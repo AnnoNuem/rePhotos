@@ -37,19 +37,26 @@ class sac:
 		self.grid_size = int(self.rectangle_size * GRID_SCALE)
 
 
-	def getPointFromRectangle(self, point1, point2):
+	def getPointFromRectangle(self, point1, point2, image_select):
 		""" computes point of interest in a subimage which is defined by to given points"""
-		assert 0 < point1[1] < self.img1.shape[0], "Point1 outside image"
-		assert 0 < point1[0] < self.img1.shape[1], "Point1 outside image"
-		assert 0 < point2[1] < self.img1.shape[0], "Point2 outside image"
-		assert 0 < point2[0] < self.img1.shape[1], "Point2 outside image"
+
+		# select image on which user draw
+		if image_select:
+			img1 = self.img1
+		else:
+			img1 = self.img2
+
+		assert 0 < point1[1] < img1.shape[0], "Point1 outside image"
+		assert 0 < point1[0] < img1.shape[1], "Point1 outside image"
+		assert 0 < point2[1] < img1.shape[0], "Point2 outside image"
+		assert 0 < point2[0] < img1.shape[1], "Point2 outside image"
 		
 		# if rectangle is to small return middlepoint of the two given points, assuming user 
 		# wanted to select a single point and not draw rectangle
 		if abs(point1[0] - point2[0]) < MIN_RECT_SIZE or abs(point1[1] - point2[1]) < MIN_RECT_SIZE:
 			return (int((point1[0]+point2[0])/2), int((point1[1]+point2[1])/2))
 
-		subimage = np.copy(self.img1[min(point1[1],point2[1]):max(point1[1],point2[1]), 
+		subimage = np.copy(img1[min(point1[1],point2[1]):max(point1[1],point2[1]), 
 											  min(point1[0], point2[0]):max(point1[0],point2[0])])
 		subimage_gray = cv2.cvtColor(subimage, cv2.COLOR_BGR2GRAY)
 	 	subimage_gray = cv2.GaussianBlur(subimage_gray, (5,5), 0)	
@@ -87,29 +94,38 @@ class sac:
 		'''
 		return return_point
 
-	def getCorespondingPoint(self, point):
+	def getCorespondingPoint(self, point, image_select):
 		""" search for coresponding point on second image given a point in first image using dense sampling"""
-		assert 0 < point[1] < self.img1.shape[0], "Point outside image 1. Have both images the same size?"
-		assert 0 < point[0] < self.img1.shape[1], "Point outside image 1. Have both images the same size?"
-		assert 0 < point[1] < self.img2.shape[0], "Point outside image 2. Have both images the same size?"
-		assert 0 < point[0] < self.img2.shape[1], "Point outside image 2. Have both images the same size?"
+
+		# select image on which user draw
+		if image_select:
+			img1 = self.img1
+			img2 = self.img2
+		else:
+			img1 = self.img2
+			img2 = self.img1
+
+		assert 0 < point[1] < img1.shape[0], "Point outside image 1. Have both images the same size?"
+		assert 0 < point[0] < img1.shape[1], "Point outside image 1. Have both images the same size?"
+		assert 0 < point[1] < img2.shape[0], "Point outside image 2. Have both images the same size?"
+		assert 0 < point[0] < img2.shape[1], "Point outside image 2. Have both images the same size?"
 
 		# get subimage from img1 to compute descriptor of user selected point in img1
 		# subimage has to have size of region used for descriptor computation
 		rectangle_size_half_1 = int(self.keypoint_size/2)
 		x1 = max(point[0] - rectangle_size_half_1, 0)
-		x2 = min(point[0] + rectangle_size_half_1, self.img1.shape[1] - 1)
+		x2 = min(point[0] + rectangle_size_half_1, img1.shape[1] - 1)
 		y1 = max(point[1] - rectangle_size_half_1, 0)
-		y2 = min(point[1] + rectangle_size_half_1, self.img1.shape[0] - 1)
-		subimage1 = np.copy(self.img1[y1:y2, x1:x2])
+		y2 = min(point[1] + rectangle_size_half_1, img1.shape[0] - 1)
+		subimage1 = np.copy(img1[y1:y2, x1:x2])
 
 		# create subimage from img2 in which the coresponding point is searched
 		rectangle_size_half = int(self.rectangle_size/2)
 		x1 = max(point[0] - rectangle_size_half, 0)
-		x2 = min(point[0] + rectangle_size_half, self.img2.shape[1] - 1)
+		x2 = min(point[0] + rectangle_size_half, img2.shape[1] - 1)
 		y1 = max(point[1] - rectangle_size_half, 0)
-		y2 = min(point[1] + rectangle_size_half, self.img2.shape[0] - 1)
-		subimage2 = np.copy(self.img2[y1:y2, x1:x2])
+		y2 = min(point[1] + rectangle_size_half, img2.shape[0] - 1)
+		subimage2 = np.copy(img2[y1:y2, x1:x2])
 
 		# preprocess both subimages
 		subimage1 = cv2.cvtColor(subimage1, cv2.COLOR_BGR2GRAY)
@@ -139,8 +155,11 @@ class sac:
 		return_point = (x1 + int(point2[0]), y1 + int(point2[1]))
 		return return_point
 
-	def getPFromRectangleACorespondingP(self, point1, point2):
-		""" wrapper for getPointFromRectangle and getCorespondingPoint """
-		return_point1 = self.getPointFromRectangle(point1, point2)
-		return_point2 = self.getCorespondingPoint(return_point1)
+	def getPFromRectangleACorespondingP(self, point1, point2, image_select):
+		""" 
+		wrapper for getPointFromRectangle and getCorespondingPoint 
+		image_select: True if user draw rect on image 1, False if user draw on image 2
+		"""
+		return_point1 = self.getPointFromRectangle(point1, point2, image_select)
+		return_point2 = self.getCorespondingPoint(return_point1, image_select)
 		return return_point1, return_point2

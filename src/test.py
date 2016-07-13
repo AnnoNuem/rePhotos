@@ -19,27 +19,38 @@ def myFilledCircle(img, center):
 
 drag_start = None
 rectangle = False
-def on_mouse(event, x, y, flags, param):
-	global drag_start, img1, img2, sac_instance, rectangle, rectangle_witdh
+def on_mouse(event, x, y, flags, image_select):
+	global drag_start, sac_instance, rectangle, rectangle_witdh
+	if image_select:
+		img1_temp = img1
+		img2_temp = img2
+		img1_name = "Image 1"
+		img2_name = "Image 2"
+	else:
+		img1_temp = img2
+		img2_temp = img1
+		img1_name = "Image 2"
+		img2_name = "Image 1"
+
 	if event == cv2.EVENT_LBUTTONDOWN:
 		rectangle = True
 		drag_start = x, y
 	elif event == cv2.EVENT_MOUSEMOVE:
 		if rectangle == True:
-			img3 = img1.copy()
+			img3 = img1_temp.copy()
 			shape = img3.shape
 			width = int((shape[0] + shape[1]) * rectangle_witdh)
 			cv2.rectangle(img3, drag_start, (x, y), (50,255,50), width)
-			cv2.imshow("Image 1", img3)
+			cv2.imshow(img1_name, img3)
 	elif event == cv2.EVENT_LBUTTONUP and rectangle is True:
 		drag_end = x,y
 		rectangle = False
 		# get point in rectangle and coresponding point 
-		point1, point2 = 	sac_instance.getPFromRectangleACorespondingP(drag_start, drag_end)
-		myFilledCircle(img1, point1)
-		myFilledCircle(img2, point2)
-		cv2.imshow("Image 1", img1)
-		cv2.imshow("Image 2", img2)
+		point1, point2 = 	sac_instance.getPFromRectangleACorespondingP(drag_start, drag_end, image_select)
+		myFilledCircle(img1_temp, point1)
+		myFilledCircle(img2_temp, point2)
+		cv2.imshow(img1_name, img1_temp)
+		cv2.imshow(img2_name, img2_temp)
 
 def test():
 	global img1, img2, sac_instance
@@ -61,8 +72,9 @@ def test():
 	sac_instance = sac.sac(img1, img2)	
 
 	cv2.namedWindow("Image 1", cv2.WINDOW_KEEPRATIO)
-	cv2.setMouseCallback("Image 1", on_mouse)
+	cv2.setMouseCallback("Image 1", on_mouse, True)
 	cv2.namedWindow("Image 2", cv2.WINDOW_KEEPRATIO)
+	cv2.setMouseCallback("Image 2", on_mouse, False)
 	cv2.imshow("Image 1", img1)
 	cv2.imshow("Image 2", img2)
 	cv2.resizeWindow("Image 1", 640, 1024)
