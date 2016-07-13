@@ -2,9 +2,12 @@ import numpy as np
 import cv2
 import sys
 import sac 
+import delaunay_morphing
 
 img1 = None
 img2 = None
+points_img1 = []
+points_img2 = []
 sac_instance = None
 radius_size = 0.003
 rectangle_witdh = 0.0008
@@ -47,6 +50,12 @@ def on_mouse(event, x, y, flags, image_select):
 		rectangle = False
 		# get point in rectangle and coresponding point 
 		point1, point2 = 	sac_instance.getPFromRectangleACorespondingP(drag_start, drag_end, image_select)
+		if image_select:
+			points_img1.append(point1)
+			points_img2.append(point2)
+		else:
+			points_img1.append(point2)
+			points_img2.append(point1)
 		myFilledCircle(img1_temp, point1)
 		myFilledCircle(img2_temp, point2)
 		cv2.imshow(img1_name, img1_temp)
@@ -56,7 +65,7 @@ def test():
 	global img1, img2, sac_instance
 	""" test method for semiautomatic point corespondence """
 	if len(sys.argv) < 3:
-		print ("Usage: getPoints <image_name1> <image_name2>")
+		print ("Usage: test <image_name1> <image_name2>")
 		exit()
 
 	img1, img2  = cv2.imread(sys.argv[1]), cv2.imread(sys.argv[2])
@@ -67,6 +76,11 @@ def test():
 	if img2 is None:
 		print ("Image 2 not readable or not found")
 		exit()
+
+	print ("Press Space to start morphing, ESC to quit")
+
+	img1_copy = np.copy(img1)
+	img2_copy = np.copy(img2)
 
 	#create sac instance with two images	
 	sac_instance = sac.sac(img1, img2)	
@@ -79,11 +93,25 @@ def test():
 	cv2.imshow("Image 2", img2)
 	cv2.resizeWindow("Image 1", 640, 1024)
 	cv2.resizeWindow("Image 2", 640, 1024)
-	
+
+	key = 0
+	while key != 32:
+		key = cv2.waitKey(0)
+		if key == 27:
+			cv2.destroyAllWindows() 
+			exit()
+
+	cv2.destroyAllWindows() 
+	#morph images
+	'''alpha = 0.5
+	stepsize = 1
+	#img1_morphed, img2_morphed = delaunay_morphing.delaunayMorphing(img1_copy, img2_copy, points_img1, points_img2, alpha, stepsize)
+	cv2.imshow("Image 1", img1_morphed)
+	cv2.imshow("Image 2", img2_morphed)
 	while cv2.waitKey(0) != 27:
 		pass
-	
 	cv2.destroyAllWindows() 
+	'''
 
 if __name__ == "__main__":
     sys.exit(test())
