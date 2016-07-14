@@ -28,7 +28,7 @@ class sac:
 		self.template_size = int((self.img2.shape[0] + self.img2.shape[1]) * 0.5  * TEMPLATE_SIZE_SCALE)
 
 	def getPointFromRectangle(self, point1, point2, image_select):
-		""" computes point of interest in a subimage which is defined by to given points"""
+		"""Computes point of interest in a subimage which is defined by to given points."""
 
 		# select image on which user draw
 		if image_select:
@@ -88,7 +88,7 @@ class sac:
 		return return_point
 
 	def getCorespondingPoint(self, point, image_select):
-		""" search for coresponding point on second image given a point in first image using template matching"""
+		"""Search for coresponding point on second image given a point in first image using template matching."""
 
 		# select image on which user draw
 		if image_select:
@@ -162,8 +162,7 @@ class sac:
 		return return_point
 
 	def getPFromRectangleACorespondingP(self, point1, point2, image_select):
-		""" 
-		wrapper for getPointFromRectangle and getCorespondingPoint 
+		"""Wrapper for getPointFromRectangle and getCorespondingPoint.
 		image_select: True if user draw rect on image 1, False if user draw on image 2
 		"""
 		return_point1 = self.getPointFromRectangle(point1, point2, image_select)
