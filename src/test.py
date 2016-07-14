@@ -103,15 +103,15 @@ def test():
 
 	cv2.destroyAllWindows() 
 	#morph images
-	'''alpha = 0.5
+	alpha = 0.5
 	stepsize = 1
-	#img1_morphed, img2_morphed = delaunay_morphing.delaunayMorphing(img1_copy, img2_copy, points_img1, points_img2, alpha, stepsize)
+	img1_morphed, img2_morphed = delaunay_morphing.delaunayMorphing(img1_copy, img2_copy, points_img1, points_img2, alpha, stepsize)
 	cv2.imshow("Image 1", img1_morphed)
 	cv2.imshow("Image 2", img2_morphed)
 	while cv2.waitKey(0) != 27:
 		pass
 	cv2.destroyAllWindows() 
-	'''
+	
 
 if __name__ == "__main__":
     sys.exit(test())

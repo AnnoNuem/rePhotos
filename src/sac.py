@@ -36,10 +36,10 @@ class sac:
 		else:
 			img1 = self.img2
 
-		assert 0 < point1[1] < img1.shape[0], "Point1 outside image"
-		assert 0 < point1[0] < img1.shape[1], "Point1 outside image"
-		assert 0 < point2[1] < img1.shape[0], "Point2 outside image"
-		assert 0 < point2[0] < img1.shape[1], "Point2 outside image"
+		assert 0 <= point1[1] < img1.shape[0], "Point1 outside image"
+		assert 0 <= point1[0] < img1.shape[1], "Point1 outside image"
+		assert 0 <= point2[1] < img1.shape[0], "Point2 outside image"
+		assert 0 <= point2[0] < img1.shape[1], "Point2 outside image"
 		
 		# if rectangle is to small return middlepoint of the two given points, assuming user 
 		# wanted to select a single point and not draw rectangle
@@ -98,10 +98,10 @@ class sac:
 			img1 = self.img2
 			img2 = self.img1
 
-		assert 0 < point[1] < img1.shape[0], "Point outside image 1. Have both images the same size?"
-		assert 0 < point[0] < img1.shape[1], "Point outside image 1. Have both images the same size?"
-		assert 0 < point[1] < img2.shape[0], "Point outside image 2. Have both images the same size?"
-		assert 0 < point[0] < img2.shape[1], "Point outside image 2. Have both images the same size?"
+		assert 0 <= point[1] < img1.shape[0], "Point outside image 1. Have both images the same size?"
+		assert 0 <= point[0] < img1.shape[1], "Point outside image 1. Have both images the same size?"
+		assert 0 <= point[1] < img2.shape[0], "Point outside image 2. Have both images the same size?"
+		assert 0 <= point[0] < img2.shape[1], "Point outside image 2. Have both images the same size?"
 
 		# get template from img1 in which user draw
 		template_size_half = int(self.template_size/2)
@@ -154,10 +154,12 @@ class sac:
 		point2 = (maxLoc[0] + template_size_half, maxLoc[1] + template_size_half)
 
 		# TODO delete for build
+		'''
 		myFilledCircle(subimage2_f, (int(point2[0]), int(point2[1])))
 		cv2.imshow("subimage1", np.uint8(subimage1_f*255))
 		cv2.imshow("subimage2", np.uint8(subimage2_f*255))
 		cv2.imshow("template result", np.uint8(template_result_1 * 255))
+		'''
 
 		return_point = (x1 + int(point2[0]), y1 + int(point2[1]))
 		return return_point

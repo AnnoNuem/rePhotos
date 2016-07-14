@@ -52,39 +52,85 @@ def morphTriangle(img1, img2, img, t1, t2, t, alpha) :
     # Copy triangular region of the rectangular patch to the output image
     img[r[1]:r[1]+r[3], r[0]:r[0]+r[2]] = img[r[1]:r[1]+r[3], r[0]:r[0]+r[2]] * ( 1 - mask ) + imgRect * mask
 
+def insertLastPoints(img, points):
+	"""Insert corners and mids of edges of image to point list."""
+	size = img.shape
+	x = img.shape[1]-1
+	y = img.shape[0]-1
+	x_half = int(x/2)
+	y_half = int(y/2)
+
+	points.append((0, 0))
+	points.append((x_half, 0))
+	points.append((x, 0))
+	points.append((x, y_half))
+	points.append((x, y))
+	points.append((x_half, y))
+	points.append((0, y))
+	points.append((0, y_half))
+
+def getIndices(rect, points):
+	"""returns indices of delaunay triangles"""
+	subdiv = cv2.Subdiv2D(rect)
+	for p in points:
+		subdiv.insert(p)
+	triangle_list = subdiv.getTriangleList()
+	
+	indicesTri = []
+	ind = [None] * 3
+	pt = [None] * 3
+	for triangle in triangle_list:
+		pt[0] = (triangle[0]), int(triangle[1])
+		pt[1] = (triangle[2]), int(triangle[3])
+		pt[2] = (triangle[4]), int(triangle[5])
+		#if rect.contains(p1) and rect.contains(p2) and rect.contains(p3):
+		for i in range(0,3):
+			for j in xrange(0, len(points)):
+				if( abs((pt[i])[0] - (points[j])[0]) < 1.0 and abs((pt[i])[1] - (points[j])[1]) < 1):
+					ind[i] = j
+		indicesTri.append(ind)
+	return indicesTri
+
 def delaunayMorphing(img1, img2, points_img1, points_img2, alpha = 0.5, stepsize = 1):
-    # Convert Mat to float data type
-    img1 = np.float32(img1)
-    img2 = np.float32(img2)
+	"""Returns list of morphed images."""
 
-    points = [];
+	assert 0 <= alpha <= 1, "Alpha not between 0 and 1."
+	assert 0 <= stepsize <= 1, "Stepsize not between 0 and 1."
+	assert len(points_img1) == len(points_img2), "Point list have different size."
 
-    # Compute weighted average point coordinates
-    for i in xrange(0, len(points_img1)):
-        x = ( 1 - alpha ) * points_img1[i][0] + alpha * points_img2[i][0]
-        y = ( 1 - alpha ) * point_imgs1[i][1] + alpha * points_img2[i][1]
-        points.append((x,y))
+	# Convert Mat to float data type
+	img1 = np.float32(img1)
+	img2 = np.float32(img2)
 
-    # Allocate space for final output
-    imgMorph = np.zeros(img1.shape, dtype = img1.dtype)
+	insertLastPoints(img1, points_img1)
+	insertLastPoints(img2, points_img2)
 
-    # Read triangles from tri.txt
-    with open("tri.txt") as file :
-        for line in file :
-            x,y,z = line.split()
+	points = [];
+
+	# Compute weighted average point coordinates
+	for i in xrange(0, len(points_img1)):
+		x = int(( 1 - alpha ) * points_img1[i][0] + alpha * points_img2[i][0])
+		y = int(( 1 - alpha ) * points_img1[i][1] + alpha * points_img2[i][1])
+		points.append((x,y))
+		print x, y
+
+	# Allocate space for final output
+	imgMorph = np.zeros(img1.shape, dtype = img1.dtype)
+
+	rect = (0, 0, max(img1.shape[1], img2.shape[1]), max(img1.shape[0],img2.shape[0]))
+	print rect
+	indicesTri = getIndices(rect, points)
+
+	for ind in indicesTri:
+		x = ind[0]
+		y = ind[1]
+		z = ind[2]
             
-            x = int(x)
-            y = int(y)
-            z = int(z)
-            
-            t1 = [points1[x], points1[y], points1[z]]
-            t2 = [points2[x], points2[y], points2[z]]
-            t = [ points[x], points[y], points[z] ]
+		t1 = [points_img1[x], points_img1[y], points_img1[z]]
+		t2 = [points_img2[x], points_img2[y], points_img2[z]]
+		t = [ points[x], points[y], points[z] ]
 
-            # Morph one triangle at a time.
-            morphTriangle(img1, img2, imgMorph, t1, t2, t, alpha)
+		# Morph one triangle at a time.
+		morphTriangle(img1, img2, imgMorph, t1, t2, t, alpha)
 
-
-    # Display Result
-    cv2.imshow("Morphed Face", np.uint8(imgMorph))
-    cv2.waitKey(0)
+	return np.uint8(imgMorph), np.uint8(imgMorph)
