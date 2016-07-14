@@ -148,6 +148,7 @@ class sac:
 		CV_TM_CCOEFF_NORMED = 5
 		template_result = cv2.matchTemplate(subimage2_f, subimage1_f, CV_TM_CCOEFF_NORMED)
 		template_result_1 = cv2.normalize(template_result, template_result, 0, 1, cv2.NORM_MINMAX)
+		#TODO weight with gaussian
 		minVal, maxVal, minLoc , maxLoc = cv2.minMaxLoc(template_result_1)
 
 		point2 = (maxLoc[0] + template_size_half, maxLoc[1] + template_size_half)
