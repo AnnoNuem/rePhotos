@@ -59,14 +59,16 @@ class sac:
 		subimage = np.copy(img1[min(point1[1],point2[1]):max(point1[1],point2[1]), 
 											  min(point1[0], point2[0]):max(point1[0],point2[0])])
 		subimage_gray = cv2.cvtColor(subimage, cv2.COLOR_BGR2GRAY)
-	 	subimage_gray = cv2.GaussianBlur(subimage_gray, (5,5), 0)	
-		
+		subimage_f = np.float32(subimage_gray)
+		subimage_f = cv2.normalize(subimage_f, subimage_f, 0, 1, cv2.NORM_MINMAX)
+	 	subimage_f = cv2.GaussianBlur(subimage_f, (5,5), 0)	
 		# Detector parameters
+
 		blockSize = 2
 		apertureSize = 3
 		k = 0.04
 		# Detecting corners
-		corners = cv2.cornerHarris( subimage_gray, blockSize, apertureSize, k, cv2.BORDER_DEFAULT )
+		corners = cv2.cornerHarris( subimage_f, blockSize, apertureSize, k, cv2.BORDER_DEFAULT )
 
 		# Assume that user wants to mark point in middle of rectangle, hence weight cornes using gaussian
 		rows, cols = corners.shape
@@ -87,10 +89,10 @@ class sac:
 
 		#TODO remove for build
 		'''
-		corners = cv2.normalize(corners, 0, 255, cv2.NORM_MINMAX)
-		cv2.imshow("corners", corners)
+		corners = cv2.normalize(corners, corners, 0, 255, cv2.NORM_MINMAX)
+		cv2.imshow("corners", np.uint8(corners))
 		cv2.imshow("gaus", gaus_matrix_normalized)
-		cv2.imshow("subimage", subimage_gray)
+		cv2.imshow("subimage", np.uint8(subimage_f*255))
 		'''
 		return return_point
 
