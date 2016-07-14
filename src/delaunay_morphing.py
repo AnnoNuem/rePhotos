@@ -80,22 +80,23 @@ def getIndices(rect, points):
 	ind = [None] * 3
 	pt = [None] * 3
 	for triangle in triangle_list:
-		pt[0] = (triangle[0]), int(triangle[1])
-		pt[1] = (triangle[2]), int(triangle[3])
-		pt[2] = (triangle[4]), int(triangle[5])
-		#if rect.contains(p1) and rect.contains(p2) and rect.contains(p3):
-		for i in range(0,3):
-			for j in xrange(0, len(points)):
-				if( abs((pt[i])[0] - (points[j])[0]) < 1.0 and abs((pt[i])[1] - (points[j])[1]) < 1):
-					ind[i] = j
-		indicesTri.append(ind)
+		pt[0] = (int(triangle[0])), int(triangle[1])
+		pt[1] = (int(triangle[2])), int(triangle[3])
+		pt[2] = (int(triangle[4])), int(triangle[5])
+		if rect[0] <= (pt[0])[0] <= rect[2] and rect[1] <= (pt[0])[1] <= rect[3] and \
+			rect[0] <= (pt[1])[0] <= rect[2] and rect[1] <= (pt[1])[1] <= rect[3] and \
+			rect[0] <= (pt[2])[0] <= rect[2] and rect[1] <= (pt[2])[1] <= rect[3]:
+			for i in range(0,3):
+				for j in xrange(0, len(points)):
+					if (((pt[i])[0] == (points[j])[0]) and ((pt[i])[1] ==  (points[j])[1])):
+						ind[i] = j
+			indicesTri.append(list(ind))
 	return indicesTri
 
-def delaunayMorphing(img1, img2, points_img1, points_img2, alpha = 0.5, stepsize = 1):
+def delaunayMorphing(img1, img2, points_img1, points_img2, alpha = 0.5, steps = 2):
 	"""Returns list of morphed images."""
 
 	assert 0 <= alpha <= 1, "Alpha not between 0 and 1."
-	assert 0 <= stepsize <= 1, "Stepsize not between 0 and 1."
 	assert len(points_img1) == len(points_img2), "Point list have different size."
 
 	# Convert Mat to float data type
@@ -112,25 +113,25 @@ def delaunayMorphing(img1, img2, points_img1, points_img2, alpha = 0.5, stepsize
 		x = int(( 1 - alpha ) * points_img1[i][0] + alpha * points_img2[i][0])
 		y = int(( 1 - alpha ) * points_img1[i][1] + alpha * points_img2[i][1])
 		points.append((x,y))
-		print x, y
-
-	# Allocate space for final output
-	imgMorph = np.zeros(img1.shape, dtype = img1.dtype)
 
 	rect = (0, 0, max(img1.shape[1], img2.shape[1]), max(img1.shape[0],img2.shape[0]))
-	print rect
 	indicesTri = getIndices(rect, points)
+	
+	images = []
+	for a in np.linspace(0.0, 1.0, num = steps):
+		# Allocate space for final output
+		imgMorph = np.zeros(img1.shape, dtype = img1.dtype)
 
-	for ind in indicesTri:
-		x = ind[0]
-		y = ind[1]
-		z = ind[2]
-            
-		t1 = [points_img1[x], points_img1[y], points_img1[z]]
-		t2 = [points_img2[x], points_img2[y], points_img2[z]]
-		t = [ points[x], points[y], points[z] ]
+		for ind in indicesTri:
+			x = ind[0]
+			y = ind[1]
+			z = ind[2]
 
-		# Morph one triangle at a time.
-		morphTriangle(img1, img2, imgMorph, t1, t2, t, alpha)
+			t1 = [points_img1[x], points_img1[y], points_img1[z]]
+			t2 = [points_img2[x], points_img2[y], points_img2[z]]
+			t = [ points[x], points[y], points[z] ]
 
-	return np.uint8(imgMorph), np.uint8(imgMorph)
+			# Morph one triangle at a time.
+			morphTriangle(img1, img2, imgMorph, t1, t2, t, a)
+		images.append(np.copy(np.uint8(imgMorph)))
+	return images

@@ -104,10 +104,17 @@ def test():
 	cv2.destroyAllWindows() 
 	#morph images
 	alpha = 0.5
-	stepsize = 1
-	img1_morphed, img2_morphed = delaunay_morphing.delaunayMorphing(img1_copy, img2_copy, points_img1, points_img2, alpha, stepsize)
-	cv2.imshow("Image 1", img1_morphed)
-	cv2.imshow("Image 2", img2_morphed)
+	steps = 3 
+	images = delaunay_morphing.delaunayMorphing(img1_copy, img2_copy, points_img1, points_img2, alpha, steps)
+	cv2.namedWindow("Image 1 morphed", cv2.WINDOW_KEEPRATIO)
+	cv2.namedWindow("Image 2 morphed", cv2.WINDOW_KEEPRATIO)
+	cv2.namedWindow("Images blended", cv2.WINDOW_KEEPRATIO)
+	cv2.imshow("Image 1 morphed", images[0])
+	cv2.imshow("Image 2 morphed", images[2])
+	cv2.imshow("Images blended", images[1])
+	cv2.resizeWindow("Image 1 morphed", 640, 1024)
+	cv2.resizeWindow("Image 2 morphed", 640, 1024)
+	cv2.resizeWindow("Images blended", 640, 1024)
 	while cv2.waitKey(0) != 27:
 		pass
 	cv2.destroyAllWindows() 
