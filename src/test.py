@@ -77,31 +77,20 @@ def test():
 		print ("Image 2 not readable or not found")
 		exit()
 
-	print ("Press Space to start morphing, ESC to quit")
-
 	img1_copy = np.copy(img1)
 	img2_copy = np.copy(img2)
-
+	
+	stepsize = sac_instance.subimage1_size
 	#create sac instance with two images	
+
 	sac_instance = sac.sac(img1, img2)	
+	stepsize_half = int(stepsize/2)
+	x_max = min(sac_instance.img1.shape[0], sac.img2.shape[0])
+	y_max = min(sac_instance.img1.shape[1], sac.img2.shape[1])
+	for x in range (stepsize_half, x_max, stepsize):
+		for y in range (stepsize_half, y_max, stepsize):
+			point1, point2 = sac_instance.getPointPFromP((x,y), image_select)
 
-	cv2.namedWindow("Image 1", cv2.WINDOW_KEEPRATIO)
-	cv2.setMouseCallback("Image 1", on_mouse, True)
-	cv2.namedWindow("Image 2", cv2.WINDOW_KEEPRATIO)
-	cv2.setMouseCallback("Image 2", on_mouse, False)
-	cv2.imshow("Image 1", img1)
-	cv2.imshow("Image 2", img2)
-	cv2.resizeWindow("Image 1", 640, 1024)
-	cv2.resizeWindow("Image 2", 640, 1024)
-
-	key = 0
-	while key != 32:
-		key = cv2.waitKey(0)
-		if key == 27:
-			cv2.destroyAllWindows() 
-			exit()
-
-	cv2.destroyAllWindows() 
 	#morph images
 	alpha = 0.5
 	steps = 3 
