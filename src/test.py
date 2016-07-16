@@ -80,17 +80,13 @@ def test():
 	img1_copy = np.copy(img1)
 	img2_copy = np.copy(img2)
 	
-	stepsize = sac_instance.subimage1_size
 	#create sac instance with two images	
-
 	sac_instance = sac.sac(img1, img2)	
-	stepsize_half = int(stepsize/2)
-	x_max = min(sac_instance.img1.shape[0], sac.img2.shape[0])
-	y_max = min(sac_instance.img1.shape[1], sac.img2.shape[1])
-	for x in range (stepsize_half, x_max, stepsize):
-		for y in range (stepsize_half, y_max, stepsize):
-			point1, point2 = sac_instance.getPointPFromP((x,y), image_select)
+	points_img1, points_img2 = sac_instance.compute()
 
+	while cv2.waitKey(0) != 27:
+		pass
+	
 	#morph images
 	alpha = 0.5
 	steps = 3 
@@ -106,6 +102,7 @@ def test():
 	cv2.resizeWindow("Images blended", 640, 1024)
 	while cv2.waitKey(0) != 27:
 		pass
+	
 	cv2.destroyAllWindows() 
 	
 
