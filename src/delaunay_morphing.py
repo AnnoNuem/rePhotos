@@ -1,14 +1,8 @@
-#!/usr/bin/env python
-
 import numpy as np
 import cv2
-import sys
-import sac
 
-# Apply affine transform calculated using srcTri and dstTri to src and
-# output an image of size.
 def applyAffineTransform(src, srcTri, dstTri, size) :
-    
+	"""Apply affine transform calculated using srcTri and dstTri to src and output an image of size."""
     # Given a pair of triangles, find the affine transform.
     warpMat = cv2.getAffineTransform( np.float32(srcTri), np.float32(dstTri) )
     
@@ -17,9 +11,9 @@ def applyAffineTransform(src, srcTri, dstTri, size) :
 
     return dst
 
-# Warps and alpha blends triangular regions from img1 and img2 to img
-def morphTriangle(img1, img2, img, t1, t2, t, alpha) :
 
+def morphTriangle(img1, img2, img, t1, t2, t, alpha) :
+	"""Warps and alpha blends triangular regions from img1 and img2 to img."""
     # Find bounding rectangle for each triangle
     r1 = cv2.boundingRect(np.float32([t1]))
     r2 = cv2.boundingRect(np.float32([t2]))
@@ -53,25 +47,9 @@ def morphTriangle(img1, img2, img, t1, t2, t, alpha) :
     # Copy triangular region of the rectangular patch to the output image
     img[r[1]:r[1]+r[3], r[0]:r[0]+r[2]] = img[r[1]:r[1]+r[3], r[0]:r[0]+r[2]] * ( 1 - mask ) + imgRect * mask
 
-def insertLastPoints(img, points):
-	"""Insert corners and mids of edges of image to point list."""
-	size = img.shape
-	x = img.shape[1]-1
-	y = img.shape[0]-1
-	x_half = int(x/2)
-	y_half = int(y/2)
-
-	points.append((0, 0))
-	points.append((x_half, 0))
-	points.append((x, 0))
-	points.append((x, y_half))
-	points.append((x, y))
-	points.append((x_half, y))
-	points.append((0, y))
-	points.append((0, y_half))
 
 def getIndices(rect, points):
-	"""returns indices of delaunay triangles"""
+	"""Returns indices of delaunay triangles."""
 	subdiv = cv2.Subdiv2D(rect)
 	for p in points:
 		subdiv.insert(p)
@@ -94,10 +72,18 @@ def getIndices(rect, points):
 			indicesTri.append(list(ind))
 	return indicesTri
 
-def getCorners(img, img2, points_img1, points_img2, points):
-	"""Returns the indices of the for corner points."""
-	x_max = img.shape[1] - 1
-	y_max = img.shape[0] - 1
+
+def getCorners(img, img2, points_img1, points_img2):
+	"""Adds the corners and middle point of edges to point_lists.
+	Finds the user selectet points which are nearest to the four corners and the 
+	four middle points of the edges of the image. Computes the delta between 
+	them and their coresponding points. Adds corner points and middle points of
+	edges to the point lists and offsets them using the computet delta values.
+	Returns the global max and minima used for cropping
+	"""
+	
+	x_max = min(img.shape[1], img2.shape[1]) - 1
+	y_max = min(img.shape[0], img2.shape[0]) - 1
 	x_mean = int(x_max / 2)
 	y_mean = int(y_max / 2)
 
@@ -105,88 +91,93 @@ def getCorners(img, img2, points_img1, points_img2, points):
 	p_min_mean, i_min_mean = min(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: (p[0])[0] + abs(y_mean - (p[0])[1]))
 	delta_y_half = int((p_min_mean[1] - (points_img2[i_min_mean])[1])/2)
 	delta_x_half = int((p_min_mean[0] - (points_img2[i_min_mean])[0])/2)
-	points.append((0 + abs(delta_x_half), p_min_mean[1]))
 	points_img1.append((0 + abs(delta_x_half) + delta_x_half, p_min_mean[1] + delta_y_half))
 	points_img2.append((0 + abs(delta_x_half) - delta_x_half, p_min_mean[1] - delta_y_half))
+	global_x_min = abs(delta_x_half)
 	
 	# right middle
 	p_max_mean, i_max_mean = min(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: (x_max -(p[0])[0]) + abs(y_mean - (p[0])[1]))
 	delta_y_half = int((p_max_mean[1] - (points_img2[i_max_mean])[1])/2)
 	delta_x_half = int((p_max_mean[0] - (points_img2[i_max_mean])[0])/2)
-	points.append((x_max - abs(delta_x_half), p_max_mean[1]))
 	points_img1.append((x_max - abs(delta_x_half) + delta_x_half, p_max_mean[1] + delta_y_half))
 	points_img2.append((x_max - abs(delta_y_half) - delta_x_half, p_max_mean[1] - delta_y_half))
+	global_x_max = x_max - abs(delta_x_half)
 	
 	# top middle
 	p_mean_min, i_mean_min = min(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: abs(x_mean - (p[0])[0]) +  (p[0])[1])
 	delta_x_half = int((p_mean_min[0] - (points_img2[i_mean_min])[0])/2)
 	delta_y_half = int((p_mean_min[1] - (points_img2[i_mean_min])[1])/2)
-	points.append((p_mean_min[0], 0 + abs(delta_y_half)))  
 	points_img1.append((p_mean_min[0] + delta_x_half, 0 + abs(delta_y_half) + delta_y_half))
 	points_img2.append((p_mean_min[0] - delta_x_half, 0 + abs(delta_y_half) - delta_y_half))
+	global_y_min = abs(delta_y_half)
 
 	# bottom middle
 	p_mean_max, i_mean_max = min(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: abs(x_mean - (p[0])[0]) + (y_max - (p[0])[1]))
 	delta_x_half = int((p_mean_max[0] - (points_img2[i_mean_max])[0])/2)
 	delta_y_half = int((p_mean_max[1] - (points_img2[i_mean_max])[1])/2)
-	points.append((p_mean_max[0], y_max - abs(delta_y_half)))  
 	points_img1.append((p_mean_max[0] + delta_x_half, y_max - abs(delta_y_half) + delta_y_half))
 	points_img2.append((p_mean_max[0] - delta_x_half, y_max - abs(delta_y_half) - delta_y_half))
+	global_y_max = y_max - abs(delta_y_half)
 	
 	# bottom left 
 	p_min_max, i_min_max = max(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: (x_max - (p[0])[0]) + (p[0])[1])
 	delta_y_half = int((p_min_max[1] - (points_img2[i_min_max])[1])/2)
 	delta_x_half = int((p_min_max[0] - (points_img2[i_min_max])[0])/2)
-	points.append((0 + abs(delta_x_half), y_max - abs(delta_y_half)))
 	points_img1.append((0 + abs(delta_x_half) + delta_x_half, y_max - abs(delta_y_half) + delta_y_half))
 	points_img2.append((0 + abs(delta_x_half) - delta_x_half, y_max - abs(delta_y_half) - delta_y_half))
+	global_x_min = abs(delta_x_half) if abs(delta_x_half) > global_x_min	else global_x_min
+	global_y_max = y_max - abs(delta_y_half) if (y_max - abs(delta_y_half)) < global_y_max	else global_y_max
 
 	# bottom right 
 	p_max_max, i_max_max = max(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: (p[0])[0] + (p[0])[1])
 	delta_y_half = int((p_max_max[1] - (points_img2[i_max_max])[1])/2)
 	delta_x_half = int((p_max_max[0] - (points_img2[i_max_max])[0])/2)
-	points.append((x_max - abs(delta_x_half), y_max - abs(delta_y_half)))
 	points_img1.append((x_max - abs(delta_x_half) + delta_x_half, y_max - abs(delta_y_half) + delta_y_half))
 	points_img2.append((x_max - abs(delta_x_half) - delta_x_half, y_max - abs(delta_y_half) - delta_y_half))
+	global_x_max = x_max - abs(delta_x_half) if (x_max - abs(delta_x_half)) < global_x_max	else global_x_max
+	global_y_max = y_max - abs(delta_y_half) if (y_max - abs(delta_y_half)) < global_y_max	else global_y_max
 
 	# top right 
 	p_max_min, i_max_min = max(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: (p[0])[0] + (y_max - (p[0])[1]))
 	delta_y_half = int((p_max_min[1] - (points_img2[i_max_min])[1])/2)
 	delta_x_half = int((p_max_min[0] - (points_img2[i_max_min])[0])/2)
-	points.append((x_max - abs(delta_x_half), 0 +  abs(delta_y_half)))
 	points_img1.append((x_max - abs(delta_x_half) + delta_x_half, 0 + abs(delta_y_half) + delta_y_half))
 	points_img2.append((x_max - abs(delta_x_half) - delta_x_half, 0 + abs(delta_y_half) - delta_y_half))
+	global_x_max = x_max - abs(delta_x_half) if (x_max - abs(delta_x_half)) < global_x_max	else global_x_max
+	global_y_min = abs(delta_y_half) if abs(delta_y_half) > global_y_min	else global_y_min
 
 	# top left
 	p_min_min, i_min_min = min(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: (p[0])[0] + (p[0])[1])
 	delta_y_half = int((p_min_min[1] - (points_img2[i_min_min])[1])/2)
 	delta_x_half = int((p_min_min[0] - (points_img2[i_min_min])[0])/2)
-	points.append((0 + abs(delta_x_half), 0 +  abs(delta_y_half)))
 	points_img1.append((0 + abs(delta_x_half) + delta_x_half, 0 + abs(delta_y_half) + delta_y_half))
 	points_img2.append((0 + abs(delta_x_half) - delta_x_half, 0 + abs(delta_y_half) - delta_y_half))
+	global_x_min = abs(delta_x_half) if abs(delta_x_half) > global_x_min	else global_x_min
+	global_y_min = abs(delta_y_half) if abs(delta_y_half) > global_y_min	else global_y_min
+
+	return global_x_min, global_x_max, global_y_min, global_y_max
+
 
 def delaunayMorphing(img1, img2, points_img1, points_img2, alpha = 0.5, steps = 2):
 	"""Returns list of morphed images."""
 
 	assert 0 <= alpha <= 1, "Alpha not between 0 and 1."
-	assert len(points_img1) == len(points_img2), "Point list have different size."
+	assert len(points_img1) == len(points_img2), "Point lists have different size."
 
 	# Convert Mat to float data type
 	img1 = np.float32(img1)
 	img2 = np.float32(img2)
 
-	#insertLastPoints(img1, points_img1)
-	#insertLastPoints(img2, points_img2)
-
-	points = [];
+	# Add the corner points and middle point of edges to the point lists
+	global_x_min, global_x_max, global_y_min, global_y_max = getCorners(img1, img2, points_img1, points_img2)
 
 	# Compute weighted average point coordinates
+	points = [];
 	for i in xrange(0, len(points_img1)):
 		x = int(( 1 - alpha ) * points_img1[i][0] + alpha * points_img2[i][0])
 		y = int(( 1 - alpha ) * points_img1[i][1] + alpha * points_img2[i][1])
 		points.append((x,y))
 
-	getCorners(img1, img2, points_img1, points_img2, points)
 	rect = (0, 0, max(img1.shape[1], img2.shape[1]), max(img1.shape[0],img2.shape[0]))
 	indicesTri = getIndices(rect, points)
 	
@@ -206,5 +197,5 @@ def delaunayMorphing(img1, img2, points_img1, points_img2, alpha = 0.5, steps = 
 
 			# Morph one triangle at a time.
 			morphTriangle(img1, img2, imgMorph, t1, t2, t, a)
-		images.append(np.copy(np.uint8(imgMorph)))
+		images.append(np.copy(np.uint8(imgMorph[global_y_min:global_y_max, global_x_min:global_x_max, : ])))
 	return images

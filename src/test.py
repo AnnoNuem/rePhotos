@@ -22,8 +22,10 @@ def myFilledCircle(img, center):
 
 drag_start = None
 rectangle = False
+waitingForSecondPoint = False
+previous_point = None
 def on_mouse(event, x, y, flags, image_select):
-	global drag_start, sac_instance, rectangle, rectangle_witdh
+	global drag_start, sac_instance, rectangle, rectangle_witdh, waitingForSecondPoint, previous_point
 	if image_select:
 		img1_temp = img1
 		img2_temp = img2
@@ -34,18 +36,37 @@ def on_mouse(event, x, y, flags, image_select):
 		img2_temp = img1
 		img1_name = "Image 2"
 		img2_name = "Image 1"
-
-	if event == cv2.EVENT_LBUTTONDOWN:
+	if event == cv2.EVENT_RBUTTONUP:
+		if waitingForSecondPoint:
+			if image_select is not previous_point:
+				if image_select:
+					points_img1.append((x,y))
+				else:
+					points_img2.append((x,y))
+				previous_point = None
+				waitingForSecondPoint = False
+				myFilledCircle(img1_temp, (x,y))
+				cv2.imshow(img1_name, img1_temp)
+		else:
+			previous_point = image_select
+			waitingForSecondPoint = True
+			if image_select: 
+				points_img1.append((x,y))
+			else:
+				points_img2.append((x,y))
+			myFilledCircle(img1_temp, (x,y))
+			cv2.imshow(img1_name, img1_temp)
+	elif event == cv2.EVENT_LBUTTONDOWN and not waitingForSecondPoint:
 		rectangle = True
 		drag_start = x, y
-	elif event == cv2.EVENT_MOUSEMOVE:
+	elif event == cv2.EVENT_MOUSEMOVE and not waitingForSecondPoint:
 		if rectangle == True:
 			img3 = img1_temp.copy()
 			shape = img3.shape
 			width = int((shape[0] + shape[1]) * rectangle_witdh)
 			cv2.rectangle(img3, drag_start, (x, y), (50,255,50), width)
 			cv2.imshow(img1_name, img3)
-	elif event == cv2.EVENT_LBUTTONUP and rectangle is True:
+	elif event == cv2.EVENT_LBUTTONUP and rectangle is True and not waitingForSecondPoint:
 		drag_end = x,y
 		rectangle = False
 		# get point in rectangle and coresponding point 
@@ -100,9 +121,10 @@ def test():
 		if key == 27:
 			cv2.destroyAllWindows() 
 			exit()
-
 	cv2.destroyAllWindows() 
+
 	#morph images
+	print ("Morphing...")
 	alpha = 0.5
 	steps = 3 
 	images = delaunay_morphing.delaunayMorphing(img1_copy, img2_copy, points_img1, points_img2, alpha, steps)
