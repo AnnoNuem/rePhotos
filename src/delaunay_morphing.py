@@ -94,44 +94,76 @@ def getIndices(rect, points):
 			indicesTri.append(list(ind))
 	return indicesTri
 
-def getCorners(img, points):
+def getCorners(img, img2, points_img1, points_img2, points):
 	"""Returns the indices of the for corner points."""
-	#dist_min_min = []
 	x_max = img.shape[1] - 1
 	y_max = img.shape[0] - 1
 	x_mean = int(x_max / 2)
 	y_mean = int(y_max / 2)
 
-	p_min_min, i_min_min = min(((val, idx) for (idx, val) in enumerate(points)), key=lambda p: (p[0])[0] + (p[0])[1])
-	p_max_max, i_max_max = max(((val, idx) for (idx, val) in enumerate(points)), key=lambda p: (p[0])[0] + (p[0])[1])
-	p_min_max, i_min_max = max(((val, idx) for (idx, val) in enumerate(points)), key=lambda p: (x_max - (p[0])[0]) + (p[0])[1])
-	p_max_min, i_max_min = max(((val, idx) for (idx, val) in enumerate(points)), key=lambda p: (p[0])[0] + (y_max - (p[0])[1]))
+	# left middle
+	p_min_mean, i_min_mean = min(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: (p[0])[0] + abs(y_mean - (p[0])[1]))
+	delta_y_half = int((p_min_mean[1] - (points_img2[i_min_mean])[1])/2)
+	delta_x_half = int((p_min_mean[0] - (points_img2[i_min_mean])[0])/2)
+	points.append((0 + abs(delta_x_half), p_min_mean[1]))
+	points_img1.append((0 + abs(delta_x_half) + delta_x_half, p_min_mean[1] + delta_y_half))
+	points_img2.append((0 + abs(delta_x_half) - delta_x_half, p_min_mean[1] - delta_y_half))
+	
+	# right middle
+	p_max_mean, i_max_mean = min(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: (x_max -(p[0])[0]) + abs(y_mean - (p[0])[1]))
+	delta_y_half = int((p_max_mean[1] - (points_img2[i_max_mean])[1])/2)
+	delta_x_half = int((p_max_mean[0] - (points_img2[i_max_mean])[0])/2)
+	points.append((x_max - abs(delta_x_half), p_max_mean[1]))
+	points_img1.append((x_max - abs(delta_x_half) + delta_x_half, p_max_mean[1] + delta_y_half))
+	points_img2.append((x_max - abs(delta_y_half) - delta_x_half, p_max_mean[1] - delta_y_half))
+	
+	# top middle
+	p_mean_min, i_mean_min = min(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: abs(x_mean - (p[0])[0]) +  (p[0])[1])
+	delta_x_half = int((p_mean_min[0] - (points_img2[i_mean_min])[0])/2)
+	delta_y_half = int((p_mean_min[1] - (points_img2[i_mean_min])[1])/2)
+	points.append((p_mean_min[0], 0 + abs(delta_y_half)))  
+	points_img1.append((p_mean_min[0] + delta_x_half, 0 + abs(delta_y_half) + delta_y_half))
+	points_img2.append((p_mean_min[0] - delta_x_half, 0 + abs(delta_y_half) - delta_y_half))
 
-	p_min_mean, i_min_mean = min(((val, idx) for (idx, val) in enumerate(points)), key=lambda p: (p[0])[0] + abs(y_mean - (p[0])[1]))
-	p_mean_min, i_mean_min = min(((val, idx) for (idx, val) in enumerate(points)), key=lambda p: abs(x_mean - (p[0])[0]) +  (p[0])[1])
-	p_max_mean, i_max_mean = max(((val, idx) for (idx, val) in enumerate(points)), key=lambda p: (x_max -(p[0])[0]) + abs(y_mean - (p[0])[1]))
-	p_mean_max, i_mean_max = max(((val, idx) for (idx, val) in enumerate(points)), key=lambda p: abs(x_mean - (p[0])[0]) + (y_max - (p[0])[1]))
+	# bottom middle
+	p_mean_max, i_mean_max = min(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: abs(x_mean - (p[0])[0]) + (y_max - (p[0])[1]))
+	delta_x_half = int((p_mean_max[0] - (points_img2[i_mean_max])[0])/2)
+	delta_y_half = int((p_mean_max[1] - (points_img2[i_mean_max])[1])/2)
+	points.append((p_mean_max[0], y_max - abs(delta_y_half)))  
+	points_img1.append((p_mean_max[0] + delta_x_half, y_max - abs(delta_y_half) + delta_y_half))
+	points_img2.append((p_mean_max[0] - delta_x_half, y_max - abs(delta_y_half) - delta_y_half))
+	
+	# bottom left 
+	p_min_max, i_min_max = max(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: (x_max - (p[0])[0]) + (p[0])[1])
+	delta_y_half = int((p_min_max[1] - (points_img2[i_min_max])[1])/2)
+	delta_x_half = int((p_min_max[0] - (points_img2[i_min_max])[0])/2)
+	points.append((0 + abs(delta_x_half), y_max - abs(delta_y_half)))
+	points_img1.append((0 + abs(delta_x_half) + delta_x_half, y_max - abs(delta_y_half) + delta_y_half))
+	points_img2.append((0 + abs(delta_x_half) - delta_x_half, y_max - abs(delta_y_half) - delta_y_half))
 
-	print p_min_min
-	print p_max_max
-	print p_min_max
-	print p_max_min
-	print p_min_mean
-	print p_mean_min
-	print p_max_mean
-	print p_mean_max
-	sac.myFilledCircle(img, p_min_min)
-	sac.myFilledCircle(img, p_max_max)
-	sac.myFilledCircle(img, p_min_max)
-	sac.myFilledCircle(img, p_max_min)
-	sac.myFilledCircle(img, p_min_mean)
-	sac.myFilledCircle(img, p_mean_min)
-	sac.myFilledCircle(img, p_max_mean)
-	sac.myFilledCircle(img, p_mean_max)
-	cv2.namedWindow('img', cv2.WINDOW_KEEPRATIO)
-	cv2.imshow("img", img)
-	cv2.resizeWindow("img", 640, 1024)
-	return 
+	# bottom right 
+	p_max_max, i_max_max = max(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: (p[0])[0] + (p[0])[1])
+	delta_y_half = int((p_max_max[1] - (points_img2[i_max_max])[1])/2)
+	delta_x_half = int((p_max_max[0] - (points_img2[i_max_max])[0])/2)
+	points.append((x_max - abs(delta_x_half), y_max - abs(delta_y_half)))
+	points_img1.append((x_max - abs(delta_x_half) + delta_x_half, y_max - abs(delta_y_half) + delta_y_half))
+	points_img2.append((x_max - abs(delta_x_half) - delta_x_half, y_max - abs(delta_y_half) - delta_y_half))
+
+	# top right 
+	p_max_min, i_max_min = max(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: (p[0])[0] + (y_max - (p[0])[1]))
+	delta_y_half = int((p_max_min[1] - (points_img2[i_max_min])[1])/2)
+	delta_x_half = int((p_max_min[0] - (points_img2[i_max_min])[0])/2)
+	points.append((x_max - abs(delta_x_half), 0 +  abs(delta_y_half)))
+	points_img1.append((x_max - abs(delta_x_half) + delta_x_half, 0 + abs(delta_y_half) + delta_y_half))
+	points_img2.append((x_max - abs(delta_x_half) - delta_x_half, 0 + abs(delta_y_half) - delta_y_half))
+
+	# top left
+	p_min_min, i_min_min = min(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: (p[0])[0] + (p[0])[1])
+	delta_y_half = int((p_min_min[1] - (points_img2[i_min_min])[1])/2)
+	delta_x_half = int((p_min_min[0] - (points_img2[i_min_min])[0])/2)
+	points.append((0 + abs(delta_x_half), 0 +  abs(delta_y_half)))
+	points_img1.append((0 + abs(delta_x_half) + delta_x_half, 0 + abs(delta_y_half) + delta_y_half))
+	points_img2.append((0 + abs(delta_x_half) - delta_x_half, 0 + abs(delta_y_half) - delta_y_half))
 
 def delaunayMorphing(img1, img2, points_img1, points_img2, alpha = 0.5, steps = 2):
 	"""Returns list of morphed images."""
@@ -143,9 +175,8 @@ def delaunayMorphing(img1, img2, points_img1, points_img2, alpha = 0.5, steps = 
 	img1 = np.float32(img1)
 	img2 = np.float32(img2)
 
-	getCorners(img1, points_img1)
-	insertLastPoints(img1, points_img1)
-	insertLastPoints(img2, points_img2)
+	#insertLastPoints(img1, points_img1)
+	#insertLastPoints(img2, points_img2)
 
 	points = [];
 
@@ -155,6 +186,7 @@ def delaunayMorphing(img1, img2, points_img1, points_img2, alpha = 0.5, steps = 
 		y = int(( 1 - alpha ) * points_img1[i][1] + alpha * points_img2[i][1])
 		points.append((x,y))
 
+	getCorners(img1, img2, points_img1, points_img2, points)
 	rect = (0, 0, max(img1.shape[1], img2.shape[1]), max(img1.shape[0],img2.shape[0]))
 	indicesTri = getIndices(rect, points)
 	
