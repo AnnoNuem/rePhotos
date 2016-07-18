@@ -3,6 +3,7 @@
 import numpy as np
 import cv2
 import sys
+import sac
 
 # Apply affine transform calculated using srcTri and dstTri to src and
 # output an image of size.
@@ -93,6 +94,45 @@ def getIndices(rect, points):
 			indicesTri.append(list(ind))
 	return indicesTri
 
+def getCorners(img, points):
+	"""Returns the indices of the for corner points."""
+	#dist_min_min = []
+	x_max = img.shape[1] - 1
+	y_max = img.shape[0] - 1
+	x_mean = int(x_max / 2)
+	y_mean = int(y_max / 2)
+
+	p_min_min, i_min_min = min(((val, idx) for (idx, val) in enumerate(points)), key=lambda p: (p[0])[0] + (p[0])[1])
+	p_max_max, i_max_max = max(((val, idx) for (idx, val) in enumerate(points)), key=lambda p: (p[0])[0] + (p[0])[1])
+	p_min_max, i_min_max = max(((val, idx) for (idx, val) in enumerate(points)), key=lambda p: (x_max - (p[0])[0]) + (p[0])[1])
+	p_max_min, i_max_min = max(((val, idx) for (idx, val) in enumerate(points)), key=lambda p: (p[0])[0] + (y_max - (p[0])[1]))
+
+	p_min_mean, i_min_mean = min(((val, idx) for (idx, val) in enumerate(points)), key=lambda p: (p[0])[0] + abs(y_mean - (p[0])[1]))
+	p_mean_min, i_mean_min = min(((val, idx) for (idx, val) in enumerate(points)), key=lambda p: abs(x_mean - (p[0])[0]) +  (p[0])[1])
+	p_max_mean, i_max_mean = max(((val, idx) for (idx, val) in enumerate(points)), key=lambda p: (x_max -(p[0])[0]) + abs(y_mean - (p[0])[1]))
+	p_mean_max, i_mean_max = max(((val, idx) for (idx, val) in enumerate(points)), key=lambda p: abs(x_mean - (p[0])[0]) + (y_max - (p[0])[1]))
+
+	print p_min_min
+	print p_max_max
+	print p_min_max
+	print p_max_min
+	print p_min_mean
+	print p_mean_min
+	print p_max_mean
+	print p_mean_max
+	sac.myFilledCircle(img, p_min_min)
+	sac.myFilledCircle(img, p_max_max)
+	sac.myFilledCircle(img, p_min_max)
+	sac.myFilledCircle(img, p_max_min)
+	sac.myFilledCircle(img, p_min_mean)
+	sac.myFilledCircle(img, p_mean_min)
+	sac.myFilledCircle(img, p_max_mean)
+	sac.myFilledCircle(img, p_mean_max)
+	cv2.namedWindow('img', cv2.WINDOW_KEEPRATIO)
+	cv2.imshow("img", img)
+	cv2.resizeWindow("img", 640, 1024)
+	return 
+
 def delaunayMorphing(img1, img2, points_img1, points_img2, alpha = 0.5, steps = 2):
 	"""Returns list of morphed images."""
 
@@ -103,6 +143,7 @@ def delaunayMorphing(img1, img2, points_img1, points_img2, alpha = 0.5, steps = 
 	img1 = np.float32(img1)
 	img2 = np.float32(img2)
 
+	getCorners(img1, points_img1)
 	insertLastPoints(img1, points_img1)
 	insertLastPoints(img2, points_img2)
 
