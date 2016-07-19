@@ -3,6 +3,7 @@ import cv2
 import sys
 import sac 
 import delaunayMorphing
+import roughCalibrator
 
 img1 = None
 img2 = None
@@ -20,12 +21,13 @@ def myFilledCircle(img, center):
 	radius = int((shape[0] + shape[1]) * radiusSize)
 	cv2.circle (img, center, radius, (0,0,255), thickness, lineType)
 
+numberOfPointPairs = 0
 dragStart = None
 rectangle = False
 waitingForSecondPoint = False
-previousPoint = None
+previousPoint = -1
 def onMouse(event, x, y, flags, imageSelect):
-	global dragStart, sacInstance, rectangle, rectangleWitdh, waitingForSecondPoint, previousPoint
+	global dragStart, sacInstance, rectangle, rectangleWitdh, waitingForSecondPoint, previousPoint, numberOfPointPairs
 	if imageSelect:
 		img1Temp = img1
 		img2Temp = img2
@@ -36,36 +38,49 @@ def onMouse(event, x, y, flags, imageSelect):
 		img2Temp = img1
 		img1Name = "Image 2"
 		img2Name = "Image 1"
-	if event == cv2.EVENT_RBUTTONUP:
-		if waitingForSecondPoint:
-			if imageSelect is not previousPoint:
-				if imageSelect:
-					pointsImg1.append((x,y))
-				else:
-					pointsImg2.append((x,y))
-				previousPoint = None
-				waitingForSecondPoint = False
-				myFilledCircle(img1Temp, (x,y))
-				cv2.imshow(img1Name, img1Temp)
-		else:
-			previousPoint = imageSelect
-			waitingForSecondPoint = True
-			if imageSelect: 
-				pointsImg1.append((x,y))
-			else:
-				pointsImg2.append((x,y))
-			myFilledCircle(img1Temp, (x,y))
-			cv2.imshow(img1Name, img1Temp)
-	elif event == cv2.EVENT_LBUTTONDOWN and not waitingForSecondPoint:
-		rectangle = True
-		dragStart = x, y
-	elif event == cv2.EVENT_MOUSEMOVE and not waitingForSecondPoint:
+	
+	# Mouse movement, rectangle drawing
+	if event == cv2.EVENT_MOUSEMOVE:
 		if rectangle == True:
 			img3 = img1Temp.copy()
 			shape = img3.shape
 			width = int((shape[0] + shape[1]) * rectangleWitdh)
 			cv2.rectangle(img3, dragStart, (x, y), (50,255,50), width)
 			cv2.imshow(img1Name, img3)
+	# Right mouse button
+	elif event == cv2.EVENT_RBUTTONDOWN and rectangle is False:
+		if (waitingForSecondPoint and (imageSelect + previousPoint) == 1):
+			rectangle = True
+			dragStart = x, y
+			waitingForSecondPoint = False
+			previousPoint =  -1
+			numberOfPointPairs += 1
+		elif not waitingForSecondPoint:
+			rectangle = True
+			dragStart = x, y
+			waitingForSecondPoint = True
+			previousPoint = imageSelect
+	elif event == cv2.EVENT_RBUTTONUP and rectangle is True:
+		dragEnd = x, y
+		# get point inside user drawn rectangle
+		point = sacInstance.getPointFromRectangle(dragStart, dragEnd, imageSelect)
+		if imageSelect:
+			pointsImg1.append(point)
+		else:
+			pointsImg2.append(point)
+		rectangle = False
+		myFilledCircle(img1Temp, point)
+		cv2.imshow(img1Name, img1Temp)
+		# calibrate the two images roughly afte two point pairs are marked
+		if waitingForSecondPoint == False and numberOfPointPairs == 4:
+			print ("Rougly calibrating images...")
+			roughCalibrator.calibrate(img1, img2, pointsImg1, pointsImg2)
+			cv2.imshow(img1Name, img1Temp)
+			cv2.imshow(img2Name, img2Temp)
+	# Left mouse button
+	elif event == cv2.EVENT_LBUTTONDOWN and not waitingForSecondPoint and rectangle is False:
+		rectangle = True
+		dragStart = x, y
 	elif event == cv2.EVENT_LBUTTONUP and rectangle is True and not waitingForSecondPoint:
 		dragEnd = x,y
 		rectangle = False
@@ -77,14 +92,23 @@ def onMouse(event, x, y, flags, imageSelect):
 		else:
 			pointsImg1.append(point2)
 			pointsImg2.append(point1)
+		numberOfPointPairs += 1
 		myFilledCircle(img1Temp, point1)
 		myFilledCircle(img2Temp, point2)
 		cv2.imshow(img1Name, img1Temp)
 		cv2.imshow(img2Name, img2Temp)
+		# calibrate the two images roughly afte two point pairs are marked
+		if waitingForSecondPoint == False and numberOfPointPairs == 4:
+			print ("Rougly calibrating images...")
+			roughCalibrator.calibrate(img1, img2, pointsImg1, pointsImg2)
+			cv2.imshow(img1Name, img1Temp)
+			cv2.imshow(img2Name, img2Temp)
 
 def test():
 	global img1, img2, sacInstance
-	""" test method for semiautomatic point corespondence """
+	"""
+	Test method for semiautomatic point corespondence.
+	"""
 	if len(sys.argv) < 3:
 		print ("Usage: test <imageName1> <imageName2>")
 		exit()
@@ -98,6 +122,9 @@ def test():
 		print ("Image 2 not readable or not found")
 		exit()
 
+	print ("Draw rectangles with LMB to search for corresponding point.")
+	print ("Draw rectangles with RMB to only mark point.")
+	print ("Click i.e. draw very tiny rectangle to mark point directly.")
 	print ("Press Space to start morphing, ESC to quit")
 
 	img1Copy = np.copy(img1)
