@@ -2,91 +2,91 @@ import numpy as np
 import cv2
 import sys
 import sac 
-import delaunay_morphing
+import delaunayMorphing
 
 img1 = None
 img2 = None
-points_img1 = []
-points_img2 = []
-sac_instance = None
-radius_size = 0.003
-rectangle_witdh = 0.0008
+pointsImg1 = []
+pointsImg2 = []
+sacInstance = None
+radiusSize = 0.003
+rectangleWitdh = 0.0008
 
 def myFilledCircle(img, center):
-	global radius_size
+	global radiusSize
 	thickness = -1
 	lineType = 8
 	shape = img.shape
-	radius = int((shape[0] + shape[1]) * radius_size)
+	radius = int((shape[0] + shape[1]) * radiusSize)
 	cv2.circle (img, center, radius, (0,0,255), thickness, lineType)
 
-drag_start = None
+dragStart = None
 rectangle = False
 waitingForSecondPoint = False
-previous_point = None
-def on_mouse(event, x, y, flags, image_select):
-	global drag_start, sac_instance, rectangle, rectangle_witdh, waitingForSecondPoint, previous_point
-	if image_select:
-		img1_temp = img1
-		img2_temp = img2
-		img1_name = "Image 1"
-		img2_name = "Image 2"
+previousPoint = None
+def onMouse(event, x, y, flags, imageSelect):
+	global dragStart, sacInstance, rectangle, rectangleWitdh, waitingForSecondPoint, previousPoint
+	if imageSelect:
+		img1Temp = img1
+		img2Temp = img2
+		img1Name = "Image 1"
+		img2Name = "Image 2"
 	else:
-		img1_temp = img2
-		img2_temp = img1
-		img1_name = "Image 2"
-		img2_name = "Image 1"
+		img1Temp = img2
+		img2Temp = img1
+		img1Name = "Image 2"
+		img2Name = "Image 1"
 	if event == cv2.EVENT_RBUTTONUP:
 		if waitingForSecondPoint:
-			if image_select is not previous_point:
-				if image_select:
-					points_img1.append((x,y))
+			if imageSelect is not previousPoint:
+				if imageSelect:
+					pointsImg1.append((x,y))
 				else:
-					points_img2.append((x,y))
-				previous_point = None
+					pointsImg2.append((x,y))
+				previousPoint = None
 				waitingForSecondPoint = False
-				myFilledCircle(img1_temp, (x,y))
-				cv2.imshow(img1_name, img1_temp)
+				myFilledCircle(img1Temp, (x,y))
+				cv2.imshow(img1Name, img1Temp)
 		else:
-			previous_point = image_select
+			previousPoint = imageSelect
 			waitingForSecondPoint = True
-			if image_select: 
-				points_img1.append((x,y))
+			if imageSelect: 
+				pointsImg1.append((x,y))
 			else:
-				points_img2.append((x,y))
-			myFilledCircle(img1_temp, (x,y))
-			cv2.imshow(img1_name, img1_temp)
+				pointsImg2.append((x,y))
+			myFilledCircle(img1Temp, (x,y))
+			cv2.imshow(img1Name, img1Temp)
 	elif event == cv2.EVENT_LBUTTONDOWN and not waitingForSecondPoint:
 		rectangle = True
-		drag_start = x, y
+		dragStart = x, y
 	elif event == cv2.EVENT_MOUSEMOVE and not waitingForSecondPoint:
 		if rectangle == True:
-			img3 = img1_temp.copy()
+			img3 = img1Temp.copy()
 			shape = img3.shape
-			width = int((shape[0] + shape[1]) * rectangle_witdh)
-			cv2.rectangle(img3, drag_start, (x, y), (50,255,50), width)
-			cv2.imshow(img1_name, img3)
+			width = int((shape[0] + shape[1]) * rectangleWitdh)
+			cv2.rectangle(img3, dragStart, (x, y), (50,255,50), width)
+			cv2.imshow(img1Name, img3)
 	elif event == cv2.EVENT_LBUTTONUP and rectangle is True and not waitingForSecondPoint:
-		drag_end = x,y
+		dragEnd = x,y
 		rectangle = False
 		# get point in rectangle and coresponding point 
-		point1, point2 = 	sac_instance.getPFromRectangleACorespondingP(drag_start, drag_end, image_select)
-		if image_select:
-			points_img1.append(point1)
-			points_img2.append(point2)
+		point1, point2 = 	sacInstance.getPFromRectangleACorespondingP(dragStart, dragEnd, imageSelect)
+		if imageSelect:
+			pointsImg1.append(point1)
+			pointsImg2.append(point2)
 		else:
-			points_img1.append(point2)
-			points_img2.append(point1)
-		myFilledCircle(img1_temp, point1)
-		myFilledCircle(img2_temp, point2)
-		cv2.imshow(img1_name, img1_temp)
-		cv2.imshow(img2_name, img2_temp)
+			pointsImg1.append(point2)
+			pointsImg2.append(point1)
+		myFilledCircle(img1Temp, point1)
+		myFilledCircle(img2Temp, point2)
+		cv2.imshow(img1Name, img1Temp)
+		cv2.imshow(img2Name, img2Temp)
 
 def test():
-	global img1, img2, sac_instance
+	global img1, img2, sacInstance
 	""" test method for semiautomatic point corespondence """
 	if len(sys.argv) < 3:
-		print ("Usage: test <image_name1> <image_name2>")
+		print ("Usage: test <imageName1> <imageName2>")
 		exit()
 
 	img1, img2  = cv2.imread(sys.argv[1]), cv2.imread(sys.argv[2])
@@ -100,16 +100,16 @@ def test():
 
 	print ("Press Space to start morphing, ESC to quit")
 
-	img1_copy = np.copy(img1)
-	img2_copy = np.copy(img2)
+	img1Copy = np.copy(img1)
+	img2Copy = np.copy(img2)
 
 	#create sac instance with two images	
-	sac_instance = sac.sac(img1, img2)	
+	sacInstance = sac.sac(img1, img2)	
 
 	cv2.namedWindow("Image 1", cv2.WINDOW_KEEPRATIO)
-	cv2.setMouseCallback("Image 1", on_mouse, True)
+	cv2.setMouseCallback("Image 1", onMouse, True)
 	cv2.namedWindow("Image 2", cv2.WINDOW_KEEPRATIO)
-	cv2.setMouseCallback("Image 2", on_mouse, False)
+	cv2.setMouseCallback("Image 2", onMouse, False)
 	cv2.imshow("Image 1", img1)
 	cv2.imshow("Image 2", img2)
 	cv2.resizeWindow("Image 1", 640, 1024)
@@ -127,7 +127,7 @@ def test():
 	print ("Morphing...")
 	alpha = 0.5
 	steps = 3 
-	images = delaunay_morphing.delaunayMorphing(img1_copy, img2_copy, points_img1, points_img2, alpha, steps)
+	images = delaunayMorphing.morph(img1Copy, img2Copy, pointsImg1, pointsImg2, alpha, steps)
 	cv2.namedWindow("Image 1 morphed", cv2.WINDOW_KEEPRATIO)
 	cv2.namedWindow("Image 2 morphed", cv2.WINDOW_KEEPRATIO)
 	cv2.namedWindow("Images blended", cv2.WINDOW_KEEPRATIO)

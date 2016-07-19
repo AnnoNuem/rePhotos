@@ -10,11 +10,11 @@ MIN_RECT_SIZE = 5
 
 # TODO delete for build
 def myFilledCircle(img, center):
-	radius_size = 0.005
+	radiusSize = 0.005
 	thickness = -1
 	lineType = 8
 	shape = img.shape
-	radius = int((shape[0] + shape[1]) * radius_size)
+	radius = int((shape[0] + shape[1]) * radiusSize)
 	cv2.circle (img, center, radius + 2, (255,255,255), thickness, lineType)
 	cv2.circle (img, center, radius, (0,0,0), thickness, lineType)
 
@@ -23,15 +23,15 @@ class sac:
 		self.img1 = img1
 		self.img2 = img2
 		# size of local subimage in which dense sampling is done
-		self.subimage_size = int((self.img2.shape[0] + self.img2.shape[1]) * 0.5 * SUBIMAGE_SIZE_SCALE)
+		self.subimageSize = int((self.img2.shape[0] + self.img2.shape[1]) * 0.5 * SUBIMAGE_SIZE_SCALE)
 		# diameter of the meaningfull keypoint neighborhood 
-		self.template_size = int((self.img2.shape[0] + self.img2.shape[1]) * 0.5  * TEMPLATE_SIZE_SCALE)
+		self.templateSize = int((self.img2.shape[0] + self.img2.shape[1]) * 0.5  * TEMPLATE_SIZE_SCALE)
 
-	def getPointFromRectangle(self, point1, point2, image_select):
+	def getPointFromRectangle(self, point1, point2, imageSelect):
 		"""Computes point of interest in a subimage which is defined by to given points."""
 
 		# select image on which user draw
-		if image_select:
+		if imageSelect:
 			img1 = self.img1
 		else:
 			img1 = self.img2
@@ -48,25 +48,25 @@ class sac:
 
 		subimage = np.copy(img1[min(point1[1],point2[1]):max(point1[1],point2[1]), 
 											  min(point1[0], point2[0]):max(point1[0],point2[0])])
-		subimage_gray = cv2.cvtColor(subimage, cv2.COLOR_BGR2GRAY)
-		subimage_f = np.float32(subimage_gray)
-		subimage_f = cv2.normalize(subimage_f, subimage_f, 0, 1, cv2.NORM_MINMAX)
-	 	subimage_f = cv2.GaussianBlur(subimage_f, (5,5), 0)	
+		subimageGray = cv2.cvtColor(subimage, cv2.COLOR_BGR2GRAY)
+		subimageF = np.float32(subimageGray)
+		subimageF = cv2.normalize(subimageF, subimageF, 0, 1, cv2.NORM_MINMAX)
+	 	subimageF = cv2.GaussianBlur(subimageF, (5,5), 0)	
 		
 		# Detector parameters
 		blockSize = 2
 		apertureSize = 3
 		k = 0.04
 		# Detecting corners
-		corners = cv2.cornerHarris( subimage_f, blockSize, apertureSize, k, cv2.BORDER_DEFAULT )
+		corners = cv2.cornerHarris( subimageF, blockSize, apertureSize, k, cv2.BORDER_DEFAULT )
 
 		# Assume that user wants to mark point in middle of rectangle, hence weight cornes using gaussian
 		rows, cols = corners.shape
-		gaus_cols = cv2.getGaussianKernel(cols, -1)
-		gaus_rows = cv2.getGaussianKernel(rows, -1)
-		gaus_matrix = gaus_rows*gaus_cols.T
-		gaus_matrix_normalized = gaus_matrix/gaus_matrix.max()
-		corners = corners * gaus_matrix_normalized
+		gausCols = cv2.getGaussianKernel(cols, -1)
+		gausRows = cv2.getGaussianKernel(rows, -1)
+		gausMatrix = gausRows*gausCols.T
+		gausMatrixNormalized = gausMatrix/gausMatrix.max()
+		corners = corners * gausMatrixNormalized
 		
 		# get sharpest corners
 		i, j = np.where(corners == corners.max());
@@ -75,23 +75,23 @@ class sac:
 		index = int(i.shape[0]/2)
 
 		#add the start position of rectangle as offset
-		return_point = (j[index] + min(point1[0], point2[0]), i[index] + min(point1[1], point2[1]))
+		returnPoint = (j[index] + min(point1[0], point2[0]), i[index] + min(point1[1], point2[1]))
 
 		#TODO remove for build
 		'''	
 		corners = cv2.normalize(corners, corners, 0, 255, cv2.NORM_MINMAX)
 		cv2.imshow("corners", np.uint8(corners))
-		cv2.imshow("gaus", gaus_matrix_normalized)
-		cv2.imshow("subimage", np.uint8(subimage_f*255))
+		cv2.imshow("gaus", gausMatrixNormalized)
+		cv2.imshow("subimage", np.uint8(subimageF*255))
 		''' 
 
-		return return_point
+		return returnPoint
 
-	def getCorespondingPoint(self, point, image_select):
+	def getCorespondingPoint(self, point, imageSelect):
 		"""Search for coresponding point on second image given a point in first image using template matching."""
 
 		# select image on which user draw
-		if image_select:
+		if imageSelect:
 			img1 = self.img1
 			img2 = self.img2
 		else:
@@ -104,39 +104,39 @@ class sac:
 		assert 0 <= point[0] < img2.shape[1], "Point outside image 2. Have both images the same size?"
 
 		# get template from img1 in which user draw
-		template_size_half = int(self.template_size/2)
-		x1 = max(point[0] - template_size_half, 0)
-		x2 = min(point[0] + template_size_half, img1.shape[1] - 1)
-		y1 = max(point[1] - template_size_half, 0)
-		y2 = min(point[1] + template_size_half, img1.shape[0] - 1)
+		templateSizeHalf = int(self.templateSize/2)
+		x1 = max(point[0] - templateSizeHalf, 0)
+		x2 = min(point[0] + templateSizeHalf, img1.shape[1] - 1)
+		y1 = max(point[1] - templateSizeHalf, 0)
+		y2 = min(point[1] + templateSizeHalf, img1.shape[0] - 1)
 		subimage1 = np.copy(img1[y1:y2, x1:x2])
 
 		# create subimage from img2 in which template is searched
-		subimage_size_half = int(self.subimage_size/2)
-		x1 = max(point[0] - subimage_size_half, 0)
-		x2 = min(point[0] + subimage_size_half, img2.shape[1] - 1)
-		y1 = max(point[1] - subimage_size_half, 0)
-		y2 = min(point[1] + subimage_size_half, img2.shape[0] - 1)
+		subimageSizeHalf = int(self.subimageSize/2)
+		x1 = max(point[0] - subimageSizeHalf, 0)
+		x2 = min(point[0] + subimageSizeHalf, img2.shape[1] - 1)
+		y1 = max(point[1] - subimageSizeHalf, 0)
+		y2 = min(point[1] + subimageSizeHalf, img2.shape[0] - 1)
 		subimage2 = np.copy(img2[y1:y2, x1:x2])
 
 		# preprocess both subimages
-		subimage1_f = np.float32(subimage1)
-		subimage1_f = cv2.cvtColor(subimage1_f, cv2.COLOR_BGR2GRAY)
-		subimage1_f = cv2.normalize(subimage1_f, subimage1_f, 0, 1, cv2.NORM_MINMAX)
-	 	subimage1_f = cv2.GaussianBlur(subimage1_f, (5,5), 0)	
-		subimage1_x = cv2.Scharr(subimage1_f, ddepth = -1, dx = 1, dy = 0)
-		subimage1_y = cv2.Scharr(subimage1_f, ddepth = -1, dx = 0, dy = 1)
-		subimage1_f = subimage1_x + subimage1_y
-		subimage1_f = cv2.normalize(subimage1_f, subimage1_f, 0, 1, cv2.NORM_MINMAX)
+		subimage1F = np.float32(subimage1)
+		subimage1F = cv2.cvtColor(subimage1F, cv2.COLOR_BGR2GRAY)
+		subimage1F = cv2.normalize(subimage1F, subimage1F, 0, 1, cv2.NORM_MINMAX)
+	 	subimage1F = cv2.GaussianBlur(subimage1F, (5,5), 0)	
+		subimage1X = cv2.Scharr(subimage1F, ddepth = -1, dx = 1, dy = 0)
+		subimage1Y = cv2.Scharr(subimage1F, ddepth = -1, dx = 0, dy = 1)
+		subimage1F = subimage1X + subimage1Y
+		subimage1F = cv2.normalize(subimage1F, subimage1F, 0, 1, cv2.NORM_MINMAX)
 
-		subimage2_f = np.float32(subimage2)
-		subimage2_f = cv2.cvtColor(subimage2_f, cv2.COLOR_BGR2GRAY)
-		subimage2_f = cv2.normalize(subimage2_f, subimage2_f, 0, 1, cv2.NORM_MINMAX)
-	 	subimage2_f = cv2.GaussianBlur(subimage2_f, (5,5), 0)	
-		subimage2_x = cv2.Scharr(subimage2_f, ddepth = -1, dx = 1, dy = 0)
-		subimage2_y = cv2.Scharr(subimage2_f, ddepth = -1, dx = 0, dy = 1)
-		subimage2_f = subimage2_x + subimage2_y
-		subimage2_f = cv2.normalize(subimage2_f, subimage2_f, 0, 1, cv2.NORM_MINMAX)
+		subimage2F = np.float32(subimage2)
+		subimage2F = cv2.cvtColor(subimage2F, cv2.COLOR_BGR2GRAY)
+		subimage2F = cv2.normalize(subimage2F, subimage2F, 0, 1, cv2.NORM_MINMAX)
+	 	subimage2F = cv2.GaussianBlur(subimage2F, (5,5), 0)	
+		subimage2X = cv2.Scharr(subimage2F, ddepth = -1, dx = 1, dy = 0)
+		subimage2Y = cv2.Scharr(subimage2F, ddepth = -1, dx = 0, dy = 1)
+		subimage2F = subimage2X + subimage2Y
+		subimage2F = cv2.normalize(subimage2F, subimage2F, 0, 1, cv2.NORM_MINMAX)
 
 		# template matching
 		# norms are missing in cv2 python wrapper
@@ -146,28 +146,20 @@ class sac:
 		CV_TM_CCORR_NORMED = 3
 		CV_TM_CCOEFF = 4
 		CV_TM_CCOEFF_NORMED = 5
-		template_result = cv2.matchTemplate(subimage2_f, subimage1_f, CV_TM_CCOEFF_NORMED)
-		template_result_1 = cv2.normalize(template_result, template_result, 0, 1, cv2.NORM_MINMAX)
-		#TODO weight with gaussian
-		minVal, maxVal, minLoc , maxLoc = cv2.minMaxLoc(template_result_1)
+		templateResult = cv2.matchTemplate(subimage2F, subimage1F, CV_TM_CCOEFF_NORMED)
+		templateResult1 = cv2.normalize(templateResult, templateResult, 0, 1, cv2.NORM_MINMAX)
 
-		point2 = (maxLoc[0] + template_size_half, maxLoc[1] + template_size_half)
+		minVal, maxVal, minLoc , maxLoc = cv2.minMaxLoc(templateResult1)
 
-		# TODO delete for build
-		'''
-		myFilledCircle(subimage2_f, (int(point2[0]), int(point2[1])))
-		cv2.imshow("subimage1", np.uint8(subimage1_f*255))
-		cv2.imshow("subimage2", np.uint8(subimage2_f*255))
-		cv2.imshow("template result", np.uint8(template_result_1 * 255))
-		'''
+		point2 = (maxLoc[0] + templateSizeHalf, maxLoc[1] + templateSizeHalf)
 
-		return_point = (x1 + int(point2[0]), y1 + int(point2[1]))
-		return return_point
+		returnPoint = (x1 + int(point2[0]), y1 + int(point2[1]))
+		return returnPoint
 
-	def getPFromRectangleACorespondingP(self, point1, point2, image_select):
+	def getPFromRectangleACorespondingP(self, point1, point2, imageSelect):
 		"""Wrapper for getPointFromRectangle and getCorespondingPoint.
-		image_select: True if user draw rect on image 1, False if user draw on image 2
+		imageSelect: True if user draw rect on image 1, False if user draw on image 2.
 		"""
-		return_point1 = self.getPointFromRectangle(point1, point2, image_select)
-		return_point2 = self.getCorespondingPoint(return_point1, image_select)
-		return return_point1, return_point2
+		returnPoint1 = self.getPointFromRectangle(point1, point2, imageSelect)
+		returnPoint2 = self.getCorespondingPoint(returnPoint1, imageSelect)
+		return returnPoint1, returnPoint2
