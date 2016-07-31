@@ -2,7 +2,9 @@ import numpy as np
 import cv2
 
 def applyAffineTransform(src, srcTri, dstTri, size):
-	"""Apply affine transform calculated using srcTri and dstTri to src and output an image of size."""
+	"""
+	Apply affine transform calculated using srcTri and dstTri to src and output an image of size.
+	"""
 	# Given a pair of triangles, find the affine transform.
 	warpMat = cv2.getAffineTransform( np.float32(srcTri), np.float32(dstTri) )
 
@@ -12,7 +14,9 @@ def applyAffineTransform(src, srcTri, dstTri, size):
 
 
 def morphTriangle(img1, img2, img, t1, t2, t, alpha):
-	"""Warps and alpha blends triangular regions from img1 and img2 to img."""
+	"""
+	Warps and alpha blends triangular regions from img1 and img2 to img.
+	"""
 	# Find bounding rectangle for each triangle
 	r1 = cv2.boundingRect(np.float32([t1]))
 	r2 = cv2.boundingRect(np.float32([t2]))
@@ -48,7 +52,9 @@ def morphTriangle(img1, img2, img, t1, t2, t, alpha):
 
 
 def getIndices(rect, points):
-	"""Returns indices of delaunay triangles."""
+	"""
+	Returns indices of delaunay triangles.
+	"""
 	subdiv = cv2.Subdiv2D(rect)
 	for p in points:
 		subdiv.insert(p)
