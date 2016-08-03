@@ -9,6 +9,10 @@ __pycache__/
 # vim swp
 .*.swp
 
+# images
+*.jpg
+*.jpeg
+
 # C extensions
 *.so
 

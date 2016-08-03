@@ -135,6 +135,9 @@ def test():
 	cv2.resizeWindow("Image 1 morphed", 640, 1024)
 	cv2.resizeWindow("Image 2 morphed", 640, 1024)
 	cv2.resizeWindow("Images blended", 640, 1024)
+	# save images to disk
+	#cv2.imwrite("1.jpg", images[0])
+	#cv2.imwrite("2.jpg", images[2])
 	while cv2.waitKey(0) != 27:
 		pass
 	cv2.destroyAllWindows() 
