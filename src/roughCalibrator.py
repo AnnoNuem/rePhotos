@@ -1,13 +1,18 @@
 import numpy as np
 import cv2
 
+def postProcess(img1, img2):
+	"""
+	Crops images.
+	"""
+	pass
+
 def transformPoints(points, transformMatrix):
 	"""
 	Transforms a list of points given a transformation matrix.
 	:param points: the list of points given as touples
 	:param transformMatrix: the transformation matrix
 	"""
-	# TODO not working properly
 	pointsTransformed = []
 	for point in points:
 		pArray = np.array([point[0], point[1], 1])
@@ -37,6 +42,11 @@ def calibrate(img1, img2, pointsImg1, pointsImg2, alpha = 0.5):
 		transformPoints(pointsImg2, transformMatrix)	
 	elif alpha == 1:
 		transformMatrix, _ = cv2.findHomography(np.vstack(pointsImg1).astype(float), np.vstack(pointsImg2).astype(float), 0)
+		print (pointsImg1)
+		y, x, _ = img1.shape
+		cornersImg1 = [(0,0), (0,y), (x,y), (x,0)]
+		cornersImg1 = transformPoints(cornersImg1, transformMatrix)
+		print cornersImg1
 		img1 = cv2.warpPerspective(img1, transformMatrix, (img2.shape[1], img2.shape[0]))
 		pointsImg1 =  transformPoints(pointsImg1, transformMatrix)	
 	else:
@@ -53,20 +63,16 @@ def calibrate(img1, img2, pointsImg1, pointsImg2, alpha = 0.5):
 		transformMatrix2, _ = cv2.findHomography(np.vstack(pointsImg2).astype(float), np.vstack(pointsDest).astype(float), 0)
 		img1 = cv2.warpPerspective(img1, transformMatrix1, (xMaxDest, yMaxDest))
 		img2 = cv2.warpPerspective(img2, transformMatrix2, (xMaxDest, yMaxDest))
-		pointsImg1 = pointsImg2 = pointsDest
+		pointsImg1  =  pointsDest[:]
+		pointsImg2  =  pointsDest[:]
+
 
 
 	# TODO remove for build
 	result = img1 * 0.5 + img2 * 0.5
 	result = cv2.normalize(result, result, 0, 255, cv2.NORM_MINMAX)
 	cv2.namedWindow("result", cv2.WINDOW_KEEPRATIO)
-	#cv2.namedWindow("img1 cali", cv2.WINDOW_KEEPRATIO)
-	#cv2.namedWindow("img2 cali", cv2.WINDOW_KEEPRATIO)
 	cv2.imshow("result", np.uint8(result) )
-	#cv2.imshow("img1 cali", img1)
-	#cv2.imshow("img2 cali", img2)
-	#cv2.resizeWindow("img1 cali", 640, 480)
-	#cv2.resizeWindow("img2 cali", 640, 480)
 	cv2.resizeWindow("result", 640, 480)
 
 	return img1, img2, pointsImg1, pointsImg2

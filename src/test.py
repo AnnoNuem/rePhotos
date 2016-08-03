@@ -31,10 +31,13 @@ def roughCalibrate():
 	img1 = np.copy(img1Orig)
 	img2 = np.copy(img2Orig)
 	print ("Roughly calibrating images...")
-	img1, img2, pointsImg1, pointsImg2 = roughCalibrator.calibrate(img1, img2, pointsImg1, pointsImg2)
+	img1, img2, pointsImg1, pointsImg2 = roughCalibrator.calibrate(img1, img2, pointsImg1, pointsImg2, alpha = 1)
 	print ("Rough calibration done.")
 	img1RoughMorphed = np.copy(img1)
 	img2RoughMorphed = np.copy(img2)
+	# update sacInstance with roughly morphed images
+	sacInstance.img1 = img1RoughMorphed
+	sacInstance.img2 = img2RoughMorphed
 	for point in pointsImg1:
 		myFilledCircle(img1, point)
 	for point in pointsImg2:
@@ -102,10 +105,10 @@ def onMouse(event, x, y, flags, imageSelect):
 		if waitingForSecondPoint == False and numberOfPointPairs == 4:
 			roughCalibrate()
 	# Left mouse button
-	elif event == cv2.EVENT_LBUTTONDOWN and not waitingForSecondPoint and rectangle is False:
+	elif event == cv2.EVENT_LBUTTONDOWN and not waitingForSecondPoint and rectangle is False and numberOfPointPairs > 3:
 		rectangle = True
 		dragStart = x, y
-	elif event == cv2.EVENT_LBUTTONUP and rectangle is True and not waitingForSecondPoint:
+	elif event == cv2.EVENT_LBUTTONUP and rectangle is True and not waitingForSecondPoint and numberOfPointPairs > 3:
 		dragEnd = x,y
 		rectangle = False
 		# get point in rectangle and coresponding point 
