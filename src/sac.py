@@ -5,7 +5,7 @@ import numpy as np
 SUBIMAGE_SIZE_SCALE = 0.159  
 # scale factor for template size
 TEMPLATE_SIZE_SCALE = 0.053
-# if rectangle is smaller compute center point of two points
+# minimum size of user drawn rectangle to start point search else return middle point
 MIN_RECT_SIZE = 5
 
 
@@ -17,6 +17,9 @@ def getPointFromRectangle(img1, point1, point2):
 	assert 0 <= point2[1] < img1.shape[0], "Point2 outside image"
 	assert 0 <= point2[0] < img1.shape[1], "Point2 outside image"
 	
+	#TODO replace for build with:
+   #assert point1[0] != point2[0], "X cordinates of rectangle corners are equal -> no rectangle"
+	#assert point1[1] != point2[1], "Y cordinates of rectangle corners are equal -> no rectangle"
 	# if rectangle is to small return middlepoint of the two given points, assuming user 
 	# wanted to select a single point and not draw rectangle
 	if abs(point1[0] - point2[0]) < MIN_RECT_SIZE or abs(point1[1] - point2[1]) < MIN_RECT_SIZE:

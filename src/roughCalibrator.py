@@ -13,11 +13,13 @@ def transformPoints(points, transformMatrix):
 	:param points: the list of points given as touples
 	:param transformMatrix: the transformation matrix
 	"""
+	pointArray = np.float32(points)
+	pointArray = np.int32(cv2.perspectiveTransform(pointArray.reshape(1,-1,2), transformMatrix).reshape(-1, 2)).tolist()
+
 	pointsTransformed = []
-	for point in points:
-		pArray = np.array([point[0], point[1], 1])
-		pArrayTransformed = transformMatrix.dot(pArray)
-		pointsTransformed.append((int(pArrayTransformed[0]), int(pArrayTransformed[1])))
+	for point in pointArray:
+		pointsTransformed.append(tuple(point))
+
 	return pointsTransformed
 
 def calibrate(img1, img2, pointsImg1, pointsImg2, alpha = 0.5):
@@ -39,10 +41,9 @@ def calibrate(img1, img2, pointsImg1, pointsImg2, alpha = 0.5):
 	if alpha == 0:
 		transformMatrix, _ = cv2.findHomography(np.vstack(pointsImg2).astype(float), np.vstack(pointsImg1).astype(float), 0)
 		img2 = cv2.warpPerspective(img2, transformMatrix, (img1.shape[1], img1.shape[0]))
-		transformPoints(pointsImg2, transformMatrix)	
+		pointsImg2 = transformPoints(pointsImg2, transformMatrix)	
 	elif alpha == 1:
 		transformMatrix, _ = cv2.findHomography(np.vstack(pointsImg1).astype(float), np.vstack(pointsImg2).astype(float), 0)
-		print (pointsImg1)
 		y, x, _ = img1.shape
 		cornersImg1 = [(0,0), (0,y), (x,y), (x,0)]
 		cornersImg1 = transformPoints(cornersImg1, transformMatrix)
@@ -52,8 +53,8 @@ def calibrate(img1, img2, pointsImg1, pointsImg2, alpha = 0.5):
 	else:
 		pointsDest = []
 		alphaM1 = 1 - alpha
-		xMaxDest = int( alphaM1 * img1.shape[1] + alpha * img2.shape[1] / 2)
-		yMaxDest = int( alphaM1 * img1.shape[0] + alpha * img2.shape[0] / 2)
+		xMaxDest = int(( alphaM1 * img1.shape[1] + alpha * img2.shape[1]) / 2)
+		yMaxDest = int(( alphaM1 * img1.shape[0] + alpha * img2.shape[0]) / 2)
 		i = 0
 		for pointImg1 in pointsImg1:
 			pointsDest.append((int(alphaM1 * pointImg1[0] + alpha * (pointsImg2[i])[0] / 2),\
