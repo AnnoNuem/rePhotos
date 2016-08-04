@@ -48,7 +48,10 @@ def calibrate(img1, img2, pointsImg1, pointsImg2, alpha = 0.5):
 		cornersImg1 = [(0,0), (0,y), (x,y), (x,0)]
 		cornersImg1 = transformPoints(cornersImg1, transformMatrix)
 		print cornersImg1
+		# TODO corner berechnung und cropping funktioniert so garnicht
 		img1 = cv2.warpPerspective(img1, transformMatrix, (img2.shape[1], img2.shape[0]))
+		img1 = img1[max((cornersImg1[0])[0],0): min((cornersImg1[3])[0], img2.shape[1]),\
+			max((cornersImg1[0])[0], 0): min((cornersImg1[3])[1], img2.shape[0]),:]
 		pointsImg1 =  transformPoints(pointsImg1, transformMatrix)	
 	else:
 		pointsDest = []

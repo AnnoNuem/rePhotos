@@ -30,7 +30,7 @@ def roughCalibrate():
 	img1 = np.copy(img1Orig)
 	img2 = np.copy(img2Orig)
 	print ("Roughly calibrating images...")
-	img1, img2, pointsImg1, pointsImg2 = roughCalibrator.calibrate(img1, img2, pointsImg1, pointsImg2, alpha = 0.5)
+	img1, img2, pointsImg1, pointsImg2 = roughCalibrator.calibrate(img1, img2, pointsImg1, pointsImg2, alpha = 1)
 	print ("Rough calibration done.")
 	img1RoughMorphed = np.copy(img1)
 	img2RoughMorphed = np.copy(img2)
