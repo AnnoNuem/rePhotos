@@ -10,10 +10,10 @@ img1Orig = None
 img2Orig = None
 pointsImg1 = []
 pointsImg2 = []
-sacInstance = None
+
+
 radiusSize = 0.003
 rectangleWitdh = 0.0008
-
 def myFilledCircle(img, center):
 	global radiusSize
 	thickness = -1
@@ -23,13 +23,12 @@ def myFilledCircle(img, center):
 	cv2.circle (img, center, radius, (0,0,255), thickness, lineType)
 
 
-
 dragStart = None
 rectangle = False
 waitingForSecondPoint = False
 previousPoint = -1
 def onMouse(event, x, y, flags, imageSelect):
-	global dragStart, sacInstance, rectangle, rectangleWitdh, waitingForSecondPoint, previousPoint 
+	global dragStart, rectangle, rectangleWitdh, waitingForSecondPoint, previousPoint 
 	if imageSelect:
 		img1Temp = img1
 		img2Temp = img2
@@ -63,11 +62,13 @@ def onMouse(event, x, y, flags, imageSelect):
 			previousPoint = imageSelect
 	elif event == cv2.EVENT_LBUTTONUP and rectangle is True:
 		dragEnd = x, y
-		# get point inside user drawn rectangle
-		point = sacInstance.getPointFromRectangle(dragStart, dragEnd, imageSelect)
 		if imageSelect:
+			# get point inside user drawn rectangle
+			point = sac.getPointFromRectangle(img1, dragStart, dragEnd)
 			pointsImg1.append(point)
 		else:
+			# get point inside user drawn rectangle
+			point = sac.getPointFromRectangle(img2, dragStart, dragEnd)
 			pointsImg2.append(point)
 		rectangle = False
 		myFilledCircle(img1Temp, point)
@@ -75,7 +76,7 @@ def onMouse(event, x, y, flags, imageSelect):
 	
 
 def test():
-	global img1, img2, sacInstance, img1Orig, img2Orig
+	global img1, img2, img1Orig, img2Orig
 	"""
 	Test method for semiautomatic point corespondence.
 	"""
@@ -98,9 +99,6 @@ def test():
 
 	img1Orig= np.copy(img1)
 	img2Orig= np.copy(img2)
-
-	#create sac instance with two images	
-	sacInstance = sac.sac(img1, img2)	
 
 	cv2.namedWindow("Image 1", cv2.WINDOW_KEEPRATIO)
 	cv2.namedWindow("Image 2", cv2.WINDOW_KEEPRATIO)
