@@ -13,7 +13,6 @@ img1RoughMorphed = None
 img2RoughMorphed = None
 pointsImg1 = []
 pointsImg2 = []
-sacInstance = None
 radiusSize = 0.003
 rectangleWitdh = 0.0008
 
@@ -31,13 +30,10 @@ def roughCalibrate():
 	img1 = np.copy(img1Orig)
 	img2 = np.copy(img2Orig)
 	print ("Roughly calibrating images...")
-	img1, img2, pointsImg1, pointsImg2 = roughCalibrator.calibrate(img1, img2, pointsImg1, pointsImg2, alpha = 1)
+	img1, img2, pointsImg1, pointsImg2 = roughCalibrator.calibrate(img1, img2, pointsImg1, pointsImg2, alpha = 0.5)
 	print ("Rough calibration done.")
 	img1RoughMorphed = np.copy(img1)
 	img2RoughMorphed = np.copy(img2)
-	# update sacInstance with roughly morphed images
-	sacInstance.img1 = img1RoughMorphed
-	sacInstance.img2 = img2RoughMorphed
 	for point in pointsImg1:
 		myFilledCircle(img1, point)
 	for point in pointsImg2:
@@ -57,7 +53,7 @@ rectangle = False
 waitingForSecondPoint = False
 previousPoint = -1
 def onMouse(event, x, y, flags, imageSelect):
-	global dragStart, sacInstance, rectangle, rectangleWitdh, waitingForSecondPoint, previousPoint, numberOfPointPairs
+	global dragStart, rectangle, rectangleWitdh, waitingForSecondPoint, previousPoint, numberOfPointPairs
 	if imageSelect:
 		img1Temp = img1
 		img2Temp = img2
@@ -92,11 +88,13 @@ def onMouse(event, x, y, flags, imageSelect):
 			previousPoint = imageSelect
 	elif event == cv2.EVENT_RBUTTONUP and rectangle is True:
 		dragEnd = x, y
-		# get point inside user drawn rectangle
-		point = sacInstance.getPointFromRectangle(dragStart, dragEnd, imageSelect)
 		if imageSelect:
+			# get point inside user drawn rectangle
+			point = sac.getPointFromRectangle(img1, dragStart, dragEnd)
 			pointsImg1.append(point)
 		else:
+			# get point inside user drawn rectangle
+			point = sac.getPointFromRectangle(img2, dragStart, dragEnd)
 			pointsImg2.append(point)
 		rectangle = False
 		myFilledCircle(img1Temp, point)
@@ -111,12 +109,14 @@ def onMouse(event, x, y, flags, imageSelect):
 	elif event == cv2.EVENT_LBUTTONUP and rectangle is True and not waitingForSecondPoint and numberOfPointPairs > 3:
 		dragEnd = x,y
 		rectangle = False
-		# get point in rectangle and coresponding point 
-		point1, point2 = 	sacInstance.getPFromRectangleACorespondingP(dragStart, dragEnd, imageSelect)
 		if imageSelect:
+			# get point in rectangle and coresponding point 
+			point1, point2 = 	sac.getPFromRectangleACorespondingP(img1, img2, dragStart, dragEnd)
 			pointsImg1.append(point1)
 			pointsImg2.append(point2)
 		else:
+			# get point in rectangle and coresponding point 
+			point1, point2 = 	sac.getPFromRectangleACorespondingP(img2, img1, dragStart, dragEnd)
 			pointsImg1.append(point2)
 			pointsImg2.append(point1)
 		numberOfPointPairs += 1
@@ -130,7 +130,7 @@ def onMouse(event, x, y, flags, imageSelect):
 			
 
 def test():
-	global img1, img2, sacInstance, img1Orig, img2Orig
+	global img1, img2, img1Orig, img2Orig
 	"""
 	Test method for semiautomatic point corespondence.
 	"""
@@ -154,9 +154,6 @@ def test():
 
 	img1Orig= np.copy(img1)
 	img2Orig= np.copy(img2)
-
-	#create sac instance with two images	
-	sacInstance = sac.sac(img1, img2)	
 
 	cv2.namedWindow("Image 1", cv2.WINDOW_KEEPRATIO)
 	cv2.namedWindow("Image 2", cv2.WINDOW_KEEPRATIO)
