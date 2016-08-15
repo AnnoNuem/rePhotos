@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.linalg import inv
 import cv2
 
 def postProcess(img1, img2):
@@ -38,16 +39,18 @@ def calibrate(img1, img2, pointsImg1, pointsImg2, alpha = 0.5):
 	assert len(pointsImg1) == len(pointsImg2), "Point lists of unequal length"
 	assert len(pointsImg1) > 3, "Not enough points to find homography"
 
+	# keep image 1
 	if alpha == 0:
 		transformMatrix, _ = cv2.findHomography(np.vstack(pointsImg2).astype(float), np.vstack(pointsImg1).astype(float), 0)
 		img2 = cv2.warpPerspective(img2, transformMatrix, (img1.shape[1], img1.shape[0]))
 		pointsImg2 = transformPoints(pointsImg2, transformMatrix)	
+	# keep image 2
 	elif alpha == 1:
 		transformMatrix, _ = cv2.findHomography(np.vstack(pointsImg1).astype(float), np.vstack(pointsImg2).astype(float), 0)
-		y, x, _ = img1.shape
-		cornersImg1 = [(0,0), (0,y), (x,y), (x,0)]
-		cornersImg1 = transformPoints(cornersImg1, transformMatrix)
-		print cornersImg1
+		y, x, _ = img2.shape
+		cornersImg2= [(0,0), (0,y), (x,y), (x,0)]
+		cornersImg2 = transformPoints(cornersImg2, inv(transformMatrix))
+		print cornersImg2
 		# TODO corner berechnung und cropping funktioniert so garnicht
 		img1 = cv2.warpPerspective(img1, transformMatrix, (img2.shape[1], img2.shape[0]))
 		img1 = img1[max((cornersImg1[0])[0],0): min((cornersImg1[3])[0], img2.shape[1]),\
@@ -73,10 +76,10 @@ def calibrate(img1, img2, pointsImg1, pointsImg2, alpha = 0.5):
 
 
 	# TODO remove for build
-	result = img1 * 0.5 + img2 * 0.5
-	result = cv2.normalize(result, result, 0, 255, cv2.NORM_MINMAX)
-	cv2.namedWindow("result", cv2.WINDOW_KEEPRATIO)
-	cv2.imshow("result", np.uint8(result) )
-	cv2.resizeWindow("result", 640, 480)
+	#result = img1 * 0.5 + img2 * 0.5
+	#result = cv2.normalize(result, result, 0, 255, cv2.NORM_MINMAX)
+	#cv2.namedWindow("result", cv2.WINDOW_KEEPRATIO)
+	#cv2.imshow("result", np.uint8(result) )
+	#cv2.resizeWindow("result", 640, 480)
 
 	return img1, img2, pointsImg1, pointsImg2
