@@ -183,7 +183,7 @@ def morph(img1, img2, pointsImg1, pointsImg2, alpha = 0.5, steps = 2):
 	images = []
 	for a in np.linspace(0.0, 1.0, num = steps):
 		# Allocate space for final output
-		imgMorph = np.zeros(img1.shape, dtype = img1.dtype)
+		imgMorph = np.zeros((max(img1.shape[0], img2.shape[0]), max(img1.shape[1], img2.shape[1]), max(img1.shape[2], img2.shape[2])), dtype=img1.dtype)
 
 		for ind in indicesTri:
 			x = ind[0]
