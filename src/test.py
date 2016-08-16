@@ -8,10 +8,10 @@ img1 = None
 img2 = None
 img1Orig = None
 img2Orig = None
-pointsImg1 = [(268,255),(345,225),(350,291),(268,293)]
-pointsImg2 = [(2241,1503),(2754,1475),(2752, 1952),(2182,1973)]
-#pointsImg1 = []
-#pointsImg2 = []
+#pointsImg1 = [(268,255),(345,225),(350,291),(268,293)]
+#pointsImg2 = [(2241,1503),(2754,1475),(2752, 1952),(2182,1973)]
+pointsImg1 = []
+pointsImg2 = []
 
 
 radiusSize = 0.003
@@ -121,7 +121,7 @@ def test():
 
 	#morph images
 	print ("Morphing...")
-	alpha = 1
+	alpha = 0.5
 	steps = 3 
 	img1 = np.copy(img1Orig)
 	img2 = np.copy(img2Orig)
