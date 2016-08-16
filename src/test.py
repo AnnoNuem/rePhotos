@@ -2,14 +2,16 @@ import numpy as np
 import cv2
 import sys
 import sac 
-import delaunayMorphing
+from image_delaunay_morphing import morph
 
 img1 = None
 img2 = None
 img1Orig = None
 img2Orig = None
-pointsImg1 = []
-pointsImg2 = []
+pointsImg1 = [(268,255),(345,225),(350,291),(268,293)]
+pointsImg2 = [(2241,1503),(2754,1475),(2752, 1952),(2182,1973)]
+#pointsImg1 = []
+#pointsImg2 = []
 
 
 radiusSize = 0.003
@@ -119,11 +121,11 @@ def test():
 
 	#morph images
 	print ("Morphing...")
-	alpha = 0.5
+	alpha = 1
 	steps = 3 
 	img1 = np.copy(img1Orig)
 	img2 = np.copy(img2Orig)
-	images = delaunayMorphing.morph(img1, img2, pointsImg1, pointsImg2, alpha, steps)
+	images = morph(img1, img2, pointsImg1, pointsImg2, alpha, steps)
 	cv2.namedWindow("Image 1 morphed", cv2.WINDOW_KEEPRATIO)
 	cv2.namedWindow("Image 2 morphed", cv2.WINDOW_KEEPRATIO)
 	cv2.namedWindow("Images blended", cv2.WINDOW_KEEPRATIO)

@@ -55,8 +55,11 @@ def getIndices(rect, points):
 	"""
 	Returns indices of delaunay triangles.
 	"""
+	print("rect", rect)
+	
 	subdiv = cv2.Subdiv2D(rect)
 	for p in points:
+		print p
 		subdiv.insert(p)
 	triangleList = subdiv.getTriangleList()
 	
@@ -181,6 +184,7 @@ def morph(img1, img2, pointsImg1, pointsImg2, alpha = 0.5, steps = 2):
 	for i in xrange(0, len(pointsImg1)):
 		x = int(( 1 - alpha ) * pointsImg1[i][0] + alpha * pointsImg2[i][0])
 		y = int(( 1 - alpha ) * pointsImg1[i][1] + alpha * pointsImg2[i][1])
+		print (x,y)
 		points.append((x,y))
 
 	rect = (0, 0, max(img1.shape[1], img2.shape[1]), max(img1.shape[0],img2.shape[0]))
