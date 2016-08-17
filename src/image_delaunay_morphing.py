@@ -1,11 +1,6 @@
 import numpy as np
 import cv2
 
-# used to crop the final image
-global_x_min = global_y_min = float('inf')
-global_x_max = global_y_max = 0
-
-
 def apply_affine_transform(src, src_tri, dst_tri, size):
     """
     Apply affine transform calculated using src_tri and dst_tri to src and output an image of size.
@@ -28,21 +23,23 @@ def scale(img1, img2, points_img1, points_img2):
     x_scale_factor = float(x_size_img1)/ float(x_size_img2)
     y_scale_factor = float(y_size_img1)/ float(y_size_img2)
 
-    global global_x_min, global_x_max, global_y_min, global_y_max
-
+    #global global_x_min, global_x_max, global_y_min, global_y_max
+    x_crop = y_crop = float('inf')
     # images are of same size
     if x_size_img1 == x_size_img2 and y_size_img1 == y_size_img2:
         return img1, img2, points_img1, points_img2
 
     # image 1 is bigger
     elif x_size_img1 >= x_size_img2 and y_size_img1 >= y_size_img2:
+        print "img1 bigger"
         temp_img = np.zeros(img1.shape, dtype=img1.dtype)
         temp_points = []
         # x scale is smaller
         if x_scale_factor < y_scale_factor:
             img2 = cv2.resize(img2,  (0,0), fx=x_scale_factor, fy=x_scale_factor, interpolation=cv2.INTER_CUBIC)
             # save how big img2 really is for cropping. Later it will have size of img1 with zeros filling remaining space
-            global_y_max = img2.shape[0]
+            y_crop = img2.shape[0]
+            x_crop = img1.shape[1]
             for point in points_img2:
                 x = point[0] * x_scale_factor
                 y = point[1] * x_scale_factor
@@ -50,7 +47,8 @@ def scale(img1, img2, points_img1, points_img2):
         # y scale is smaller
         else:
             img2 = cv2.resize(img2, (0,0), fx=y_scale_factor, fy=y_scale_factor, interpolation=cv2.INTER_CUBIC)
-            global_x_max = img2.shape[1]
+            x_crop = img2.shape[1]
+            y_crop = img1.shape[0]
             for point in points_img2:
                 x = point[0] * y_scale_factor
                 y = point[1] * y_scale_factor
@@ -63,10 +61,12 @@ def scale(img1, img2, points_img1, points_img2):
     elif x_size_img1 <= x_size_img2 and y_size_img1 <= y_size_img2:
         temp_img = np.zeros(img2.shape, dtype=img2.dtype)
         temp_points = []
+        print "img1 smaller"
         # x scale is smaller. we need the inverse
         if x_scale_factor > y_scale_factor:
             img1 = cv2.resize(img1, (0,0), fx=(1/x_scale_factor), fy=(1/x_scale_factor), interpolation=cv2.INTER_CUBIC)
-            global_y_max = img1.shape[0]
+            y_crop = img1.shape[0]
+            x_crop = img2.shape[1]
             for point in points_img1:
                 x = point[0] * 1/x_scale_factor
                 y = point[1] * 1/x_scale_factor
@@ -74,7 +74,8 @@ def scale(img1, img2, points_img1, points_img2):
         # y scale is smaller
         else:
             img1 = cv2.resize(img1, (0,0), fx=1/y_scale_factor, fy=1/y_scale_factor, interpolation=cv2.INTER_CUBIC)
-            global_x_max = img1.shape[1]
+            x_crop = img1.shape[1]
+            y_crop = img2.shape[0]
             for point in points_img1:
                 x = point[0] * 1/y_scale_factor
                 y = point[1] * 1/y_scale_factor
@@ -87,12 +88,14 @@ def scale(img1, img2, points_img1, points_img2):
     else:
         temp_img = np.zeros(max(y_size_img1, y_size_img2), max(x_size_img1, x_size_img2), max(z_size_img1, z_size_img2), dtype=img1.dtype)
         temp_img2 = np.copy(temp_img)
+        x_crop = min(x_size_img1, x_size_img2)
+        y_crop = min(y_size_img1, y_size_img2)
         temp_img[0:img1.shape[0], 0:img1.shape[1], 0:img1.shape[2]] = img1
         img1 = temp_img
         temp_img[0:img2.shape[0], 0:img2.shape[1], 0:img2.shape[2]] = img2
         img2 = temp_img2
 
-    return img1, img2, points_img1, points_img2
+    return img1, img2, points_img1, points_img2, x_crop, y_crop
 
 
 def morph_triangle(img1, img2, img, t1, t2, t, alpha):
@@ -166,7 +169,7 @@ def weighted_average_point(point1, point2, alpha):
     y = int((1 - alpha) * point1[1] + alpha * point2[1])
     return (x,y)
 
-def get_corners(img, img2, points_img1, points_img2, alpha):
+def get_corners(img, img2, points_img1, points_img2, x_crop, y_crop, alpha):
     """Adds the corners and middle point of edges to pointlists.
     Finds the user selectet points which are nearest to the four corners and the
     four middle points of the edges of the image. Computes the delta between
@@ -175,14 +178,13 @@ def get_corners(img, img2, points_img1, points_img2, alpha):
     Returns the global max and minima used for cropping
     """
 
-    global global_x_min, global_x_max, global_y_min, global_y_max
-
     x_max = min(img.shape[1], img2.shape[1]) - 1
     y_max = min(img.shape[0], img2.shape[0]) - 1
     x_mean = int(x_max / 2)
     y_mean = int(y_max / 2)
     corners_img1 = []
     corners_img2 = []
+    alpha_2 = 0  
 
     # left middle
     p_min_mean, i_min_mean = min(((val, idx) for (idx, val) in enumerate(points_img1)),
@@ -200,9 +202,11 @@ def get_corners(img, img2, points_img1, points_img2, alpha):
     delta_y_half = int((p_max_mean[1] - (points_img2[i_max_mean])[1]) / 2)
     delta_x_half = int((p_max_mean[0] - (points_img2[i_max_mean])[0]) / 2)
     corners_img1.append((x_max - abs(delta_x_half) + delta_x_half, p_max_mean[1] + delta_y_half))
-    corners_img2.append((x_max - abs(delta_y_half) - delta_x_half, p_max_mean[1] - delta_y_half))
+    corners_img2.append((x_max - abs(delta_x_half) - delta_x_half, p_max_mean[1] - delta_y_half))
     average_point = weighted_average_point(corners_img1[-1], corners_img2[-1], alpha)
-    global_x_max = average_point[0] if average_point[0] < global_x_max else global_x_max
+    global_x_max = average_point[0] 
+    # check that zeros added by scaling are cropped from final image
+    global_x_max = x_crop - alpha_2 * delta_x_half if x_crop - alpha_2 * delta_x_half < global_x_max else global_x_max
 
     # top middle
     p_mean_min, i_mean_min = min(((val, idx) for (idx, val) in enumerate(points_img1)),
@@ -222,7 +226,8 @@ def get_corners(img, img2, points_img1, points_img2, alpha):
     corners_img1.append((p_mean_max[0] + delta_x_half, y_max - abs(delta_y_half) + delta_y_half))
     corners_img2.append((p_mean_max[0] - delta_x_half, y_max - abs(delta_y_half) - delta_y_half))
     average_point = weighted_average_point(corners_img1[-1], corners_img2[-1], alpha)
-    global_y_max = average_point[1] if average_point[1] < global_y_max else global_y_max
+    global_y_max = average_point[1]
+    global_y_max = abs(y_crop - alpha_2 * delta_y_half) if abs(y_crop - alpha_2 * delta_y_half) < global_y_max else global_y_max
 
     # bottom left
     p_min_max, i_min_max = max(((val, idx) for (idx, val) in enumerate(points_img1)), 
@@ -234,6 +239,7 @@ def get_corners(img, img2, points_img1, points_img2, alpha):
     average_point = weighted_average_point(corners_img1[-1], corners_img2[-1], alpha)
     global_x_min = average_point[0] if average_point[0] > global_x_min else global_x_min
     global_y_max = average_point[1] if average_point[1] < global_y_max else global_y_max
+    global_y_max = y_crop - alpha_2 * delta_y_half if y_crop - alpha_2 * delta_y_half < global_y_max else global_y_max
 
     # bottom right
     p_max_max, i_max_max = max(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: (p[0])[0] + (p[0])[1])
@@ -244,6 +250,8 @@ def get_corners(img, img2, points_img1, points_img2, alpha):
     average_point = weighted_average_point(corners_img1[-1], corners_img2[-1], alpha)
     global_x_max = average_point[0] if average_point[0] < global_x_max else global_x_max
     global_y_max = average_point[1] if average_point[1] < global_y_max else global_y_max
+    global_x_max = x_crop - alpha_2 * delta_x_half if x_crop - alpha_2 * delta_x_half < global_x_max else global_x_max
+    global_y_max = y_crop - alpha_2 * delta_y_half if y_crop - alpha_2 * delta_y_half < global_y_max else global_y_max
 
     # top right
     p_max_min, i_max_min = max(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: (p[0])[0] + (y_max - (p[0])[1]))
@@ -254,6 +262,7 @@ def get_corners(img, img2, points_img1, points_img2, alpha):
     average_point = weighted_average_point(corners_img1[-1], corners_img2[-1], alpha)
     global_x_max = average_point[0] if average_point[0] < global_x_max else global_x_max
     global_y_min = average_point[1] if average_point[1] > global_y_min else global_y_min
+    global_x_max = x_crop - alpha_2 * delta_x_half if x_crop - alpha_2 * delta_x_half < global_x_max else global_x_max
 
     # top left
     p_min_min, i_min_min = min(((val, idx) for (idx, val) in enumerate(points_img1)), key=lambda p: (p[0])[0] + (p[0])[1])
@@ -267,15 +276,15 @@ def get_corners(img, img2, points_img1, points_img2, alpha):
 
     points_img1 += corners_img1
     points_img2 += corners_img2
-    return 
+    return global_x_min, global_x_max, global_y_min, global_y_max
 
 
 def morph(img1, img2, points_img1, points_img2, alpha=0.5, steps=2):
     """Returns list of morphed images."""
 
-    global global_x_min, global_x_max, global_y_min, global_y_max
-    global_x_min = global_y_min = 0
-    global_x_max = global_y_max = float('inf')
+    #global global_x_min, global_x_max, global_y_min, global_y_max
+    #global_x_min = global_y_min = 0
+    #global_x_max = global_y_max = float('inf')
 
     assert 0 <= alpha <= 1, "Alpha not between 0 and 1."
     assert len(points_img1) == len(points_img2), "Point lists have different size."
@@ -285,10 +294,10 @@ def morph(img1, img2, points_img1, points_img2, alpha=0.5, steps=2):
     img1 = np.float32(img1)
     img2 = np.float32(img2)
     
-    img1, img2, points_img1, points_img2 = scale(img1, img2, points_img1, points_img2)
+    img1, img2, points_img1, points_img2, x_crop, y_crop = scale(img1, img2, points_img1, points_img2)
 
     # Add the corner points and middle point of edges to the point lists
-    get_corners(img1, img2, points_img1, points_img2, alpha)
+    global_x_min, global_x_max, global_y_min, global_y_max = get_corners(img1, img2, points_img1, points_img2, x_crop, y_crop, alpha)
 
     # Compute weighted average point coordinates
     points = []
@@ -315,5 +324,6 @@ def morph(img1, img2, points_img1, points_img2, alpha=0.5, steps=2):
             # Morph one triangle at a time.
             morph_triangle(img1, img2, img_morph, t1, t2, t, a)
         # add cropped images to list
-        images.append(np.copy(np.uint8(img_morph[global_y_min:global_y_max, global_x_min:global_x_max, :])))
+        images.append(np.copy(np.uint8(img_morph[int(global_y_min):int(global_y_max), int(global_x_min):int(global_x_max), :])))
+#        images.append(np.uint8(img_morph))
     return images
