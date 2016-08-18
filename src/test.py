@@ -8,8 +8,15 @@ img1 = None
 img2 = None
 img1Orig = None
 img2Orig = None
-#pointsImg1 = [(268,255),(345,225),(350,291),(268,293)]
-#pointsImg2 = [(2241,1503),(2754,1475),(2752, 1952),(2182,1973)]
+# points turtle tower
+#pointsImg2 = [(268,255),(345,225),(350,291),(268,293)]
+#pointsImg1 = [(2241,1503),(2754,1475),(2752, 1952),(2182,1973)]
+# points marktplatz osna
+#pointsImg2 = [(159, 552), (611, 845), (493, 716)]
+#pointsImg1 = [(1050, 838), (2061, 1216), (1851, 998)]
+# points backsteinneubau osnabrueck
+#pointsImg1 = [(571, 177), (694, 182), (1471, 606), (1323, 229)]
+#pointsImg2 = [(580, 189), (729, 201), (1582, 686), (1431, 282)]
 pointsImg1 = []
 pointsImg2 = []
 
@@ -121,7 +128,7 @@ def test():
 
 	#morph images
 	print ("Morphing...")
-	alpha = 0.5
+	alpha = 0.5 
 	steps = 3 
 	img1 = np.copy(img1Orig)
 	img2 = np.copy(img2Orig)
