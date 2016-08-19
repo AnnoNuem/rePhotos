@@ -1,8 +1,53 @@
 import numpy as np
 
 
-def crop(img):
-    pass
+def get_crop_indices(img):
+    """
+    Get crop indices to crop black border from image.
+    """
+    x_min, y_min = 0, 0
+    y_max, x_max = img.shape[0] - 1, img.shape[1] - 1
+    top_done, left_done, bottom_done, right_done = False, False, False, False
+
+    while not top_done and not right_done and not bottom_done and not left_done:
+        # check top
+        for y in range(y_min, y_max):
+            value = img[y, x_min, :]
+            if value[0] == 0 and value[1] == 0 and value[2] == 0:
+                x_min += 1
+                break
+            top_done = True   
+
+        # check right
+        for x in range(x_min, x_max):
+            value = img[y_max, x, :]
+            if value[0] == 0 and value[1] == 0 and value[2] == 0:
+                y_max -= 1
+                break
+            right_done = True
+
+        # check bottom
+        for y in range(y_min, y_max):
+            value = img[y, x_max, :]
+            if value[0] == 0 and value[1] == 0 and value[2] == 0:
+                x_max -= 1
+                break
+            bottom_done = True
+
+        # check left
+        for x in range(x_min, x_max):
+            value = img[y_min, x, :]
+            if value[0] == 0 and value[1] == 0 and value[2] == 0:
+                y_min += 1
+                break
+            left_done = True
+        
+        # croping not possible
+        if x_min >= x_max or y_min >= y_max:
+            return None, None, None, None
+
+    return x_min, x_max, y_min, y_max
+
 
 def weighted_average_point(point1, point2, alpha):
     """
