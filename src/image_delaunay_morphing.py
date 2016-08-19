@@ -3,7 +3,7 @@ import cv2
 from image_helpers import scale
 from image_helpers import get_corners 
 from image_helpers import weighted_average_point
-from image_helpers import crop
+from image_helpers import get_crop_indices
 
 def apply_affine_transform(src, src_tri, dst_tri, size):
     """
@@ -82,64 +82,29 @@ def get_indices(rect, points):
     return indices_tri
 
 
-def check_cropping(points, points_img1, points_img2, x_crop, y_crop, global_x_max, global_y_max, alpha):
-    """
-    Checks if zeros added by scaling are cropped in result images.
-    Searches nearest point to padding in point list of image in which padding 
-    with zeros was necessary for scaling. Does it independently for x 
-    direction and y direction. Assumes padding start (*_crop) is moved as far
-    as nearest point. Then checks if moved padding point is smaller than
-    current crop mark (global_*_max).
-    """
-    # x
-    # img1 is bigger
-    if x_crop > 0:
-        p1, i = min(((val, idx) for (idx, val) in enumerate(points_img2)),
-                                 key=lambda p: abs(x_crop - (p[0])[0]))
-        delta = p1[0] - (points[i])[0]
-        global_x_max = x_crop - delta if x_crop - delta < global_x_max else global_x_max
-    # img2 is bigger
-    else:
-        x_crop = abs(x_crop)
-        p1, i = min(((val, idx) for (idx, val) in enumerate(points_img1)),
-                                 key=lambda p: abs(x_crop - (p[0])[0]))
-        delta = p1[0] - (points[i])[0]
-        global_x_max = x_crop - delta if x_crop - delta < global_x_max else global_x_max
-
-    # y
-    # img1 is bigger
-    if y_crop > 0:
-        p1, i = min(((val, idx) for (idx, val) in enumerate(points_img2)),
-                                 key=lambda p: abs(y_crop - (p[0])[1]))
-        delta = p1[1] - (points[i])[1]
-        global_y_max = y_crop - delta if y_crop - delta < global_y_max else global_y_max
-    # img2 is bigger
-    else:
-        y_crop = abs(y_crop)
-        p1, i = min(((val, idx) for (idx, val) in enumerate(points_img1)),
-                                 key=lambda p: abs(y_crop - (p[0])[1]))
-        delta = p1[1] - (points[i])[1]
-        global_y_max = y_crop - delta if y_crop - delta < global_y_max else global_y_max
-
-    return global_x_max, global_y_max
-
-
 def morph(img1, img2, points_img1, points_img2, alpha=0.5, steps=2):
     """Returns list of morphed images."""
 
     assert 0 <= alpha <= 1, "Alpha not between 0 and 1."
     assert len(points_img1) == len(points_img2), "Point lists have different size."
     assert len(points_img1) > 0, "Point lists are empty."
+    assert steps > 1, "Number of steps has to be at least two."
 
     # Convert Mat to float data type
     img1 = np.float32(img1)
     img2 = np.float32(img2)
-    
-    img1, img2, points_img1, points_img2, x_crop, y_crop = scale(img1, img2, points_img1, points_img2)
+
+    # Add small number so only frame is zero and can be cropped easily later
+    img1 += 0.000001
+    img2 += 0.000001
+
+    # Scale
+    img1, img2, points_img1, points_img2 = scale(img1, img2, points_img1, points_img2)
 
     # Add the corner points and middle point of edges to the point lists
-    global_x_min, global_x_max, global_y_min, global_y_max = get_corners(img1, img2, points_img1, points_img2, x_crop, y_crop, alpha)
+    get_corners(img1, img2, points_img1, points_img2)
 
+    # Check that all points are in respective image
     for point in points_img1:
         assert 0 <= point[0] < img1.shape[1] and 0 <= point[1] < img1.shape[0], "Point %s outside image 1!" % (point,)
     for point in points_img2:
@@ -150,12 +115,10 @@ def morph(img1, img2, points_img1, points_img2, alpha=0.5, steps=2):
     for i in range(0, len(points_img1)):
         points.append(weighted_average_point(points_img1[i], points_img2[i], alpha))
     
-    # Check that zeros from scaling get cropped in result
-    global_x_max, global_y_max = check_cropping(points, points_img1, points_img2, x_crop, y_crop, global_x_max, global_y_max, alpha)
-
     rect = (0, 0, max(img1.shape[1], img2.shape[1]), max(img1.shape[0], img2.shape[0]))
     indices_tri = get_indices(rect, points)
 
+    # Morph
     images = []
     for a in np.linspace(0.0, 1.0, num=steps):
         # Allocate space for final output
@@ -172,6 +135,15 @@ def morph(img1, img2, points_img1, points_img2, alpha=0.5, steps=2):
 
             # Morph one triangle at a time.
             morph_triangle(img1, img2, img_morph, t1, t2, t, a)
-        # add cropped images to list
-        images.append(np.copy(np.uint8(img_morph[int(global_y_min):int(global_y_max), int(global_x_min):int(global_x_max), :])))
-    return images
+        # Add cropped images to list
+        images.append(np.copy(img_morph))
+    
+    # Crop images
+    # Either first or last image needs max crop
+    x_min_1, x_max_1, y_min_1, y_max_1 = get_crop_indices(images[0])
+    x_min_2, x_max_2, y_min_2, y_max_2 = get_crop_indices(images[-1])
+    x_min, x_max, y_min, y_max = max(x_min_1, x_min_2), min(x_max_1, x_max_2), max(y_min_1, y_min_2), min(y_max_1, y_max_2)
+    images_cropped = []
+    for image in images:
+        images_cropped.append(np.uint8(image[y_min:y_max, x_min:x_max, : ] - 0.000001))
+    return images_cropped
