@@ -2,8 +2,8 @@ import numpy as np
 import cv2
 import sys
 import sac 
-import delaunayMorphing
-import roughCalibrator
+from image_delaunay_morphing import morph
+from image_rough_calibrator import calibrate
 
 img1 = None
 img2 = None
@@ -11,6 +11,15 @@ img1Orig = None
 img2Orig = None
 img1RoughMorphed = None
 img2RoughMorphed = None
+# points turtle tower
+#pointsImg2 = [(268,255),(345,225),(350,291),(268,293)]
+#pointsImg1 = [(2241,1503),(2754,1475),(2752, 1952),(2182,1973)]
+# points marktplatz osna
+#pointsImg1 = [(159, 552), (611, 845), (493, 716)]
+#pointsImg2 = [(1050, 838), (2061, 1216), (1851, 998)]
+# points backsteinneubau osnabrueck
+#pointsImg1 = [(571, 177), (694, 182), (1471, 606), (1323, 229)]
+#pointsImg2 = [(580, 189), (729, 201), (1582, 686), (1431, 282)]
 pointsImg1 = []
 pointsImg2 = []
 radiusSize = 0.003
@@ -30,7 +39,7 @@ def roughCalibrate():
 	img1 = np.copy(img1Orig)
 	img2 = np.copy(img2Orig)
 	print ("Roughly calibrating images...")
-	img1, img2, pointsImg1, pointsImg2 = roughCalibrator.calibrate(img1, img2, pointsImg1, pointsImg2, alpha = 1)
+	img1, img2, pointsImg1, pointsImg2 = calibrate(img1, img2, pointsImg1, pointsImg2, alpha = 0.5 )
 	print ("Rough calibration done.")
 	img1RoughMorphed = np.copy(img1)
 	img2RoughMorphed = np.copy(img2)
@@ -178,7 +187,7 @@ def test():
 	steps = 3 
 	img1 = np.copy(img1RoughMorphed)
 	img2 = np.copy(img2RoughMorphed)
-	images = delaunayMorphing.morph(img1, img2, pointsImg1, pointsImg2, alpha, steps)
+	images = morph(img1, img2, pointsImg1, pointsImg2, alpha, steps)
 	cv2.namedWindow("Image 1 morphed", cv2.WINDOW_KEEPRATIO)
 	cv2.namedWindow("Image 2 morphed", cv2.WINDOW_KEEPRATIO)
 	cv2.namedWindow("Images blended", cv2.WINDOW_KEEPRATIO)
