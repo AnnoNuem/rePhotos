@@ -5,6 +5,9 @@ import cv2
 def get_crop_indices(img):
     """
     Get crop indices to crop black border from image.
+    Crops non linear borders.
+    Starts with small rectangle in middle, grows till black pixels are reached
+    at each site.
     """        
     
     x_min= int(img.shape[1] / 2) - 1
@@ -184,7 +187,7 @@ def scale(img1, img2, points_img1, points_img2):
     if x_size_img1 == x_size_img2 and y_size_img1 == y_size_img2:
         return img1, img2, points_img1, points_img2
 
-    # image 1 is bigger
+    # Image 1 is bigger
     elif x_size_img1 >= x_size_img2 and y_size_img1 >= y_size_img2:
         temp_img = np.zeros(img1.shape, dtype=img1.dtype)
         temp_points = []
@@ -217,7 +220,7 @@ def scale(img1, img2, points_img1, points_img2):
                 x = point[0] * 1/x_scale_factor
                 y = point[1] * 1/x_scale_factor
                 temp_points.append((x,y))
-        #Yy scale is smaller
+        # Y scale is smaller
         else:
             img1 = cv2.resize(img1, (0,0), fx=1/y_scale_factor, fy=1/y_scale_factor, interpolation=cv2.INTER_CUBIC)
             for point in points_img1:
@@ -228,7 +231,7 @@ def scale(img1, img2, points_img1, points_img2):
         points_img1 = temp_points
         img1 = temp_img
 
-    # Images size relations are not the same i.e. x_scale < 0 and y_scale > 0 or vice versa
+    # Images size relations are not the same i.e. x_scale < 1 and y_scale > 1 or vice versa
     else:
         temp_img = np.zeros((max(y_size_img1, y_size_img2), max(x_size_img1, x_size_img2), max(z_size_img1, z_size_img2)), dtype=img1.dtype)
         temp_img2 = np.copy(temp_img)

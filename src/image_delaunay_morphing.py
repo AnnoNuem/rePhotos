@@ -5,6 +5,7 @@ from image_helpers import get_corners
 from image_helpers import weighted_average_point
 from image_helpers import get_crop_indices
 
+
 def apply_affine_transform(src, src_tri, dst_tri, size):
     """
     Apply affine transform calculated using src_tri and dst_tri to src and output an image of size.
@@ -83,8 +84,9 @@ def get_indices(rect, points):
 
 
 def morph(img1, img2, points_img1, points_img2, alpha=0.5, steps=2):
-    """Returns list of morphed images."""
-
+    """
+    Returns list of morphed images.
+    """
     assert 0 <= alpha <= 1, "Alpha not between 0 and 1."
     assert len(points_img1) == len(points_img2), "Point lists have different size."
     assert len(points_img1) > 0, "Point lists are empty."
@@ -94,9 +96,9 @@ def morph(img1, img2, points_img1, points_img2, alpha=0.5, steps=2):
     img1 = np.float32(img1)
     img2 = np.float32(img2)
 
-    # Add small number so only frame is zero and can be cropped easily later
-    img1 += 0.000001
-    img2 += 0.000001
+    # Add small number so only frame added by scaling and morphing is zero and can be cropped easily later
+    img1 += 0.00000001
+    img2 += 0.00000001
 
     # Scale
     img1, img2, points_img1, points_img2 = scale(img1, img2, points_img1, points_img2)
@@ -145,5 +147,5 @@ def morph(img1, img2, points_img1, points_img2, alpha=0.5, steps=2):
     x_min, x_max, y_min, y_max = max(x_min_1, x_min_2), min(x_max_1, x_max_2), max(y_min_1, y_min_2), min(y_max_1, y_max_2)
     images_cropped = []
     for image in images:
-        images_cropped.append(np.uint8(image[y_min:y_max, x_min:x_max, : ] - 0.000001))
+        images_cropped.append(np.uint8(image[y_min:y_max, x_min:x_max, : ] - 0.00000001))
     return images_cropped
