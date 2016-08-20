@@ -1,93 +1,93 @@
 import numpy as np
-from numpy.linalg import inv
 import cv2
+from image_helpers import weighted_average_point
 
-def postProcess(img1, img2):
-    """
-    Crops images.
-    """
-    pass
-
-def transformPoints(points, transformMatrix):
+def transform_points(points, transform_matrix):
     """
     Transforms a list of points given a transformation matrix.
     :param points: the list of points given as touples
-    :param transformMatrix: the transformation matrix
+    :param transform_matrix: the transformation matrix
     """
-    pointArray = np.float32(points)
-    pointArray = np.int32(cv2.perspectiveTransform(pointArray.reshape(1,-1,2), transformMatrix).reshape(-1, 2)).tolist()
+    point_array = np.float32(points)
+    point_array = np.int32(cv2.perspectiveTransform(point_array.reshape(1,-1,2), transform_matrix).reshape(-1, 2)).tolist()
 
-    pointsTransformed = []
-    for point in pointArray:
-        pointsTransformed.append(tuple(point))
+    points_transformed = []
+    for point in point_array:
+        points_transformed.append(tuple(point))
 
-    return pointsTransformed
+    return points_transformed
 
-def calibrate(img1, img2, pointsImg1, pointsImg2, alpha = None):
+
+def calibrate(img_1, img_2, points_img_1, points_img_2, alpha = None):
     """
     Aligns the two images with the best matching perspective transform given the two point lists.
     Points in pointlists are transformed as well.
-    :param img1: Image 1
-    :param img2: Image 2
-    :param pointsImg1: marked points in image 1
-    :param pointsImg2: coresponding points in image 2
-    :param alpha: 0 = align img2 to img1, 1 = align img1 to img2, 0.5 align img1 and img2 to mean
+    :param img_1: Image 1
+    :param img_2: Image 2
+    :param points_img_1: marked points in image 1
+    :param points_img_2: coresponding points in image 2
+    :param alpha: 0 = align img_2 to img_1, 1 = align img_1 to img_2, 0.5 align img_1 and img_2 to mean
         and points acordingly. If alpha is None the smaller image is transformed to bigger one
     """
 
-    assert len(pointsImg1) == len(pointsImg2), "Point lists of unequal length"
-    assert len(pointsImg1) > 3, "Not enough points to find homography"
+    assert len(points_img_1) == len(points_img_2), "Point lists of unequal length"
+    assert len(points_img_1) > 3, "Not enough points to find homography"
 
     if (alpha == None):
-        if (img1.shape[0] * img1.shape[1]) < (img2.shape[0] * img2.shape[1]):
+        if (img_1.shape[0] * img_1.shape[1]) < (img_2.shape[0] * img_2.shape[1]):
             alpha = 1
         else:
             alpha = 0
 
     assert 0 <= alpha <= 1, "Alpha not between 0 and 1."
 
-    # Keep image 1
-    if alpha == 0:
-        transformMatrix, _ = cv2.findHomography(np.vstack(pointsImg2).astype(float), np.vstack(pointsImg1).astype(float), 0)
-        img2 = cv2.warpPerspective(img2, transformMatrix, (img1.shape[1], img1.shape[0]))
-        pointsImg2 = transformPoints(pointsImg2, transformMatrix)   
-    # Keep image 2
-    elif alpha == 1:
-        transformMatrix, _ = cv2.findHomography(np.vstack(pointsImg1).astype(float), np.vstack(pointsImg2).astype(float), 0)
-        y, x, _ = img1.shape
-        cornersImg1= [(0,0), (0,y), (x,y), (x,0)]
-        cornersImg1 = transformPoints(cornersImg1, inv(transformMatrix))
-        print cornersImg1
-        # TODO corner berechnung und cropping funktioniert so garnicht
-        img1 = cv2.warpPerspective(img1, transformMatrix, (img2.shape[1], img2.shape[0]))
-        img1 = img1[max((cornersImg1[0])[0],0): min((cornersImg1[3])[0], img2.shape[1]),\
-            max((cornersImg1[0])[0], 0): min((cornersImg1[3])[1], img2.shape[0]),:]
-        pointsImg1 =  transformPoints(pointsImg1, transformMatrix)  
-    # Transform  both image with respect to alpha
-    else:
-        pointsDest = []
-        alphaM1 = 1 - alpha
-        xMaxDest = int(( alphaM1 * img1.shape[1] + alpha * img2.shape[1]) / 2)
-        yMaxDest = int(( alphaM1 * img1.shape[0] + alpha * img2.shape[0]) / 2)
-        i = 0
-        for pointImg1 in pointsImg1:
-            pointsDest.append((int(alphaM1 * pointImg1[0] + alpha * (pointsImg2[i])[0] / 2),\
-                                     int(alphaM1 * pointImg1[1] + alpha * (pointsImg2[i])[1] / 2))) 
-            i += 1
-        transformMatrix1, _ = cv2.findHomography(np.vstack(pointsImg1).astype(float), np.vstack(pointsDest).astype(float), 0)
-        transformMatrix2, _ = cv2.findHomography(np.vstack(pointsImg2).astype(float), np.vstack(pointsDest).astype(float), 0)
-        img1 = cv2.warpPerspective(img1, transformMatrix1, (xMaxDest, yMaxDest))
-        img2 = cv2.warpPerspective(img2, transformMatrix2, (xMaxDest, yMaxDest))
-        pointsImg1  =  pointsDest[:]
-        pointsImg2  =  pointsDest[:]
+    x_max_dest = max(img_1.shape[1], img_2.shape[1])
+    y_max_dest = max(img_1.shape[0], img_2.shape[0])
 
+    # Find points of dest image
+    dest_points = []
+    i = 0
+    for point_1 in points_img_1:
+        dest_points.append(weighted_average_point(point_1, points_img_2[i], alpha))
+        i += 1
+        
+    # Image 1
+    y, x, _ = img_1.shape
+    corners_img_1= [(0,0), (0,y), (x,y), (x,0)]
+    transform_matrix_1, _ = cv2.findHomography(np.vstack(points_img_1).astype(float), np.vstack(dest_points).astype(float), 0)
+    img_1 = cv2.warpPerspective(img_1, transform_matrix_1, (x_max_dest, y_max_dest))
+    points_img_1 = transform_points(points_img_1, transform_matrix_1)
+    corners_img_1 = transform_points(corners_img_1, transform_matrix_1)
 
+    # Image 2
+    y, x, _ = img_2.shape
+    corners_img_2= [(0,0), (0,y), (x,y), (x,0)]
+    transform_matrix_2, _ = cv2.findHomography(np.vstack(points_img_2).astype(float), np.vstack(dest_points).astype(float), 0)
+    img_2 = cv2.warpPerspective(img_2, transform_matrix_2, (x_max_dest, y_max_dest))
+    points_img_2 = transform_points(points_img_2, transform_matrix_2)
+    corners_img_2 = transform_points(corners_img_2, transform_matrix_2)
 
-    # TODO remove for build
-    #result = img1 * 0.5 + img2 * 0.5
-    #result = cv2.normalize(result, result, 0, 255, cv2.NORM_MINMAX)
-    #cv2.namedWindow("result", cv2.WINDOW_KEEPRATIO)
-    #cv2.imshow("result", np.uint8(result) )
-    #cv2.resizeWindow("result", 640, 480)
+    # Crop
+    x_min = max((corners_img_1[0])[0], (corners_img_1[1])[0], (corners_img_2[0])[0], (corners_img_2[1])[0])
+    y_min = max((corners_img_1[0])[1], (corners_img_1[3])[1], (corners_img_2[0])[1], (corners_img_2[3])[1])
+    x_max = min((corners_img_1[2])[0], (corners_img_1[3])[0], (corners_img_2[2])[0], (corners_img_2[3])[0])
+    y_max = min((corners_img_1[1])[1], (corners_img_1[2])[1], (corners_img_2[1])[1], (corners_img_2[2])[1])
 
-    return img1, img2, pointsImg1, pointsImg2
+    points_img_1_cropped = []
+    for point in points_img_1:
+        x_cropped = point[0] - x_min
+        y_cropped = point[1] - y_min
+        if x_min <= x_cropped < x_max and y_min <= y_cropped < y_max:
+            points_img_1_cropped.append((x,y))
+
+    points_img_2_cropped = []
+    for point in points_img_2:
+        x_cropped = point[0] - x_min
+        y_cropped = point[1] - y_min
+        if x_min <= x_cropped < x_max and y_min <= y_cropped < y_max:
+            points_img_2_cropped.append((x,y))
+
+    img_1 = img_1[y_min:y_max, x_min:x_max, :]
+    img_2 = img_2[y_min:y_max, x_min:x_max, :]
+
+    return img_1, img_2, points_img_1_cropped, points_img_2_cropped
