@@ -18,7 +18,7 @@ def getPointFromRectangle(img1, point1, point2):
 	assert 0 <= point2[0] < img1.shape[1], "Point2 outside image"
 	
 	#TODO replace for build with:
-   #assert point1[0] != point2[0], "X cordinates of rectangle corners are equal -> no rectangle"
+    #assert point1[0] != point2[0], "X cordinates of rectangle corners are equal -> no rectangle"
 	#assert point1[1] != point2[1], "Y cordinates of rectangle corners are equal -> no rectangle"
 	# if rectangle is to small return middlepoint of the two given points, assuming user 
 	# wanted to select a single point and not draw rectangle

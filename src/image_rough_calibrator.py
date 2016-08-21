@@ -77,15 +77,15 @@ def calibrate(img_1, img_2, points_img_1, points_img_2, alpha = None):
     for point in points_img_1:
         x_cropped = point[0] - x_min
         y_cropped = point[1] - y_min
-        if x_min <= x_cropped < x_max and y_min <= y_cropped < y_max:
-            points_img_1_cropped.append((x,y))
+        if 0 <= x_cropped < x_max - x_min and 0 <= y_cropped < y_max - y_min:
+            points_img_1_cropped.append((x_cropped, y_cropped))
 
     points_img_2_cropped = []
     for point in points_img_2:
         x_cropped = point[0] - x_min
         y_cropped = point[1] - y_min
-        if x_min <= x_cropped < x_max and y_min <= y_cropped < y_max:
-            points_img_2_cropped.append((x,y))
+        if 0 <= x_cropped < x_max - x_min and 0 <= y_cropped < y_max - y_min:
+            points_img_2_cropped.append((x_cropped, y_cropped))
 
     img_1 = img_1[y_min:y_max, x_min:x_max, :]
     img_2 = img_2[y_min:y_max, x_min:x_max, :]
