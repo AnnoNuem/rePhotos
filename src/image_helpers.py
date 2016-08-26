@@ -1,6 +1,31 @@
 import numpy as np
 import cv2
 
+def lce(img, kernel = 11 , ammount = 0.5):
+    """
+    Local Contrast Enhancement by unsharp mask.
+    """
+    
+    assert kernel % 2 == 1, "kernel size has to be odd."
+
+    img = np.float32(img)
+    img = cv2.normalize(img, img, 1, 0, cv2.NORM_MINMAX)
+
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+    img_v = img_hsv[:,:,2] 
+    img_v_blurred = cv2.GaussianBlur(img_v, (kernel, kernel), 0, 0)
+    img_t = img_v - img_v_blurred
+    img_v = img_v + img_t * ammount
+    
+    img_v[img_v > 1] = 1
+    img_v[img_v < 0] = 0
+
+    img_hsv[:,:,2] = img_v
+
+    img_bgr = cv2.cvtColor(img_hsv, cv2.COLOR_HSV2BGR)
+
+    return img_bgr
 
 def get_crop_indices(img):
     """
