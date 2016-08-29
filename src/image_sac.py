@@ -57,14 +57,6 @@ def getPointFromRectangle(img1, point1, point2):
     #add the start position of rectangle as offset
     returnPoint = (j[index] + min(point1[0], point2[0]), i[index] + min(point1[1], point2[1]))
 
-    #TODO remove for build
-    ''' 
-    corners = cv2.normalize(corners, corners, 0, 255, cv2.NORM_MINMAX)
-    cv2.imshow("corners", np.uint8(corners))
-    cv2.imshow("gaus", gausMatrixNormalized)
-    cv2.imshow("subimage", np.uint8(subimageF*255))
-    ''' 
-
     return returnPoint
 
 def getCorespondingPoint(img1, img2, point):
@@ -100,29 +92,32 @@ def getCorespondingPoint(img1, img2, point):
     # preprocess both subimages
     subimage1F = np.float32(subimage1)
     subimage1F = lce(subimage1F, 11, 5)
- #   cv2.imshow("bla", subimage1F)
     subimage1F = cv2.cvtColor(subimage1F, cv2.COLOR_BGR2GRAY)
     subimage1F = cv2.normalize(subimage1F, subimage1F, 0, 1, cv2.NORM_MINMAX)
     subimage1F = cv2.GaussianBlur(subimage1F, (5,5), 0) 
     subimage1X = cv2.Scharr(subimage1F, ddepth = -1, dx = 1, dy = 0)
     subimage1Y = cv2.Scharr(subimage1F, ddepth = -1, dx = 0, dy = 1)
     subimage1F = subimage1X + subimage1Y
+    subimage1F[subimage1F < 0.5] = 1 - subimage1F[subimage1F < 0.5]
+    #subimage1F = cv2.dilate(subimage1F, None)
+    #subimage1F = cv2.erode(subimage1F, None)
     subimage1F = cv2.normalize(subimage1F, subimage1F, 0, 1, cv2.NORM_MINMAX)
 
     cv2.namedWindow("template", cv2.WINDOW_KEEPRATIO)
-    cv2.imshow("template", np.uint8(subimage1F))
     cv2.imshow("template", np.uint8(cv2.normalize(subimage1F, subimage1F, 0, 255, cv2.NORM_MINMAX)))
     cv2.resizeWindow("template", 640, 480)
 
     subimage2F = np.float32(subimage2)
     subimage2F = lce(subimage2F, 11, 5)
-#    cv2.imshow("bla2", subimage2F)
     subimage2F = cv2.cvtColor(subimage2F, cv2.COLOR_BGR2GRAY)
     subimage2F = cv2.normalize(subimage2F, subimage2F, 0, 1, cv2.NORM_MINMAX)
     subimage2F = cv2.GaussianBlur(subimage2F, (5,5), 0) 
     subimage2X = cv2.Scharr(subimage2F, ddepth = -1, dx = 1, dy = 0)
     subimage2Y = cv2.Scharr(subimage2F, ddepth = -1, dx = 0, dy = 1)
     subimage2F = subimage2X + subimage2Y
+    subimage2F[subimage2F < 0.5] = 1 - subimage2F[subimage2F < 0.5]
+    #subimage2F = cv2.dilate(subimage2F, None)
+    #subimage2F = cv2.erode(subimage2F, None)
     subimage2F = cv2.normalize(subimage2F, subimage2F, 0, 1, cv2.NORM_MINMAX)
 
     cv2.namedWindow("subimage", cv2.WINDOW_KEEPRATIO)
@@ -164,4 +159,5 @@ def getPFromRectangleACorespondingP(img1, img2, point1, point2):
     """
     returnPoint1 = getPointFromRectangle(img1, point1, point2)
     returnPoint2 = getCorespondingPoint(img1, img2, returnPoint1)
+    #returnPoint2 = getPointFromRectangle(img2, (returnPoint1[0]-20,returnPoint1[1]-20), (returnPoint1[0]+20, returnPoint1[1]+20))
     return returnPoint1, returnPoint2
