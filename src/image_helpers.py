@@ -193,14 +193,14 @@ def scale(img1, img2, points_img1, points_img2):
         temp_points = []
         # X scale is smaller
         if x_scale_factor < y_scale_factor:
-            img2 = cv2.resize(img2,  (0,0), fx=x_scale_factor, fy=x_scale_factor, interpolation=cv2.INTER_CUBIC)
+            img2 = cv2.resize(img2,  (0,0), fx=x_scale_factor, fy=x_scale_factor, interpolation=cv2.INTER_LINEAR)
             for point in points_img2:
                 x = point[0] * x_scale_factor
                 y = point[1] * x_scale_factor
                 temp_points.append((x,y))
         # Y scale is smaller
         else:
-            img2 = cv2.resize(img2, (0,0), fx=y_scale_factor, fy=y_scale_factor, interpolation=cv2.INTER_CUBIC)
+            img2 = cv2.resize(img2, (0,0), fx=y_scale_factor, fy=y_scale_factor, interpolation=cv2.INTER_LINEAR)
             for point in points_img2:
                 x = point[0] * y_scale_factor
                 y = point[1] * y_scale_factor
@@ -215,14 +215,14 @@ def scale(img1, img2, points_img1, points_img2):
         temp_points = []
         # X scale is smaller. we need the inverse
         if x_scale_factor > y_scale_factor:
-            img1 = cv2.resize(img1, (0,0), fx=(1/x_scale_factor), fy=(1/x_scale_factor), interpolation=cv2.INTER_CUBIC)
+            img1 = cv2.resize(img1, (0,0), fx=(1/x_scale_factor), fy=(1/x_scale_factor), interpolation=cv2.INTER_LINEAR)
             for point in points_img1:
                 x = point[0] * 1/x_scale_factor
                 y = point[1] * 1/x_scale_factor
                 temp_points.append((x,y))
         # Y scale is smaller
         else:
-            img1 = cv2.resize(img1, (0,0), fx=1/y_scale_factor, fy=1/y_scale_factor, interpolation=cv2.INTER_CUBIC)
+            img1 = cv2.resize(img1, (0,0), fx=1/y_scale_factor, fy=1/y_scale_factor, interpolation=cv2.INTER_LINEAR)
             for point in points_img1:
                 x = point[0] * 1/y_scale_factor
                 y = point[1] * 1/y_scale_factor
