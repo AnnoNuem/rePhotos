@@ -104,6 +104,7 @@ def get_corners(img, img2, points_img1, points_img2):
     corners_img1 = []
     corners_img2 = []
 
+    '''
     # left middle
     p_min_mean, i_min_mean = min(((val, idx) for (idx, val) in enumerate(points_img1)),
                                 key=lambda p: (p[0])[0] + abs(y_mean - (p[0])[1]))
@@ -135,7 +136,7 @@ def get_corners(img, img2, points_img1, points_img2):
     delta_y_half = int((p_mean_max[1] - (points_img2[i_mean_max])[1]) / 2)
     corners_img1.append((p_mean_max[0] + delta_x_half, y_max - abs(delta_y_half) + delta_y_half))
     corners_img2.append((p_mean_max[0] - delta_x_half, y_max - abs(delta_y_half) - delta_y_half))
-
+    '''
     # bottom left
     p_min_max, i_min_max = max(((val, idx) for (idx, val) in enumerate(points_img1)), 
                                 key=lambda p: (x_max - (p[0])[0]) + (p[0])[1])
