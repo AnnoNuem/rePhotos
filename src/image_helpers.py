@@ -88,6 +88,50 @@ def weighted_average_point(point1, point2, alpha):
     return (x,y)
 
 
+def compute_corner(corner_x, corner_y, f, corners_img1, corners_img2, pointpairs, x_max, y_max):
+    """
+    Computes the position of a corner, given former corner position and sorting function.
+    """
+    pointpairs = sorted(pointpairs, key=f)
+    # delta nearest point
+    delta_x_half_max = (((pointpairs[0])[0])[0] - ((pointpairs[0])[1])[0]) / 2
+    delta_y_half_max = (((pointpairs[0])[0])[1] - ((pointpairs[0])[1])[1]) / 2
+    # delta second nearest point
+    delta_x_half_second_max = (((pointpairs[1])[0])[0] - ((pointpairs[1])[1])[0]) / 2
+    delta_y_half_second_max = (((pointpairs[1])[0])[1] - ((pointpairs[1])[1])[1]) / 2
+    # distance between nearest and second nearest point
+    distance_nearest_second_neares_x = abs(((pointpairs[0])[0])[0] - ((pointpairs[1])[0])[0])
+    distance_nearest_second_neares_y = abs(((pointpairs[0])[0])[1] - ((pointpairs[1])[0])[1])
+    # distance nearest point to corner
+    distance_nearest_corner_x = abs(corner_x - ((pointpairs[0])[0])[0])
+    distance_nearest_corner_y = abs(corner_y - ((pointpairs[0])[0])[1])
+
+    delta_x_half = int(delta_x_half_max )#+ (delta_x_half_max - delta_x_half_second_max) * (distance_nearest_corner_x / distance_nearest_second_neares_x))
+    delta_y_half = int(delta_y_half_max )#+ (delta_y_half_max - delta_y_half_second_max) * (distance_nearest_corner_y / distance_nearest_second_neares_y))
+    print corner_y
+    print y_max
+    print delta_y_half
+    
+    if corner_x == 0:
+        x_1 = 0 + abs(delta_x_half) + delta_x_half
+        x_2 = 0 + abs(delta_x_half) - delta_x_half
+    elif corner_x == x_max:
+        x_1 = x_max - abs(delta_x_half) + delta_x_half
+        x_2 = x_max - abs(delta_x_half) - delta_x_half
+
+    if corner_y == 0:
+        y_1 = 0 + abs(delta_y_half) + delta_y_half
+        y_2 = 0 + abs(delta_y_half) - delta_y_half
+    elif corner_y == y_max:
+        y_1 = y_max - abs(delta_y_half) + delta_y_half
+        y_2 = y_max - abs(delta_y_half) - delta_y_half
+
+    corners_img1.append((x_1, y_1))
+    corners_img2.append((x_2, y_2))
+
+    return
+
+
 def get_corners(img, img2, points_img1, points_img2):
     """Adds the corners and middle point of edges to pointlists.
     Finds the user selectet points which are nearest to the four corners and the
@@ -97,12 +141,30 @@ def get_corners(img, img2, points_img1, points_img2):
     Returns the global max and minima used for cropping
     """
 
+    assert len(points_img1) > 1, "At leas two points are required to compute cornerpoints."
+
     x_max = min(img.shape[1], img2.shape[1]) - 1
     y_max = min(img.shape[0], img2.shape[0]) - 1
     x_mean = int(x_max / 2)
     y_mean = int(y_max / 2)
     corners_img1 = []
     corners_img2 = []
+    pointpairs = zip(points_img1[:], points_img2[:])
+
+    # bottom left 
+    compute_corner(0, y_max, lambda p: ((p[0])[0] + (y_max - (p[0])[1])), corners_img1, corners_img2, pointpairs, x_max, y_max)
+
+    # bottom right
+    compute_corner(x_max, y_max, lambda p: ((x_max - (p[0])[0]) + (y_max - (p[0])[1])), corners_img1, corners_img2, pointpairs, x_max, y_max)
+
+    # top right
+    compute_corner(x_max, 0, lambda p: ((x_max - (p[0])[0]) + (p[0])[1]), corners_img1, corners_img2, pointpairs, x_max, y_max)
+
+    # top left
+    compute_corner(0, 0, lambda p: ((p[0])[0] + (p[0])[1]), corners_img1, corners_img2, pointpairs, x_max, y_max)
+    print corners_img1
+    print 
+    print corners_img2
 
     '''
     # left middle
@@ -136,7 +198,7 @@ def get_corners(img, img2, points_img1, points_img2):
     delta_y_half = int((p_mean_max[1] - (points_img2[i_mean_max])[1]) / 2)
     corners_img1.append((p_mean_max[0] + delta_x_half, y_max - abs(delta_y_half) + delta_y_half))
     corners_img2.append((p_mean_max[0] - delta_x_half, y_max - abs(delta_y_half) - delta_y_half))
-    '''
+
     # bottom left
     p_min_max, i_min_max = max(((val, idx) for (idx, val) in enumerate(points_img1)), 
                                 key=lambda p: (x_max - (p[0])[0]) + (p[0])[1])
@@ -169,6 +231,7 @@ def get_corners(img, img2, points_img1, points_img2):
     corners_img1.append((0 + abs(delta_x_half) + delta_x_half, 0 + abs(delta_y_half) + delta_y_half))
     corners_img2.append((0 + abs(delta_x_half) - delta_x_half, 0 + abs(delta_y_half) - delta_y_half))
 
+    '''
     points_img1 += corners_img1
     points_img2 += corners_img2
     return 

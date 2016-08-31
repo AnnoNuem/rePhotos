@@ -147,5 +147,6 @@ def morph(img1, img2, points_img1, points_img2, alpha=0.5, steps=2):
     x_min, x_max, y_min, y_max = max(x_min_1, x_min_2), min(x_max_1, x_max_2), max(y_min_1, y_min_2), min(y_max_1, y_max_2)
     images_cropped = []
     for image in images:
-        images_cropped.append(np.uint8(image[y_min:y_max, x_min:x_max, : ] - 0.00000001))
+        images_cropped.append(np.uint8(image - 0.00000001))
+        #images_cropped.append(np.uint8(image[y_min:y_max, x_min:x_max, : ] - 0.00000001))
     return images_cropped
