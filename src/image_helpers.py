@@ -92,35 +92,17 @@ def compute_corner(corner_x, corner_y, f, corners_img1, corners_img2, pointpairs
     """
     Computes the position of a corner, given former corner position and sorting function.
     """
-    pointpairs = sorted(pointpairs, key=f)
-    # delta nearest point
-    delta_x_half_max = (((pointpairs[0])[0])[0] - ((pointpairs[0])[1])[0]) / 2
-    delta_y_half_max = (((pointpairs[0])[0])[1] - ((pointpairs[0])[1])[1]) / 2
-    # delta second nearest point
-    delta_x_half_second_max = (((pointpairs[1])[0])[0] - ((pointpairs[1])[1])[0]) / 2
-    delta_y_half_second_max = (((pointpairs[1])[0])[1] - ((pointpairs[1])[1])[1]) / 2
-    # distance between nearest and second nearest point
-    distance_nearest_second_neares_x = abs(((pointpairs[0])[0])[0] - ((pointpairs[1])[0])[0])
-    distance_nearest_second_neares_y = abs(((pointpairs[0])[0])[1] - ((pointpairs[1])[0])[1])
-    # distance nearest point to corner
-    distance_nearest_corner_x = abs(corner_x - ((pointpairs[0])[0])[0])
-    distance_nearest_corner_y = abs(corner_y - ((pointpairs[0])[0])[1])
+    pointpair = min(pointpairs, key=f)
 
-    delta_x_half = int(delta_x_half_max )# + (delta_x_half_max - delta_x_half_second_max) * (distance_nearest_corner_x / distance_nearest_second_neares_x))
-    delta_y_half = int(delta_y_half_max )# + (delta_y_half_max - delta_y_half_second_max) * (distance_nearest_corner_y / distance_nearest_second_neares_y))
-    print(corner_x, corner_y)
-    print(pointpairs[0][0], pointpairs[0][1])
-    print(delta_x_half, delta_y_half)
-    
+    delta_x_half = int((pointpair[0][0] - pointpair[1][0])/2)
+    delta_y_half = int((pointpair[0][1] - pointpair[1][1])/2)
+
     if corner_x == 0:
         x_1 = 0 + abs(delta_x_half) + delta_x_half
         x_2 = 0 + abs(delta_x_half) - delta_x_half
     elif corner_x == x_max:
         x_1 = x_max - abs(delta_x_half) + delta_x_half
         x_2 = x_max - abs(delta_x_half) - delta_x_half
-    elif corner_x == x_mean:
-        x_1 = x_mean + abs(delta_x_half) + delta_x_half
-        x_2 = x_mean + abs(delta_x_half) - delta_x_half
 
     if corner_y == 0:
         y_1 = 0 + abs(delta_y_half) + delta_y_half
@@ -128,12 +110,7 @@ def compute_corner(corner_x, corner_y, f, corners_img1, corners_img2, pointpairs
     elif corner_y == y_max:
         y_1 = y_max - abs(delta_y_half) + delta_y_half
         y_2 = y_max - abs(delta_y_half) - delta_y_half
-    elif corner_y == y_mean:
-        y_1 = y_mean + abs(delta_y_half) + delta_y_half
-        y_2 = y_mean + abs(delta_y_half) - delta_y_half
 
-    print((x_1, y_1), (x_2,y_2))
-    print
     corners_img1.append((x_1, y_1))
     corners_img2.append((x_2, y_2))
 
@@ -148,8 +125,6 @@ def get_corners(img, img2, points_img1, points_img2):
     edges to the point lists and offsets them using the computet delta values.
     Returns the global max and minima used for cropping
     """
-
-    assert len(points_img1) > 1, "At least two points are required to compute cornerpoints."
 
     x_max = min(img.shape[1], img2.shape[1]) - 1
     y_max = min(img.shape[0], img2.shape[0]) - 1
@@ -171,18 +146,6 @@ def get_corners(img, img2, points_img1, points_img2):
     # top left
     compute_corner(0, 0, lambda p: ((p[0])[0] + (p[0])[1]), corners_img1, corners_img2, pointpairs, x_max, y_max, x_mean, y_mean)
 
-    # top middle 
-    #compute_corner(x_mean, 0, lambda p: (abs(x_mean - (p[0])[0]) + (p[0])[1]), corners_img1, corners_img2, pointpairs, x_max, y_max, x_mean, y_mean)
-    
-    # bottom middle 
-    #compute_corner(x_mean, y_max, lambda p: (abs(x_mean - (p[0])[0]) + (y_max - (p[0])[1])), corners_img1, corners_img2, pointpairs, x_max, y_max, x_mean, y_mean)
-    
-    # left  middle 
-    #compute_corner(0, y_mean, lambda p: ((p[0])[0] + abs(y_mean - (p[0])[1])), corners_img1, corners_img2, pointpairs, x_max, y_max, x_mean, y_mean)
-    
-    # right middle 
-    #compute_corner(x_max, y_mean, lambda p: ((x_max - (p[0])[0]) + abs(y_mean - (p[0])[1])), corners_img1, corners_img2, pointpairs, x_max, y_max, x_mean, y_mean)
-    
     points_img1 += corners_img1
     points_img2 += corners_img2
     return 
