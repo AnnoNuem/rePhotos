@@ -83,7 +83,7 @@ def get_indices(rect, points):
     return indices_tri
 
 
-def morph(img1, img2, points_img1, points_img2, alpha=0.5, steps=2):
+def compute_3_stage(img1, img2, points_img1, points_img2, alpha=0.5, steps=2):
     """
     Returns list of morphed images.
     """

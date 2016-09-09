@@ -10,7 +10,7 @@ TEMPLATE_SIZE_SCALE = 0.07
 MIN_RECT_SIZE = 5
 
 
-def getPointFromRectangle(img1, point1, point2):
+def get_point_from_rectangle(img1, point1, point2):
     """Computes point of interest in a subimage which is defined by to given points."""
 
     assert 0 <= point1[1] < img1.shape[0], "Point1 outside image"
@@ -28,25 +28,25 @@ def getPointFromRectangle(img1, point1, point2):
 
     subimage = np.copy(img1[min(point1[1],point2[1]):max(point1[1],point2[1]), 
                                           min(point1[0], point2[0]):max(point1[0],point2[0])])
-    subimageGray = cv2.cvtColor(subimage, cv2.COLOR_BGR2GRAY)
-    subimageF = np.float32(subimageGray)
-    subimageF = cv2.normalize(subimageF, subimageF, 0, 1, cv2.NORM_MINMAX)
-    subimageF = cv2.GaussianBlur(subimageF, (5,5), 0)   
+    subimage_gray = cv2.cvtColor(subimage, cv2.COLOR_BGR2GRAY)
+    subimage_f = np.float32(subimage_gray)
+    subimage_f = cv2.normalize(subimage_f, subimage_f, 0, 1, cv2.NORM_MINMAX)
+    subimage_f = cv2.GaussianBlur(subimage_f, (5,5), 0)   
     
     # Detector parameters
-    blockSize = 2
-    apertureSize = 3
+    block_size = 2
+    aperture_size = 3
     k = 0.04
     # Detecting corners
-    corners = cv2.cornerHarris( subimageF, blockSize, apertureSize, k, cv2.BORDER_DEFAULT )
+    corners = cv2.cornerHarris( subimage_f, block_size, aperture_size, k, cv2.BORDER_DEFAULT )
 
     # Assume that user wants to mark point in middle of rectangle, hence weight cornes using gaussian
     rows, cols = corners.shape
-    gausCols = cv2.getGaussianKernel(cols, -1)
-    gausRows = cv2.getGaussianKernel(rows, -1)
-    gausMatrix = gausRows*gausCols.T
-    gausMatrixNormalized = gausMatrix/gausMatrix.max()
-    corners = corners * gausMatrixNormalized
+    gaus_cols = cv2.getGaussianKernel(cols, -1)
+    gaus_rows = cv2.getGaussianKernel(rows, -1)
+    gaus_matrix = gaus_rows*gaus_cols.T
+    gaus_matrix_normalized = gaus_matrix/gaus_matrix.max()
+    corners = corners * gaus_matrix_normalized
     
     # get sharpest corners
     i, j = np.where(corners == corners.max());
@@ -55,11 +55,11 @@ def getPointFromRectangle(img1, point1, point2):
     index = int(i.shape[0]/2)
 
     #add the start position of rectangle as offset
-    returnPoint = (j[index] + min(point1[0], point2[0]), i[index] + min(point1[1], point2[1]))
+    return_point = (j[index] + min(point1[0], point2[0]), i[index] + min(point1[1], point2[1]))
 
-    return returnPoint
+    return return_point
 
-def getCorespondingPoint(img1, img2, point):
+def get_coresponding_point(img1, img2, point):
     """Search for coresponding point on second image given a point in first image using template matching."""
 
     assert 0 <= point[1] < img1.shape[0], "Point outside image 1. Have both images the same size?"
@@ -68,25 +68,25 @@ def getCorespondingPoint(img1, img2, point):
     assert 0 <= point[0] < img2.shape[1], "Point outside image 2. Have both images the same size?"
 
     # diameter of the meaningfull keypoint neighborhood 
-    templateSize = int((img1.shape[0] + img1.shape[1]) * 0.5  * TEMPLATE_SIZE_SCALE)
+    template_size = int((img1.shape[0] + img1.shape[1]) * 0.5  * TEMPLATE_SIZE_SCALE)
 
     # size of local subimage in which dense sampling is done
-    subimageSize = int((img2.shape[0] + img2.shape[1]) * 0.5 * SUBIMAGE_SIZE_SCALE)
+    subimage_size = int((img2.shape[0] + img2.shape[1]) * 0.5 * SUBIMAGE_SIZE_SCALE)
 
     # get template from img1 in which user draw
-    templateSizeHalf = int(templateSize/2)
-    x1 = max(point[0] - templateSizeHalf, 0)
-    x2 = min(point[0] + templateSizeHalf, img1.shape[1] - 1)
-    y1 = max(point[1] - templateSizeHalf, 0)
-    y2 = min(point[1] + templateSizeHalf, img1.shape[0] - 1)
+    template_size_half = int(template_size/2)
+    x1 = max(point[0] - template_size_half, 0)
+    x2 = min(point[0] + template_size_half, img1.shape[1] - 1)
+    y1 = max(point[1] - template_size_half, 0)
+    y2 = min(point[1] + template_size_half, img1.shape[0] - 1)
     subimage1 = np.copy(img1[y1:y2, x1:x2])
 
     # create subimage from img2 in which template is searched
-    subimageSizeHalf = int(subimageSize/2)
-    x1 = max(point[0] - subimageSizeHalf, 0)
-    x2 = min(point[0] + subimageSizeHalf, img2.shape[1] - 1)
-    y1 = max(point[1] - subimageSizeHalf, 0)
-    y2 = min(point[1] + subimageSizeHalf, img2.shape[0] - 1)
+    subimage_size_half = int(subimage_size/2)
+    x1 = max(point[0] - subimage_size_half, 0)
+    x2 = min(point[0] + subimage_size_half, img2.shape[1] - 1)
+    y1 = max(point[1] - subimage_size_half, 0)
+    y2 = min(point[1] + subimage_size_half, img2.shape[0] - 1)
     subimage2 = np.copy(img2[y1:y2, x1:x2])
 
     # preprocess both subimages
@@ -132,11 +132,11 @@ def getCorespondingPoint(img1, img2, point):
     CV_TM_CCORR_NORMED = 3
     CV_TM_CCOEFF = 4
     CV_TM_CCOEFF_NORMED = 5
-    templateResult = cv2.matchTemplate(subimage2F, subimage1F, CV_TM_CCOEFF_NORMED)
-    templateResult1 = cv2.normalize(templateResult, templateResult, 0, 1, cv2.NORM_MINMAX)
+    template_result = cv2.matchTemplate(subimage2F, subimage1F, CV_TM_CCOEFF_NORMED)
+    template_result1 = cv2.normalize(template_result, template_result, 0, 1, cv2.NORM_MINMAX)
 
     cv2.namedWindow("result", cv2.WINDOW_KEEPRATIO)
-    cv2.imshow("result", np.uint8(cv2.normalize(templateResult1, templateResult1, 0, 255, cv2.NORM_MINMAX)))
+    cv2.imshow("result", np.uint8(cv2.normalize(template_result1, template_result1, 0, 255, cv2.NORM_MINMAX)))
     cv2.resizeWindow("result", 640, 480)
 
     while cv2.waitKey(0) != 99:
@@ -146,18 +146,18 @@ def getCorespondingPoint(img1, img2, point):
     cv2.destroyWindow("template")
     cv2.destroyWindow("result")
 
-    minVal, maxVal, minLoc , maxLoc = cv2.minMaxLoc(templateResult1)
+    min_val, max_val, min_loc , max_loc = cv2.minMaxLoc(template_result1)
 
-    point2 = (maxLoc[0] + templateSizeHalf, maxLoc[1] + templateSizeHalf)
+    point2 = (max_loc[0] + template_size_half, max_loc[1] + template_size_half)
 
-    returnPoint = (x1 + int(point2[0]), y1 + int(point2[1]))
-    return returnPoint
+    return_point = (x1 + int(point2[0]), y1 + int(point2[1]))
+    return return_point
 
-def getPFromRectangleACorespondingP(img1, img2, point1, point2):
-    """Wrapper for getPointFromRectangle and getCorespondingPoint.
+def get_p_from_rectangle_a_coresponding_p(img1, img2, point1, point2):
+    """Wrapper for getPoint_from_rectangle and get_coresponding_point.
     imageSelect: True if user draw rect on image 1, False if user draw on image 2.
     """
-    returnPoint1 = getPointFromRectangle(img1, point1, point2)
-    returnPoint2 = getCorespondingPoint(img1, img2, returnPoint1)
+    return_point1 = get_point_from_rectangle(img1, point1, point2)
+    return_point2 = get_coresponding_point(img1, img2, return_point1)
     #returnPoint2 = getPointFromRectangle(img2, (returnPoint1[0]-20,returnPoint1[1]-20), (returnPoint1[0]+20, returnPoint1[1]+20))
-    return returnPoint1, returnPoint2
+    return return_point1, return_point2

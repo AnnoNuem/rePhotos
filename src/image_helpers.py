@@ -1,6 +1,23 @@
 import numpy as np
 import cv2
 
+
+def transform_points(points, transform_matrix):
+    """
+    Transforms a list of points given a transformation matrix.
+    :param points: the list of points given as touples
+    :param transform_matrix: the transformation matrix
+    """
+    point_array = np.float32(points)
+    point_array = np.int32(cv2.perspectiveTransform(point_array.reshape(1,-1,2), transform_matrix).reshape(-1, 2)).tolist()
+
+    points_transformed = []
+    for point in point_array:
+        points_transformed.append(tuple(point))
+
+    return points_transformed
+
+
 def lce(img, kernel = 11 , ammount = 0.5):
     """
     Local Contrast Enhancement by unsharp mask.

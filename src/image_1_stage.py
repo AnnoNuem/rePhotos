@@ -1,26 +1,12 @@
 import numpy as np
 import cv2
 from image_helpers import weighted_average_point
+from image_helpers import transform_points
 
-def transform_points(points, transform_matrix):
+
+def compute_1_stage(img_1, img_2, points_img_1, points_img_2, alpha = None):
     """
-    Transforms a list of points given a transformation matrix.
-    :param points: the list of points given as touples
-    :param transform_matrix: the transformation matrix
-    """
-    point_array = np.float32(points)
-    point_array = np.int32(cv2.perspectiveTransform(point_array.reshape(1,-1,2), transform_matrix).reshape(-1, 2)).tolist()
-
-    points_transformed = []
-    for point in point_array:
-        points_transformed.append(tuple(point))
-
-    return points_transformed
-
-
-def calibrate(img_1, img_2, points_img_1, points_img_2, alpha = None):
-    """
-    Aligns the two images with the best matching perspective transform given the two point lists.
+    Scale images given two points
     Points in pointlists are transformed as well.
     :param img_1: Image 1
     :param img_2: Image 2
@@ -54,6 +40,8 @@ def calibrate(img_1, img_2, points_img_1, points_img_2, alpha = None):
     # Image 1
     y, x, _ = img_1.shape
     corners_img_1= [(0,0), (0,y), (x,y), (x,0)]
+    scale_factor = #TODO
+    img2 = cv2.resize(img2,  (0,0), fx=x_scale_factor, fy=x_scale_factor, interpolation=cv2.INTER_LINEAR)
     transform_matrix_1, _ = cv2.findHomography(np.vstack(points_img_1).astype(float), np.vstack(dest_points).astype(float), 0)
     img_1 = cv2.warpPerspective(img_1, transform_matrix_1, (x_max_dest, y_max_dest))
     points_img_1 = transform_points(points_img_1, transform_matrix_1)
