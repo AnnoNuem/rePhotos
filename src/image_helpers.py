@@ -189,9 +189,9 @@ def get_corners(img, img2, points_img1, points_img2):
     return 
 
 
-def scale(img1, img2, points_img1, points_img2):
+def scale(img1, img2, lines_img1, lines_img2):
     """
-    Prescales images and points to allow delaunay morphing of images of different sizes.
+    Prescales images and lines to allow delaunay morphing of images of different sizes.
     Upsacles the smaller image
     """
     y_size_img1, x_size_img1, z_size_img1 = img1.shape
@@ -199,52 +199,61 @@ def scale(img1, img2, points_img1, points_img2):
     x_scale_factor = float(x_size_img1)/ float(x_size_img2)
     y_scale_factor = float(y_size_img1)/ float(y_size_img2)
 
+
     # Images are of same size
     if x_size_img1 == x_size_img2 and y_size_img1 == y_size_img2:
-        return img1, img2, points_img1, points_img2
+        return img1, img2, lines_img1, lines_img2
 
     # Image 1 is bigger
     elif x_size_img1 >= x_size_img2 and y_size_img1 >= y_size_img2:
         temp_img = np.zeros(img1.shape, dtype=img1.dtype)
-        temp_points = []
+        temp_lines = []
         # X scale is smaller
         if x_scale_factor < y_scale_factor:
             img2 = cv2.resize(img2,  (0,0), fx=x_scale_factor, fy=x_scale_factor, interpolation=cv2.INTER_LINEAR)
-            for point in points_img2:
-                x = point[0] * x_scale_factor
-                y = point[1] * x_scale_factor
-                temp_points.append((x,y))
+            for line in lines_img2:
+                temp_line = []
+                for value in line:
+                    temp_line.append(value * x_scale_factor)
+                temp_lines.append(temp_line)
+
         # Y scale is smaller
         else:
             img2 = cv2.resize(img2, (0,0), fx=y_scale_factor, fy=y_scale_factor, interpolation=cv2.INTER_LINEAR)
-            for point in points_img2:
-                x = point[0] * y_scale_factor
-                y = point[1] * y_scale_factor
-                temp_points.append((x,y))
+            for line in lines_img2:
+                temp_line = []
+                for value in line:
+                    temp_line.append(value * y_scale_factor)
+                temp_lines.append(temp_line)
+
         temp_img[0:img2.shape[0], 0:img2.shape[1], 0:img2.shape[2]] = img2
-        points_img2 = temp_points
+        lines_img2 = temp_lines
         img2 = temp_img
 
     # Image 1 is smaller
     elif x_size_img1 <= x_size_img2 and y_size_img1 <= y_size_img2:
         temp_img = np.zeros(img2.shape, dtype=img2.dtype)
-        temp_points = []
+        temp_lines = []
         # X scale is smaller. we need the inverse
         if x_scale_factor > y_scale_factor:
             img1 = cv2.resize(img1, (0,0), fx=(1/x_scale_factor), fy=(1/x_scale_factor), interpolation=cv2.INTER_LINEAR)
-            for point in points_img1:
-                x = point[0] * 1/x_scale_factor
-                y = point[1] * 1/x_scale_factor
-                temp_points.append((x,y))
+            for line in lines_img2:
+                temp_line = []
+                for value in line:
+                    temp_line.append(value * 1/x_scale_factor)
+                temp_lines.append(temp_line)
+
         # Y scale is smaller
         else:
             img1 = cv2.resize(img1, (0,0), fx=1/y_scale_factor, fy=1/y_scale_factor, interpolation=cv2.INTER_LINEAR)
-            for point in points_img1:
-                x = point[0] * 1/y_scale_factor
-                y = point[1] * 1/y_scale_factor
-                temp_points.append((x,y))
+            for line in lines_img2:
+                temp_line = []
+                for value in line:
+                    temp_line.append(value * 1/y_scale_factor)
+                temp_lines.append(temp_line)
+
         temp_img[0:img1.shape[0], 0:img1.shape[1], 0:img1.shape[2]] = img1
-        points_img1 = temp_points
+        lines_img1 = temp_lines
         img1 = temp_img
 
     # Images size relations are not the same i.e. x_scale < 1 and y_scale > 1 or vice versa
@@ -256,5 +265,5 @@ def scale(img1, img2, points_img1, points_img2):
         temp_img2[0:img2.shape[0], 0:img2.shape[1], 0:img2.shape[2]] = img2
         img2 = temp_img2
 
-    return img1, img2, points_img1, points_img2
+    return img1, img2, lines_img1, lines_img2
 

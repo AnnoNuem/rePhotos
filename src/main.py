@@ -2,6 +2,7 @@ import cv2
 import matlab.engine
 import os, sys
 import numpy as np
+from image_helpers import scale
 from image_morphing import morph
 
 
@@ -9,23 +10,24 @@ location = os.path.abspath(os.path.dirname(sys.argv[0]))
 dataname = 'data.mat'
 
 
-def init_matlab(path, src_name, dst_name):
+def init_matlab():#path, src_name, dst_name):
+
     eng = matlab.engine.connect_matlab()
     eng.eval('clear',nargout=0)
 
     eng.workspace['mp_dataname'] = dataname
-    eng.workspace['mp_path'] = path
+    #eng.workspace['mp_path'] = path
     eng.workspace['mp_location'] = location
-    eng.workspace['mp_src_name'] = src_name
-    eng.workspace['mp_dst_name'] = dst_name
+    #eng.workspace['mp_src_name'] = src_name
+    #eng.workspace['mp_dst_name'] = dst_name
 
     eng.eval('cd(mp_location);')
-    eng.eval('load([mp_path, mp_dataname]);', nargout=0)
+    eng.eval('load([mp_dataname]);', nargout=0)
     return eng
 
 
 def draw_line(img, start, end):
-    thickness = 1
+    thickness = int((img.shape[0] + img.shape[1]) / 1000  )
     lineType = 8
     cv2.line(img, start, end, ( 0, 0, 255 ), thickness, lineType )
 
@@ -57,16 +59,15 @@ def onMouse(event, x, y, flags, args):
     
 
 def test():
-    if len(sys.argv) != 4:
-        print("Usage: test <path> <img_src> <img_dst>")
+    if len(sys.argv) != 3:
+        print("Usage: test <img_src> <img_dst>")
         exit()
 
-    path = sys.argv[1]
-    src_name = sys.argv[2]
-    dst_name = sys.argv[3]
+    src_name = sys.argv[1]
+    dst_name = sys.argv[2]
 
-    src_img = cv2.imread(path + src_name)
-    dst_img = cv2.imread(path + dst_name)
+    src_img = cv2.imread(src_name)
+    dst_img = cv2.imread(dst_name)
 
     if src_img is None:
         print ("Image 1 not readable or not found")
@@ -75,14 +76,10 @@ def test():
         print ("Image 2 not readable or not found")
         exit()
 
-    eng = init_matlab(path, src_name, dst_name)
-
-    #print ("Draw rectangles with LMB to search for corresponding point.")
-    #print ("Draw rectangles with RMB to only mark point.")
-    #print ("Click i.e. draw very tiny rectangle to mark point directly.")
-    #print ("Press Space to start morphing, ESC to quit")
+    eng = init_matlab()
 
     src_img_orig = np.copy(src_img)
+    dst_img_orig = np.copy(dst_img)
 
     src_lines = []
     dst_lines = []
@@ -120,8 +117,10 @@ def test():
     cv2.destroyAllWindows()
 
     src_img = np.copy(src_img_orig)
+    dst_img = np.copy(dst_img_orig)
 
-
+    #img1, img2, points_img1, points_img2 = scale(img1, img2, points_img1, points_img2)
+    src_img, dst_img, src_lines, dst_lines = scale(src_img, dst_img, src_lines, dst_lines)
 
     y_max = src_img.shape[0]
     for line in src_lines:
@@ -135,13 +134,13 @@ def test():
     linedst = matlab.double(dst_lines)
     eng.workspace['linesrc'] = linedst
     eng.workspace['linedst'] = linesrc
-    print eng.workspace['linesrc']
-    print
-    print eng.workspace['linedst']
-    print
+
+    eng.workspace['width'] = float(src_img.shape[1])
+    eng.workspace['height'] = float(src_img.shape[0])
 
     eng.workspace['lineConstraintType'] = 2
-    x, y, triangulation, quads = eng.eval('test(mp_path, mp_dst_name, mp_src_name, gridSize, linesrc, linedst, nSamplePerGrid, lineConstraintType, deformEnergyWeights)', nargout=4)
+    x, y, triangulation, quads = eng.eval('test(gridSize, linesrc, linedst, nSamplePerGrid, \
+        lineConstraintType, deformEnergyWeights, width, height)', nargout=4)
 
     points_old = []
     points_new = []
@@ -155,30 +154,27 @@ def test():
     for point in y:
         points_new.append((point[0], max_y - point[1]))
 
+    (src_img_morphed, dst_img) = morph(dst_img, src_img, points_old, points_new, quads)
 
-    src_img_morphed = morph(dst_img, src_img.shape, points_old, points_new, quads)
     cv2.namedWindow('src', cv2.WINDOW_KEEPRATIO)
     cv2.namedWindow('src_morphed', cv2.WINDOW_KEEPRATIO)
     cv2.namedWindow('dst', cv2.WINDOW_KEEPRATIO)
-    #cv2.namedWindow('dst_morphed', cv2.WINDOW_KEEPRATIO)
-    #cv2.namedWindow('overlay', cv2.WINDOW_KEEPRATIO)
+    cv2.namedWindow('overlay', cv2.WINDOW_KEEPRATIO)
     cv2.imshow('src', src_img)
     cv2.imshow('src_morphed', src_img_morphed)
     cv2.imshow('dst', dst_img)
-    print dst_img.shape
-    print src_img_morphed.shape
     cv2.resizeWindow('src', 640, 480)
     cv2.resizeWindow('src_morphed', 640, 480)
     cv2.resizeWindow('dst', 640, 480)
-    #overlay_img = (cv2.normalize(dst_img,dst_img, 0, 1, cv2.NORM_MINMAX)  +  cv2.normalize(src_img_morphed,src_img_morphed,0,1,cv2.NORM_MINMAX)) /2
     #overlay_img = np.zeros(src_img_morphed.shape,dtype=dst_img.dtype)
     #overlay_img[:,:,0] = dst_img[:,:,0] 
     #overlay_img[:,:,1] = src_img_morphed[:,:,1]
     #overlay_img[:,:,2] = src_img_morphed[:,:,2]
-    #cv2.imshow('overlay', np.uint8(cv2.normalize(overlay_img, overlay_img, 0, 255, cv2.NORM_MINMAX)))
+    cv2.imshow('overlay', cv2.addWeighted(dst_img, 0.5, src_img_morphed, 0.5, 0))
     cv2.resizeWindow('dst_morphed', 640, 480)
+    cv2.resizeWindow('overlay', 640, 480)
+
     cv2.imwrite('morphed.jpg', src_img_morphed)
-    #cv2.resizeWindow('overlay', 640, 480)
 
     while cv2.waitKey(0) != 27:
         pass

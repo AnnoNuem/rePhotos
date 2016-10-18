@@ -48,7 +48,7 @@ def morph_quad(img1, img, t1, t):
     # Copy quadangular region of the rectangular patch to the output image
     img[r[1]:r[1] + r[3], r[0]:r[0] + r[2]] = img[r[1]:r[1] + r[3], r[0]:r[0] + r[2]] * (1 - mask) + img_rect * mask
 
-def morph(src_img, dst_shape, points_old, points_new, quads):
+def morph(src_img, dst_img, points_old, points_new, quads):
     """
     Returns morphed image given points of old and new grid and quads 
     """
@@ -59,6 +59,7 @@ def morph(src_img, dst_shape, points_old, points_new, quads):
     src_img = np.float32(src_img)
 
     # Add small number so only frame added by scaling and morphing is zero and can be cropped easily later
+    src_img += 0.00000001
     #img1 += 0.00000001
     #img2 += 0.00000001
 
@@ -86,8 +87,8 @@ def morph(src_img, dst_shape, points_old, points_new, quads):
     # Morph
     #for a in np.linspace(0.0, 1.0, num=steps):
     # Allocate space for final output
-    img_morph = np.zeros((max(src_img.shape[0], dst_shape[0]), max(src_img.shape[1], dst_shape[1]),
-        max(src_img.shape[2], dst_shape[2])), dtype=src_img.dtype)
+    img_morph = np.zeros((max(src_img.shape[0], dst_img.shape[0]), max(src_img.shape[1], dst_img.shape[1]),
+        max(src_img.shape[2], dst_img.shape[2])), dtype=src_img.dtype)
 
     x_max = img_morph.shape[1]
     y_max = img_morph.shape[0]
@@ -120,11 +121,12 @@ def morph(src_img, dst_shape, points_old, points_new, quads):
 
     # Crop images
     # Either first or last image needs max crop
-    #x_min_1, x_max_1, y_min_1, y_max_1 = get_crop_indices(images[0])
+    x_min_1, x_max_1, y_min_1, y_max_1 = get_crop_indices(img_morph)
     #x_min_2, x_max_2, y_min_2, y_max_2 = get_crop_indices(images[-1])
     #x_min, x_max, y_min, y_max = max(x_min_1, x_min_2), min(x_max_1, x_max_2), max(y_min_1, y_min_2), min(y_max_1, y_max_2)
     #images_cropped = []
     #for image in images:
     #    images_cropped.append(np.uint8(image[y_min:y_max, x_min:x_max, : ] - 0.00000001))
     #return images_cropped
-    return np.uint8(img_morph)
+    #return (np.uint8(img_morph[y_min_1:y_max_1, x_min_1: x_max_1, :] - 0.0000001), dst_img[y_min_1:y_max_1, x_min_1: x_max_1, :])
+    return (np.uint8(img_morph), dst_img)

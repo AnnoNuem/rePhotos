@@ -1,13 +1,12 @@
-function [x ,y, t, p] = test(mp_path, mp_dst_name, mp_src_name,...
-    gridSize, linesrc, linedst, nSamplePerGrid, lineConstraintType,...
-    deformEnergyWeights)
+function [x ,y, t, p] = test(gridSize, linesrc, linedst, nSamplePerGrid, lineConstraintType,...
+    deformEnergyWeights, w, h)
 
-dstImg = imread([mp_path, mp_dst_name]);
-srcImg = imread([mp_path, mp_src_name]);
+%dstImg = imread([mp_path, mp_dst_name]);
+%srcImg = imread([mp_path, mp_src_name]);
 
 
-w = size(dstImg, 2);
-h = size(dstImg, 1);
+%w1 = size(dstImg, 2);
+%h2 = size(dstImg, 1);
 [x,uv, p, qmSize, B, t] = buildRegularMesh(w, h, gridSize);
 
 %update energy
