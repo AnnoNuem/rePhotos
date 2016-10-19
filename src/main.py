@@ -59,7 +59,6 @@ def test():
     if len(sys.argv) != 3:
         print("Usage: test <img_src> <img_dst>")
         exit()
-
     src_name = sys.argv[1]
     dst_name = sys.argv[2]
 
@@ -105,8 +104,8 @@ def test():
 
     
     # scale images, add small value to later crop everything which is zero
-    scr_img = np.float32(src_img) + 0.000001
-    dst_img = np.float32(dst_img) + 0.000001
+    scr_img = np.float32(src_img) + 1
+    dst_img = np.float32(dst_img) + 1
     src_img, dst_img, src_lines, dst_lines = scale(src_img, dst_img, src_lines, dst_lines)
 
     y_max = src_img.shape[0]
@@ -142,13 +141,34 @@ def test():
     (src_img_morphed, dst_img_cropped, src_img_cropped) = morph(dst_img, src_img, points_old, points_new, quads)
 
     # postprocess
-    src_img_morphed = np.uint8(src_img_morphed - 0.000001)
-    dst_img_cropped = np.uint8(dst_img_cropped - 0.000001)
-    src_img_cropped = np.uint8(src_img_cropped - 0.000001)
-    src_img = np.uint8(src_img - 0.000001)
-    dst_img = np.uint8(dst_img - 0.000001)
+    src_img_morphed = np.uint8(src_img_morphed - 1)
+    dst_img_cropped = np.uint8(dst_img_cropped - 1)
+    src_img_cropped = np.uint8(src_img_cropped - 1)
+    src_img = np.uint8(src_img - 1)
+    dst_img = np.uint8(dst_img - 1)
     overlay_morphed = cv2.addWeighted(dst_img_cropped, 0.5, src_img_morphed, 0.5, 0)
     overlay_orig = cv2.addWeighted(src_img, 0.5, dst_img, 0.5, 0)
+
+    
+    # display
+    #cv2.namedWindow('src', cv2.WINDOW_KEEPRATIO)
+    #cv2.namedWindow('src_morphed', cv2.WINDOW_KEEPRATIO)
+    #cv2.namedWindow('dst', cv2.WINDOW_KEEPRATIO)
+    cv2.namedWindow('overlay', cv2.WINDOW_KEEPRATIO)
+    cv2.imshow('overlay', cv2.addWeighted(dst_img_cropped, 0.5, src_img_morphed, 0.5, 0))
+    cv2.resizeWindow('overlay', 640, 480)
+    #cv2.namedWindow('overlay_orig', cv2.WINDOW_KEEPRATIO)
+    #cv2.imshow('src', src_img)
+    #cv2.imshow('src_morphed', src_img_morphed)
+    #cv2.imshow('dst', dst_img)
+    #cv2.resizeWindow('src', 640, 480)
+    #cv2.resizeWindow('src_morphed', 640, 480)
+    #cv2.resizeWindow('dst', 640, 480)
+    
+
+    #cv2.imshow('overlay_orig', cv2.addWeighted(dst_img_cropped, 0.5, src_img_cropped, 0.5, 0))
+    #cv2.resizeWindow('dst_morphed', 640, 480)
+    #cv2.resizeWindow('overlay_orig', 640, 480)
 
     # write2disk
     filenname_prefix = 'results/' + (src_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + \
@@ -156,30 +176,10 @@ def test():
     cv2.imwrite(filenname_prefix + 'src.jpg', dst_img)
     cv2.imwrite(filenname_prefix + 'dst.jpg', src_img)
     cv2.imwrite(filenname_prefix + 'src_morphed.jpg', src_img_morphed)
+    cv2.imwrite(filenname_prefix + 'dst_cropped.jpg', dst_img_cropped)
+    cv2.imwrite(filenname_prefix + 'src_cropped.jpg', src_img_cropped)
     cv2.imwrite(filenname_prefix + 'overlay_morphed.jpg', overlay_morphed)
     cv2.imwrite(filenname_prefix + 'overlay_orig.jpg', overlay_orig)
-
-
-    cv2.namedWindow('src', cv2.WINDOW_KEEPRATIO)
-    cv2.namedWindow('src_morphed', cv2.WINDOW_KEEPRATIO)
-    cv2.namedWindow('dst', cv2.WINDOW_KEEPRATIO)
-    cv2.namedWindow('overlay', cv2.WINDOW_KEEPRATIO)
-    cv2.namedWindow('overlay_orig', cv2.WINDOW_KEEPRATIO)
-    cv2.imshow('src', src_img)
-    cv2.imshow('src_morphed', src_img_morphed)
-    cv2.imshow('dst', dst_img)
-    cv2.resizeWindow('src', 640, 480)
-    cv2.resizeWindow('src_morphed', 640, 480)
-    cv2.resizeWindow('dst', 640, 480)
-    
-    cv2.imshow('overlay', cv2.addWeighted(dst_img_cropped, 0.5, src_img_morphed, 0.5, 0))
-
-    cv2.imshow('overlay_orig', cv2.addWeighted(dst_img_cropped, 0.5, src_img_cropped, 0.5, 0))
-    cv2.resizeWindow('dst_morphed', 640, 480)
-    cv2.resizeWindow('overlay', 640, 480)
-    cv2.resizeWindow('overlay_orig', 640, 480)
-
-    cv2.imwrite('morphed.jpg', src_img_morphed)
 
     while cv2.waitKey(0) != 27:
         pass

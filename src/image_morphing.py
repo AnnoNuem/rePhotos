@@ -54,13 +54,6 @@ def morph(src_img, dst_img, points_old, points_new, quads):
     assert len(points_old) == len(points_new), "Point lists have different size."
     assert len(points_old) > 0, "Point lists are empty."
 
-    # Convert Mat to float data type
-    src_img = np.float32(src_img)
-
-    # Add small number so only frame added by scaling and morphing is zero and can be cropped easily later
-    #src_img += 0.00000001
-
-    # Morph
     # Allocate space for final output
     img_morph = np.zeros((max(src_img.shape[0], dst_img.shape[0]), max(src_img.shape[1], dst_img.shape[1]),
         max(src_img.shape[2], dst_img.shape[2])), dtype=src_img.dtype)
@@ -95,12 +88,13 @@ def morph(src_img, dst_img, points_old, points_new, quads):
             morph_quad(src_img, img_morph, quad_old, quad_new)
 
     # Crop images
-    x_min_1, x_max_1, y_min_1, y_max_1 = get_crop_indices(img_morph)
     x_min_2, x_max_2, y_min_2, y_max_2 = get_crop_indices(dst_img)
+    x_min_1, x_max_1, y_min_1, y_max_1 = get_crop_indices(img_morph)
     x_min, x_max, y_min, y_max = max(x_min_1, x_min_2), min(x_max_1, x_max_2), max(y_min_1, y_min_2), min(y_max_1, y_max_2)
 
+    cv2.imshow('sdaf', np.uint8(img_morph-1))
+    cv2.imshow('sdddaf', np.uint8(dst_img-1))
     #return images_cropped
-    return (img_morph[y_min_1:y_max_1, x_min_1: x_max_1, :] - 0.0000001, 
+    return (img_morph[y_min_1:y_max_1, x_min_1: x_max_1, :], 
         dst_img[y_min_1:y_max_1, x_min_1: x_max_1, :],
         src_img[y_min_1:y_max_1, x_min_1: x_max_1, :])
-    #return (np.uint8(img_morph), dst_img, np.uint8(src_img))
