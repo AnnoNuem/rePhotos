@@ -102,13 +102,14 @@ def test():
     #src_img = np.copy(src_img_orig)
     #dst_img = np.copy(dst_img_orig)
 
-    
     # scale images, add small value to later crop everything which is zero
-    scr_img = np.float32(src_img) + 1
-    dst_img = np.float32(dst_img) + 1
-    src_img, dst_img, src_lines, dst_lines = scale(src_img, dst_img, src_lines, dst_lines)
+    src_img_alpha = np.ones((src_img.shape[0], src_img.shape[1], 4), np.float32)
+    src_img_alpha[:, :, 0:3] = np.float32(src_img[:,:,0:3])
+    dst_img_alpha = np.ones((dst_img.shape[0], dst_img.shape[1], 4), np.float32)
+    dst_img_alpha[:, :, 0:3] = np.float32(dst_img[:,:,0:3])
+    src_img_alpha, dst_img_alpha, src_lines, dst_lines = scale(src_img_alpha, dst_img_alpha, src_lines, dst_lines)
 
-    y_max = src_img.shape[0]
+    y_max = src_img_alpha.shape[0]
     for line in src_lines:
         line[1] = y_max - line[1]
         line[3] = y_max - line[3]
@@ -121,8 +122,8 @@ def test():
     linedst = matlab.double(dst_lines)
     eng.workspace['linesrc'] = linedst
     eng.workspace['linedst'] = linesrc
-    eng.workspace['width'] = float(src_img.shape[1])
-    eng.workspace['height'] = float(src_img.shape[0])
+    eng.workspace['width'] = float(src_img_alpha.shape[1])
+    eng.workspace['height'] = float(src_img_alpha.shape[0])
     eng.workspace['lineConstraintType'] = 2
     x, y, triangulation, quads = eng.eval('test(gridSize, linesrc, linedst, nSamplePerGrid, \
         lineConstraintType, deformEnergyWeights, width, height)', nargout=4)
@@ -130,39 +131,39 @@ def test():
     # transform point coordinates from matlab to numpy
     points_old = []
     points_new = []
-    max_x = dst_img.shape[1]
-    max_y = dst_img.shape[0]
+    max_x = dst_img_alpha.shape[1]
+    max_y = dst_img_alpha.shape[0]
     for point in x:
         points_old.append((point[0], max_y - point[1]))
     for point in y:
         points_new.append((point[0], max_y - point[1]))
 
     # morph image
-    (src_img_morphed, dst_img_cropped, src_img_cropped) = morph(dst_img, src_img, points_old, points_new, quads)
+    (src_img_morphed, dst_img_cropped, src_img_cropped) = morph(dst_img_alpha, src_img_alpha, points_old, points_new, quads)
 
     # postprocess
-    src_img_morphed = np.uint8(src_img_morphed - 1)
-    dst_img_cropped = np.uint8(dst_img_cropped - 1)
-    src_img_cropped = np.uint8(src_img_cropped - 1)
-    src_img = np.uint8(src_img - 1)
-    dst_img = np.uint8(dst_img - 1)
-    overlay_morphed = cv2.addWeighted(dst_img_cropped, 0.5, src_img_morphed, 0.5, 0)
-    overlay_orig = cv2.addWeighted(src_img, 0.5, dst_img, 0.5, 0)
+    src_img_morphed = np.uint8(src_img_morphed[:, :, 0:3])
+    dst_img_cropped = np.uint8(dst_img_cropped[:, :, 0:3])
+    src_img_cropped = np.uint8(src_img_cropped[:, :, 0:3])
+    src_img_alpha = np.uint8(src_img_alpha[:, :, 0:3])
+    dst_img_alpha = np.uint8(dst_img_alpha[:, :, 0:3])
 
+    overlay_morphed = cv2.addWeighted(dst_img_cropped, 0.5, src_img_morphed, 0.5, 0)
+    overlay_orig = cv2.addWeighted(src_img_alpha, 0.5, dst_img_alpha, 0.5, 0)
     
     # display
     #cv2.namedWindow('src', cv2.WINDOW_KEEPRATIO)
-    #cv2.namedWindow('src_morphed', cv2.WINDOW_KEEPRATIO)
+    cv2.namedWindow('src_morphed', cv2.WINDOW_KEEPRATIO)
     #cv2.namedWindow('dst', cv2.WINDOW_KEEPRATIO)
     cv2.namedWindow('overlay', cv2.WINDOW_KEEPRATIO)
     cv2.imshow('overlay', cv2.addWeighted(dst_img_cropped, 0.5, src_img_morphed, 0.5, 0))
     cv2.resizeWindow('overlay', 640, 480)
     #cv2.namedWindow('overlay_orig', cv2.WINDOW_KEEPRATIO)
     #cv2.imshow('src', src_img)
-    #cv2.imshow('src_morphed', src_img_morphed)
+    cv2.imshow('src_morphed', src_img_morphed)
     #cv2.imshow('dst', dst_img)
     #cv2.resizeWindow('src', 640, 480)
-    #cv2.resizeWindow('src_morphed', 640, 480)
+    cv2.resizeWindow('src_morphed', 640, 480)
     #cv2.resizeWindow('dst', 640, 480)
     
 
@@ -173,8 +174,8 @@ def test():
     # write2disk
     filenname_prefix = 'results/' + (src_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + \
         '_' + (dst_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + '__'
-    cv2.imwrite(filenname_prefix + 'src.jpg', dst_img)
-    cv2.imwrite(filenname_prefix + 'dst.jpg', src_img)
+    cv2.imwrite(filenname_prefix + 'src.jpg', dst_img_alpha)
+    cv2.imwrite(filenname_prefix + 'dst.jpg', src_img_alpha)
     cv2.imwrite(filenname_prefix + 'src_morphed.jpg', src_img_morphed)
     cv2.imwrite(filenname_prefix + 'dst_cropped.jpg', dst_img_cropped)
     cv2.imwrite(filenname_prefix + 'src_cropped.jpg', src_img_cropped)

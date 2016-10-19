@@ -12,9 +12,11 @@ def apply_affine_transform(src, src_quad, dst_quad, size):
     # Given a pair of quads, find the affine transform. 3 points give unique solution 
     warp_mat = cv2.getAffineTransform(np.float32(src_quad[0:3]), np.float32(dst_quad[0:3]))
 
+    
     # Apply the Affine Transform just found to the src image
     dst = cv2.warpAffine(src, warp_mat, (size[0], size[1]), None, flags=cv2.INTER_LINEAR,
                          borderMode=cv2.BORDER_REFLECT_101)
+
     return dst
 
 
@@ -35,8 +37,9 @@ def morph_quad(img1, img, t1, t):
         t1_rect.append(((t1[i][0] - r1[0]), (t1[i][1] - r1[1])))
 
     # Get mask by filling quadangle
-    mask = np.zeros((r[3], r[2], 3), dtype=np.float32)
-    cv2.fillConvexPoly(mask, np.int32(t_rect), (1.0, 1.0, 1.0), 16, 0)
+    mask = np.zeros((r[3], r[2], 4), dtype=np.float32)
+    #print mask.shape
+    cv2.fillConvexPoly(mask, np.int32(t_rect), (1.0, 1.0, 1.0, 1.0), 16, 0)
 
     # Apply warpImage to small rectangular patches
     img1_rect = img1[r1[1]:r1[1] + r1[3], r1[0]:r1[0] + r1[2]]
@@ -46,6 +49,7 @@ def morph_quad(img1, img, t1, t):
 
     # Copy quadangular region of the rectangular patch to the output image
     img[r[1]:r[1] + r[3], r[0]:r[0] + r[2]] = img[r[1]:r[1] + r[3], r[0]:r[0] + r[2]] * (1 - mask) + img_rect * mask
+
 
 def morph(src_img, dst_img, points_old, points_new, quads):
     """
@@ -57,6 +61,7 @@ def morph(src_img, dst_img, points_old, points_new, quads):
     # Allocate space for final output
     img_morph = np.zeros((max(src_img.shape[0], dst_img.shape[0]), max(src_img.shape[1], dst_img.shape[1]),
         max(src_img.shape[2], dst_img.shape[2])), dtype=src_img.dtype)
+
 
     x_max = img_morph.shape[1]
     y_max = img_morph.shape[0]
@@ -92,8 +97,6 @@ def morph(src_img, dst_img, points_old, points_new, quads):
     x_min_1, x_max_1, y_min_1, y_max_1 = get_crop_indices(img_morph)
     x_min, x_max, y_min, y_max = max(x_min_1, x_min_2), min(x_max_1, x_max_2), max(y_min_1, y_min_2), min(y_max_1, y_max_2)
 
-    cv2.imshow('sdaf', np.uint8(img_morph-1))
-    cv2.imshow('sdddaf', np.uint8(dst_img-1))
     #return images_cropped
     return (img_morph[y_min_1:y_max_1, x_min_1: x_max_1, :], 
         dst_img[y_min_1:y_max_1, x_min_1: x_max_1, :],

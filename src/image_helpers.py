@@ -37,10 +37,6 @@ def get_crop_indices(img):
 
     """        
     
-    # threshold img 
-    img_thresh = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
-    img_thresh[np.sum(img, axis = 2) != 0]  = 1 
-    
     x_min= int(img.shape[1] / 2) - 1
     y_min= int(img.shape[0] / 2) - 1
     x_max= int(img.shape[1] / 2) + 1
@@ -58,7 +54,7 @@ def get_crop_indices(img):
         # check left  
         if not left_done and x_min - x_step_size > -1: 
             for y in range(y_min, y_max):
-                if  img_thresh[y, x_min - x_step_size] == 0:
+                if  img[y, x_min - x_step_size, 3] == 0:
                     left_done = True   
                     break
             if y == y_max -1 :
@@ -70,7 +66,7 @@ def get_crop_indices(img):
         # check bottom
         if not bottom_done and y_max + y_step_size < img.shape[0] :
             for x in range(x_min, x_max):
-                if img_thresh[y_max + y_step_size, x] == 0:
+                if img[y_max + y_step_size, x, 3] == 0:
                     bottom_done = True 
                     break
             if x == x_max - 1:
@@ -82,7 +78,7 @@ def get_crop_indices(img):
         # check right
         if not right_done and x_max + x_step_size < img.shape[1] :
             for y in range(y_min, y_max):
-                if img_thresh[y, x_max + x_step_size] == 0:
+                if img[y, x_max + x_step_size, 3] == 0:
                     right_done = True
                     break
             if y == y_max - 1:
@@ -94,7 +90,7 @@ def get_crop_indices(img):
         # check top  
         if not top_done and y_min - y_step_size > -1:
             for x in range(x_min, x_max):
-                if img_thresh[y_min - y_step_size, x] == 0:
+                if img[y_min - y_step_size, x, 3] == 0:
                     top_done = True
                     break
             if x == x_max - 1:
