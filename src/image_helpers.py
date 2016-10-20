@@ -233,7 +233,7 @@ def scale(img1, img2, lines_img1, lines_img2):
         # X scale is smaller. we need the inverse
         if x_scale_factor > y_scale_factor:
             img1 = cv2.resize(img1, (0,0), fx=(1/x_scale_factor), fy=(1/x_scale_factor), interpolation=cv2.INTER_LINEAR)
-            for line in lines_img2:
+            for line in lines_img1:
                 temp_line = []
                 for value in line:
                     temp_line.append(value * 1/x_scale_factor)
@@ -242,7 +242,7 @@ def scale(img1, img2, lines_img1, lines_img2):
         # Y scale is smaller
         else:
             img1 = cv2.resize(img1, (0,0), fx=1/y_scale_factor, fy=1/y_scale_factor, interpolation=cv2.INTER_LINEAR)
-            for line in lines_img2:
+            for line in lines_img1:
                 temp_line = []
                 for value in line:
                     temp_line.append(value * 1/y_scale_factor)

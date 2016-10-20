@@ -62,7 +62,6 @@ def morph(src_img, dst_img, points_old, points_new, quads):
     img_morph = np.zeros((max(src_img.shape[0], dst_img.shape[0]), max(src_img.shape[1], dst_img.shape[1]),
         max(src_img.shape[2], dst_img.shape[2])), dtype=src_img.dtype)
 
-
     x_max = img_morph.shape[1]
     y_max = img_morph.shape[0]
     for quad in quads:
@@ -97,7 +96,7 @@ def morph(src_img, dst_img, points_old, points_new, quads):
     x_min_1, x_max_1, y_min_1, y_max_1 = get_crop_indices(img_morph)
     x_min, x_max, y_min, y_max = max(x_min_1, x_min_2), min(x_max_1, x_max_2), max(y_min_1, y_min_2), min(y_max_1, y_max_2)
 
-    #return images_cropped
-    return (img_morph[y_min_1:y_max_1, x_min_1: x_max_1, :], 
-        dst_img[y_min_1:y_max_1, x_min_1: x_max_1, :],
-        src_img[y_min_1:y_max_1, x_min_1: x_max_1, :])
+    return (img_morph[y_min:y_max, x_min: x_max, :], 
+        dst_img[y_min:y_max, x_min: x_max, :],
+        src_img[y_min:y_max, x_min: x_max, :])
+#    return(img_morph, dst_img, src_img)

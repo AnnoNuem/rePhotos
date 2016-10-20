@@ -103,9 +103,9 @@ def test():
     #dst_img = np.copy(dst_img_orig)
 
     # scale images, add small value to later crop everything which is zero
-    src_img_alpha = np.ones((src_img.shape[0], src_img.shape[1], 4), np.float32)
+    src_img_alpha = np.ones((src_img.shape[0], src_img.shape[1], 4), np.float32) * 255
     src_img_alpha[:, :, 0:3] = np.float32(src_img[:,:,0:3])
-    dst_img_alpha = np.ones((dst_img.shape[0], dst_img.shape[1], 4), np.float32)
+    dst_img_alpha = np.ones((dst_img.shape[0], dst_img.shape[1], 4), np.float32) * 255
     dst_img_alpha[:, :, 0:3] = np.float32(dst_img[:,:,0:3])
     src_img_alpha, dst_img_alpha, src_lines, dst_lines = scale(src_img_alpha, dst_img_alpha, src_lines, dst_lines)
 
