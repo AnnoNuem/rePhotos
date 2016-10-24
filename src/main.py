@@ -2,12 +2,15 @@ import cv2
 import matlab.engine
 import os, sys
 import numpy as np
+from build_mesh import build_regular_mesh
 from image_helpers import scale
 from image_morphing import morph
 
 
 location = os.path.abspath(os.path.dirname(sys.argv[0]))
 dataname = 'data.mat'
+
+grid_size = 20
 
 
 def init_matlab():
@@ -125,8 +128,13 @@ def test():
     eng.workspace['width'] = float(src_img_alpha.shape[1])
     eng.workspace['height'] = float(src_img_alpha.shape[0])
     eng.workspace['lineConstraintType'] = 2
-    x, y, triangulation, quads = eng.eval('test(gridSize, linesrc, linedst, nSamplePerGrid, \
-        lineConstraintType, deformEnergyWeights, width, height)', nargout=4)
+    eng.workspace['gridSize'] = float(grid_size)
+
+    build_regular_mesh(src_img_alpha.shape[1], src_img_alpha.shape[0], grid_size)
+
+    cv2.waitKey(0)
+    x, y, quads = eng.eval('test(gridSize, linesrc, linedst, nSamplePerGrid, \
+        lineConstraintType, deformEnergyWeights, width, height)', nargout=3)
 
     # transform point coordinates from matlab to numpy
     points_old = []
