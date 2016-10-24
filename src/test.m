@@ -1,5 +1,7 @@
-function [x ,y, p] = test(gridSize, linesrc, linedst, nSamplePerGrid, lineConstraintType,...
-    deformEnergyWeights, w, h)
+function [x ,y, p] = test(x, p, qmSize, linesrc, linedst, nSamplePerGrid, lineConstraintType,...
+    deformEnergyWeights, gridSize, w, h)
+
+qmSize = double(cell2mat(qmSize));
 
 %dstImg = imread([mp_path, mp_dst_name]);
 %srcImg = imread([mp_path, mp_src_name]);
@@ -7,7 +9,6 @@ function [x ,y, p] = test(gridSize, linesrc, linedst, nSamplePerGrid, lineConstr
 
 %w1 = size(dstImg, 2);
 %h2 = size(dstImg, 1);
-[x,uv, p, qmSize, B, t] = buildRegularMesh(w, h, gridSize);
 
 %update energy
 L = PolyMeshEnergy(x, p, deformEnergyWeights);

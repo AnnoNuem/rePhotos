@@ -125,16 +125,17 @@ def test():
     linedst = matlab.double(dst_lines)
     eng.workspace['linesrc'] = linedst
     eng.workspace['linedst'] = linesrc
-    eng.workspace['width'] = float(src_img_alpha.shape[1])
-    eng.workspace['height'] = float(src_img_alpha.shape[0])
     eng.workspace['lineConstraintType'] = 2
+
+    grid_points, quads, grid_shape = build_regular_mesh(src_img_alpha.shape[1], src_img_alpha.shape[0], grid_size)
+
+    eng.workspace['gridPoints'] = matlab.double(grid_points.tolist())
+    eng.workspace['quads'] = matlab.double((quads + 1).tolist())
+    eng.workspace['gridShape'] = grid_shape
     eng.workspace['gridSize'] = float(grid_size)
 
-    build_regular_mesh(src_img_alpha.shape[1], src_img_alpha.shape[0], grid_size)
-
-    cv2.waitKey(0)
-    x, y, quads = eng.eval('test(gridSize, linesrc, linedst, nSamplePerGrid, \
-        lineConstraintType, deformEnergyWeights, width, height)', nargout=3)
+    x, y, quads = eng.eval('test(gridPoints, quads, gridShape, linesrc, linedst, nSamplePerGrid, \
+        lineConstraintType, deformEnergyWeights, gridSize)', nargout=3)
 
     # transform point coordinates from matlab to numpy
     points_old = []
