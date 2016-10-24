@@ -2,7 +2,9 @@ import cv2
 import matlab.engine
 import os, sys
 import numpy as np
-from build_mesh import build_regular_mesh
+from scipy.sparse import csc_matrix
+from image_aaap import build_regular_mesh
+from image_aaap import poly_mesh_energy
 from image_helpers import scale
 from image_morphing import morph
 
@@ -10,7 +12,10 @@ from image_morphing import morph
 location = os.path.abspath(os.path.dirname(sys.argv[0]))
 dataname = 'data.mat'
 
-grid_size = 20
+# aaap parameters
+grid_size = 50
+line_constraint_type = 2
+deform_energy_weights = np.array([1, 0.0100, 0, 0])
 
 
 def init_matlab():
@@ -102,10 +107,7 @@ def test():
             exit()
     cv2.destroyAllWindows()
 
-    #src_img = np.copy(src_img_orig)
-    #dst_img = np.copy(dst_img_orig)
-
-    # scale images, add small value to later crop everything which is zero
+    # scale images, create alpha channel for easy cropping
     src_img_alpha = np.ones((src_img.shape[0], src_img.shape[1], 4), np.float32) * 255
     src_img_alpha[:, :, 0:3] = np.float32(src_img[:,:,0:3])
     dst_img_alpha = np.ones((dst_img.shape[0], dst_img.shape[1], 4), np.float32) * 255
@@ -120,19 +122,23 @@ def test():
         line[1] = y_max - line[1]
         line[3] = y_max - line[3]
 
-    # compute grid and grid deformation
-    linesrc = matlab.double(src_lines)
-    linedst = matlab.double(dst_lines)
-    eng.workspace['linesrc'] = linedst
-    eng.workspace['linedst'] = linesrc
-    eng.workspace['lineConstraintType'] = 2
-
+    # init grid 
     grid_points, quads, grid_shape = build_regular_mesh(src_img_alpha.shape[1], src_img_alpha.shape[0], grid_size)
-
     eng.workspace['gridPoints'] = matlab.double(grid_points.tolist())
     eng.workspace['quads'] = matlab.double((quads + 1).tolist())
     eng.workspace['gridShape'] = grid_shape
     eng.workspace['gridSize'] = float(grid_size)
+
+    # update energy
+    L = poly_mesh_energy(grid_points, quads, deform_energy_weights)
+    print L
+
+    # deform grid
+    linesrc = matlab.double(src_lines)
+    linedst = matlab.double(dst_lines)
+    eng.workspace['linesrc'] = linedst
+    eng.workspace['linedst'] = linesrc
+    eng.workspace['lineConstraintType'] = line_constraint_type
 
     x, y, quads = eng.eval('test(gridPoints, quads, gridShape, linesrc, linedst, nSamplePerGrid, \
         lineConstraintType, deformEnergyWeights, gridSize)', nargout=3)
