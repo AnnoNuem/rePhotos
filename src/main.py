@@ -2,7 +2,7 @@ import cv2
 import matlab.engine
 import os, sys
 import numpy as np
-from scipy.sparse import csc_matrix
+from scipy import sparse
 from image_aaap import build_regular_mesh
 from image_aaap import poly_mesh_energy
 from image_helpers import scale
@@ -129,9 +129,11 @@ def test():
     eng.workspace['gridShape'] = grid_shape
     eng.workspace['gridSize'] = float(grid_size)
 
-    # update energy
-    L = poly_mesh_energy(grid_points, quads, deform_energy_weights)
-    print L
+    # create enery matrix
+    L = construct_mesh_energy(grid_points, quads, deform_energy_weights)
+
+    # discretisice lines
+
 
     # deform grid
     linesrc = matlab.double(src_lines)

@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse import csc_matrix
+from scipy.sparse import coo_matrix
 
 def build_regular_mesh(width, height, grid_size):
     """
@@ -32,16 +32,18 @@ def build_regular_mesh(width, height, grid_size):
     return grid_points, quads, (m,n)
 
 
-def poly_mesh_energy(grid_points, quads, deform_energy_weights):
+def construct_mesh_energy(grid_points, quads, deform_energy_weights):
     """
+    Create quadratic enery matrix for aaap deformation of quad mesh.
     Returns:
-        L:
+        L: Sparse matrixs coresponding to aaap quadratic energy.
     """
+
     nv = grid_points.shape[0]
     n = quads.shape[0]
    
-    Ais = np.empty(n * 16)#, dtype=object)
-    Ajs = np.empty(n * 16)#, dtype=object)
+    Ais = np.empty(n * 16)
+    Ajs = np.empty(n * 16)
     As = np.empty(n * 16, dtype=complex)
 
     A1 = np.array([[1, -1, 1, -1],
@@ -65,4 +67,4 @@ def poly_mesh_energy(grid_points, quads, deform_energy_weights):
         Ajs[i*16:i*16+16] = vvii.T.reshape(vvii.size)
         As[i*16:i*16+16] = A
     
-    return csc_matrix((As, (Ais, Ajs)), shape=(nv, nv)).toarray() 
+    return coo_matrix((As, (Ais, Ajs)), shape=(nv, nv)).tocsr()
