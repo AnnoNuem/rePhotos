@@ -133,9 +133,6 @@ def bilinear_point_in_quad_mesh(pts, X, P, qmSize):
     wx = (pts[0, :] - X[P[q, 0], 0]) / (X[P[q, 1], 0] - X[P[q, 0], 0])
     wy = (pts[1, :] - X[P[q, 0], 1]) / (X[P[q, 3], 1] - X[P[q, 0], 1])
 
-    print wx
-    print wy
+    return  coo_matrix((np.array(((1 - wx) * (1 - wy), wx * (1 - wy),  wx * wy, (1 - wx) * wy )).T.flatten(), 
+        (np.tile((np.arange(0, npts , 1)), [4,1]).T.flatten(),  P[q, :].flatten())), shape=(npts, nx)).tocsr()
 
-
-    # TODO a sparse
-    return -1

@@ -20,12 +20,13 @@ L = PolyMeshEnergy(x, p, deformEnergyWeights);
 [psrc, pdst] = sampleLines([linesrc, linedst], nSamplePerGrid/gridSize);
 
 
-% WORKING
+% DONE
 Asrc = bilinearPointInQuadMesh(psrc, x, p, qmSize);
 % line constraint type 
 % 0 = linear sampled
 % 1 = semi flexible
 % 2 = flexible
+% IN PROCESS
 [y, energy] = deformAAAP(x, Asrc, pdst, L, lineConstraintType);
 %srcLineSamples = Asrc * x;
 %dstLineSamples = fC2R(cell2mat(pdst));
