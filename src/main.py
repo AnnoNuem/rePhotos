@@ -3,8 +3,9 @@ import matlab.engine
 import os, sys
 import numpy as np
 from scipy import sparse
+from image_aaap import construct_mesh_energy
 from image_aaap import build_regular_mesh
-from image_aaap import poly_mesh_energy
+from image_aaap import sample_lines
 from image_helpers import scale
 from image_morphing import morph
 
@@ -12,10 +13,14 @@ from image_morphing import morph
 location = os.path.abspath(os.path.dirname(sys.argv[0]))
 dataname = 'data.mat'
 
-# aaap parameters
+### aaap parameters
 grid_size = 50
 line_constraint_type = 2
 deform_energy_weights = np.array([1, 0.0100, 0, 0])
+# number of points sampled from line per grid
+n_samples_per_grid = 1
+
+###
 
 
 def init_matlab():
@@ -114,6 +119,17 @@ def test():
     dst_img_alpha[:, :, 0:3] = np.float32(dst_img[:,:,0:3])
     src_img_alpha, dst_img_alpha, src_lines, dst_lines = scale(src_img_alpha, dst_img_alpha, src_lines, dst_lines)
 
+    # init grid 
+    grid_points, quads, grid_shape = build_regular_mesh(src_img_alpha.shape[1], src_img_alpha.shape[0], grid_size)
+    eng.workspace['gridPoints'] = matlab.double(grid_points.tolist())
+    eng.workspace['quads'] = matlab.double((quads + 1).tolist())
+    eng.workspace['gridShape'] = grid_shape
+    eng.workspace['gridSize'] = float(grid_size)
+
+    # create energy matrix
+    L = construct_mesh_energy(grid_points, quads, deform_energy_weights)
+
+    # change coordinate sytem of lines to matlab images
     y_max = src_img_alpha.shape[0]
     for line in src_lines:
         line[1] = y_max - line[1]
@@ -122,19 +138,13 @@ def test():
         line[1] = y_max - line[1]
         line[3] = y_max - line[3]
 
-    # init grid 
-    grid_points, quads, grid_shape = build_regular_mesh(src_img_alpha.shape[1], src_img_alpha.shape[0], grid_size)
-    eng.workspace['gridPoints'] = matlab.double(grid_points.tolist())
-    eng.workspace['quads'] = matlab.double((quads + 1).tolist())
-    eng.workspace['gridShape'] = grid_shape
-    eng.workspace['gridSize'] = float(grid_size)
+    # discretisize lines
+    src_points, dst_points = sample_lines(src_lines, dst_lines, float(n_samples_per_grid)/grid_size)
 
-    # create enery matrix
-    L = construct_mesh_energy(grid_points, quads, deform_energy_weights)
-
-    # discretisice lines
-
-
+    print src_points
+    print
+    print dst_points
+    
     # deform grid
     linesrc = matlab.double(src_lines)
     linedst = matlab.double(dst_lines)

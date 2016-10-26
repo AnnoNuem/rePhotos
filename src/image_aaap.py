@@ -68,3 +68,31 @@ def construct_mesh_energy(grid_points, quads, deform_energy_weights):
         As[i*16:i*16+16] = A
     
     return coo_matrix((As, (Ais, Ajs)), shape=(nv, nv)).tocsr()
+
+
+def sample_lines(src_lines, dst_lines, sample_rate):
+    """
+    Samples points from line pairs
+    """
+    assert len(src_lines) == len(dst_lines), "Different number of lines per image."
+    assert len(src_lines) > 0, "No lines."
+
+    #TODO switch tp src dst instead dst src but matlab implemenation is like this
+    line_pairs = np.concatenate((np.array(dst_lines,dtype=np.double), np.array(src_lines)), axis=1)
+
+    line_src = line_pairs[:, 0::2] + 1j* line_pairs[:, 1::2]
+
+    fGenWt = lambda n: np.array((np.arange(n-1, -1, -1), np.arange(0, n))).T/(n-1)
+
+    fNSampleAdaptive = lambda pq: max(2, np.ceil(sample_rate * abs(pq[0] -pq[1])))
+
+    pts = [ np.dot(fGenWt(fNSampleAdaptive(line_src[i,0:2])), line_src[i,:].reshape((2,-1)).T) for i in range(0,line_src.shape[0])]
+    p1 =  pts[0][:, 0]
+    p2 = []
+    p2.append(pts[0][:, 1])
+    for i in range(1, len(pts)):
+        p1 = np.concatenate((p1, pts[i][:, 0]))
+        p2.append(pts[i][:, 1])
+  
+    return p1, p2
+

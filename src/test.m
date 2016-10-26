@@ -11,13 +11,16 @@ qmSize = double(cell2mat(qmSize));
 %h2 = size(dstImg, 1);
 
 %update energy
+% DONE
 L = PolyMeshEnergy(x, p, deformEnergyWeights);
 
 
 % discretisice lines
+%DONE
 [psrc, pdst] = sampleLines([linesrc, linedst], nSamplePerGrid/gridSize);
 
 
+% WORKING
 Asrc = bilinearPointInQuadMesh(psrc, x, p, qmSize);
 % line constraint type 
 % 0 = linear sampled
