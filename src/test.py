@@ -1,7 +1,7 @@
 import cv2 
 import numpy as np
 import sys
-from aaap_main import aaap_morph
+from image_aaap_main import aaap_morph
 
 
 def draw_line(img, start, end, color):
