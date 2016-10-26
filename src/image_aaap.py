@@ -96,3 +96,46 @@ def sample_lines(src_lines, dst_lines, sample_rate):
   
     return p1, p2
 
+def bilinear_point_in_quad_mesh(pts, X, P, qmSize):
+    """
+    Express points in a quad mesh as the convex combination of there 
+    containing quads, using bilinear weights
+    A = bilinearPointInQuadMesh(pts, X, P, qmSize)
+    Args: 
+        pts: points that are to be expressed as bilinear combinations of 
+        the quadmesh vertices
+        X, P: the vertices/connectivy of the quadmesh
+        qmSize: size (rows/columns of quads) of the quadmesh, that is 
+        consctructed to cover some image plane
+    Returns:
+        A: a matrix that gives the weights for the points as combinations 
+        of the quadmesh vertices, i.e. A*X = pts
+    """ 
+    
+
+    if pts.dtype == 'complex128':
+        pts = np.array([pts.real, pts.imag])
+        
+
+    nx = X.shape[0]
+    npts = pts.shape[1]
+
+    # suboptimal but python has no minmax function
+    bbox = np.array((np.amin(X, axis=0), np.amax(X, axis=0)))
+    peak_dist = np.ptp(X, axis=0)
+
+    eps = np.finfo(float).eps
+    qij = np.array((np.ceil((pts[0, :] + eps - bbox[0, 0]) * (qmSize[1] - 1) / peak_dist[0]), 
+                    np.ceil((pts[1, :] + eps - bbox[0, 1]) * (qmSize[0] - 1) / peak_dist[1])))
+
+    q = (((qij[0, :] - 1) * (qmSize[0] - 1) + qij[1, :]) - 1).astype(int)
+
+    wx = (pts[0, :] - X[P[q, 0], 0]) / (X[P[q, 1], 0] - X[P[q, 0], 0])
+    wy = (pts[1, :] - X[P[q, 0], 1]) / (X[P[q, 3], 1] - X[P[q, 0], 1])
+
+    print wx
+    print wy
+
+
+    # TODO a sparse
+    return -1

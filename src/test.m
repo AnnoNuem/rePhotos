@@ -1,5 +1,5 @@
-function [x ,y, p] = test(x, p, qmSize, linesrc, linedst, nSamplePerGrid, lineConstraintType,...
-    deformEnergyWeights, gridSize, w, h)
+function [x ,y, p] = test(x, p, qmSize, linesrc, linedst, nSamplePerGrid,...
+    lineConstraintType, deformEnergyWeights, gridSize)
 
 qmSize = double(cell2mat(qmSize));
 

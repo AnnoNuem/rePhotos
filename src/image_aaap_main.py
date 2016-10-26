@@ -6,6 +6,7 @@ from scipy import sparse
 from image_aaap import construct_mesh_energy
 from image_aaap import build_regular_mesh
 from image_aaap import sample_lines
+from image_aaap import bilinear_point_in_quad_mesh
 from image_helpers import scale
 from image_morphing import morph
 
@@ -61,10 +62,11 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=50,
     # discretisize lines
     src_points, dst_points = sample_lines(src_lines, dst_lines, float(n_samples_per_grid)/grid_size)
 
-    print src_points
-    print
-    print dst_points
+    # express points by quads
+    Asrc = bilinear_point_in_quad_mesh(src_points, grid_points, quads, grid_shape)
     
+    print Asrc
+
     # deform grid
     linesrc = matlab.double(src_lines)
     linedst = matlab.double(dst_lines)
