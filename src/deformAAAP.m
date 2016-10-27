@@ -86,7 +86,7 @@ if flexLineConstraints>0
 %     lambda = 10;
 %     y = (Lr*2+lambda*C'*C)\(lambda*C'*d);
     y = complex(y(1:nv), y(nv+(1:nv)));
-else
+else % flex_line == 0
     pdst = cell2mat(pdst);
     pdst = reshape(pdst, [], 1); % merge multiple lines
 

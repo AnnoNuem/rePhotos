@@ -7,6 +7,7 @@ from image_aaap import construct_mesh_energy
 from image_aaap import build_regular_mesh
 from image_aaap import sample_lines
 from image_aaap import bilinear_point_in_quad_mesh
+from image_aaap import deform_aaap 
 from image_helpers import scale
 from image_morphing import morph
 
@@ -65,24 +66,27 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=50,
     # express points by quads
     Asrc = bilinear_point_in_quad_mesh(src_points, grid_points, quads, grid_shape)
     
-    print Asrc
-
     # deform grid
+    y = deform_aaap(grid_points, Asrc, dst_points, L, line_constraint_type)
+
+    print y
+
+
     linesrc = matlab.double(src_lines)
     linedst = matlab.double(dst_lines)
     eng.workspace['linesrc'] = linedst
     eng.workspace['linedst'] = linesrc
     eng.workspace['lineConstraintType'] = line_constraint_type
 
-    x, y, quads = eng.eval('test(gridPoints, quads, gridShape, linesrc, linedst, nSamplePerGrid, \
-        lineConstraintType, deformEnergyWeights, gridSize)', nargout=3)
+    y = eng.eval('test(gridPoints, quads, gridShape, linesrc, linedst, nSamplePerGrid, \
+        lineConstraintType, deformEnergyWeights, gridSize)', nargout=1)
 
     # transform point coordinates from matlab to numpy
     points_old = []
     points_new = []
     max_x = dst_img_alpha.shape[1]
     max_y = dst_img_alpha.shape[0]
-    for point in x:
+    for point in grid_points:
         points_old.append((point[0], max_y - point[1]))
     for point in y:
         points_new.append((point[0], max_y - point[1]))

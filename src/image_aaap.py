@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse import coo_matrix
+from scipy.sparse import csc_matrix
 
 def build_regular_mesh(width, height, grid_size):
     """
@@ -67,7 +67,9 @@ def construct_mesh_energy(grid_points, quads, deform_energy_weights):
         Ajs[i*16:i*16+16] = vvii.T.reshape(vvii.size)
         As[i*16:i*16+16] = A
     
-    return coo_matrix((As, (Ais, Ajs)), shape=(nv, nv)).tocsr()
+    L = csc_matrix((As, (Ais, Ajs)), shape=(nv, nv))
+    L.eliminate_zeros()
+    return L
 
 
 def sample_lines(src_lines, dst_lines, sample_rate):
@@ -96,6 +98,7 @@ def sample_lines(src_lines, dst_lines, sample_rate):
   
     return p1, p2
 
+
 def bilinear_point_in_quad_mesh(pts, X, P, qmSize):
     """
     Express points in a quad mesh as the convex combination of there 
@@ -112,11 +115,9 @@ def bilinear_point_in_quad_mesh(pts, X, P, qmSize):
         of the quadmesh vertices, i.e. A*X = pts
     """ 
     
-
     if pts.dtype == 'complex128':
         pts = np.array([pts.real, pts.imag])
         
-
     nx = X.shape[0]
     npts = pts.shape[1]
 
@@ -133,6 +134,49 @@ def bilinear_point_in_quad_mesh(pts, X, P, qmSize):
     wx = (pts[0, :] - X[P[q, 0], 0]) / (X[P[q, 1], 0] - X[P[q, 0], 0])
     wy = (pts[1, :] - X[P[q, 0], 1]) / (X[P[q, 3], 1] - X[P[q, 0], 1])
 
-    return  coo_matrix((np.array(((1 - wx) * (1 - wy), wx * (1 - wy),  wx * wy, (1 - wx) * wy )).T.flatten(), 
-        (np.tile((np.arange(0, npts , 1)), [4,1]).T.flatten(),  P[q, :].flatten())), shape=(npts, nx)).tocsr()
+    Ascr = csc_matrix((np.array(((1 - wx) * (1 - wy), wx * (1 - wy),  wx * wy, (1 - wx) * wy )).T.flatten(), 
+        (np.tile((np.arange(0, npts , 1)), [4,1]).T.flatten(),  P[q, :].flatten())), shape=(npts, nx))
+    Ascr.eliminate_zeros()
+    return Ascr
 
+
+def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
+    """
+    AAAP/ASAP deform a quadmesh with line constraints
+    Args: 
+        x: geometry of the original quadmesh
+        Asrc: matrix that express lines (sampled points on lines) as linear 
+        combinations of x
+        pdst: target positions of the lines (sampled points on them), each 
+        cell element corresponds to one line
+        L: AAAP/ASAP energy of the quadmesh
+        flexLineConstraints: constraint type of each line
+    Returns:
+        y: geometry of the deformed quadmesh
+    """
+
+    if x.dtype != 'complex128':
+        x = x[:, 0] + 1j * x[:, 1]
+
+    nv =  x.shape[0]
+
+    B1 = []
+    nb = 0
+    
+    #print Asrc
+    if line_constraint_type > 0:
+        n_samples_in_line = np.zeros((len(pdst) + 1))
+        n_samples_in_line[1:] = np.array([line.size for line in pdst])
+        AIdxs = np.cumsum(n_samples_in_line)
+        n_lines = len(pdst)
+
+        for i in range(0, n_lines):
+            a = (pdst[i])[0]
+            b = (pdst[i])[-1]
+
+            if line_constraint_type == 2:
+    #            print AIdxs[i]
+    #            print AIdxs[i+1] -1
+                A1 = Asrc[AIdxs[i]:AIdxs[i+1] -1, :]
+    #            print A1
+    return  -1
