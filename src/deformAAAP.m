@@ -75,16 +75,16 @@ if flexLineConstraints>0
     
     
     %% remove constraints (possibly contradicting) for same points
-    [d, C] = qr(C, d);
-    d = d(any(C,2));
-    C = C(any(C,2),:);
+    %[d, C] = qr(C, d);
+    %d = d(any(C,2));
+    %C = C(any(C,2),:);
 
     Lr = [real(L) -imag(L); imag(L) real(L)];
     y = [Lr*2 C.'; C sparse(numel(d), numel(d))] \ [zeros(nv*2,1); d];
     
     %% soft constraints
-%     lambda = 10;
-%     y = (Lr*2+lambda*C'*C)\(lambda*C'*d);
+    %     lambda = 10;
+    %     y = (Lr*2+lambda*C'*C)\(lambda*C'*d);
     y = complex(y(1:nv), y(nv+(1:nv)));
 else % flex_line == 0
     pdst = cell2mat(pdst);
@@ -107,8 +107,8 @@ else % flex_line == 0
     y = y(1:nv);
 
     %% soft constraints
-%      lambda = 1e1;
-%      y = (L+lambda*C'*C)\(lambda*C'*d);
+    %      lambda = 1e1;
+    %      y = (L+lambda*C'*C)\(lambda*C'*d);
 end
 
 energy = y'*L*y;

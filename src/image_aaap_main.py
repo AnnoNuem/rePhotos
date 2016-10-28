@@ -69,7 +69,7 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=50,
     # deform grid
     y = deform_aaap(grid_points, Asrc, dst_points, L, line_constraint_type)
 
-    print y
+    #print y
 
 
     linesrc = matlab.double(src_lines)
@@ -78,8 +78,9 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=50,
     eng.workspace['linedst'] = linesrc
     eng.workspace['lineConstraintType'] = line_constraint_type
 
-    y = eng.eval('test(gridPoints, quads, gridShape, linesrc, linedst, nSamplePerGrid, \
+    y  = eng.eval('test(gridPoints, quads, gridShape, linesrc, linedst, nSamplePerGrid, \
         lineConstraintType, deformEnergyWeights, gridSize)', nargout=1)
+
 
     # transform point coordinates from matlab to numpy
     points_old = []

@@ -1,5 +1,9 @@
 import numpy as np
 from scipy.sparse import csc_matrix
+from scipy.sparse import hstack
+from scipy.sparse import vstack
+from scipy.linalg import qr
+from scipy.linalg import qr_multiply
 
 def build_regular_mesh(width, height, grid_size):
     """
@@ -50,13 +54,12 @@ def construct_mesh_energy(grid_points, quads, deform_energy_weights):
                   [-1, 1, -1, 1],
                   [1, -1, 1, -1],
                   [ -1, 1, -1, 1]], dtype=complex)/4
-    A2 = np.array([[1, 1j, -1, -1],
+    A2 = np.array([[1, 1j, -1, -1j],
                   [-1j, 1, 1j, -1],
                   [-1, -1j, 1, 1j],
                   [ 1j, -1, -1j, 1]])/4
     A = (A1 * deform_energy_weights[0] + A2 * deform_energy_weights[1]) * 2
     A = A.T.reshape(A.size) 
-
     for i in range(n):
         vvi = quads[i,:]
         nvv = vvi.size
@@ -162,21 +165,77 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
 
     B1 = []
     nb = 0
+
     
-    #print Asrc
     if line_constraint_type > 0:
         n_samples_in_line = np.zeros((len(pdst) + 1))
         n_samples_in_line[1:] = np.array([line.size for line in pdst])
         AIdxs = np.cumsum(n_samples_in_line)
         n_lines = len(pdst)
 
+        C = np.empty(n_lines, dtype=object)
+        d = np.empty(n_lines, dtype=object)
+
+        C2 = np.empty(n_lines, dtype=object)
+        d2 = np.empty(n_lines, dtype=object)
+
         for i in range(0, n_lines):
             a = (pdst[i])[0]
             b = (pdst[i])[-1]
 
             if line_constraint_type == 2:
-    #            print AIdxs[i]
-    #            print AIdxs[i+1] -1
-                A1 = Asrc[AIdxs[i]:AIdxs[i+1] -1, :]
-    #            print A1
-    return  -1
+                A1 = Asrc[AIdxs[i]:AIdxs[i+1], :]
+                d[i] = (a.imag * b.real - a.real * b.imag) * np.ones(pdst[i].size)
+            else: # line_constraint_type == 1
+                A1 = Asrc[AIdxs[i]+1:AIdxs[i+1]-1, :]
+                d[i] = (a.imag * b.real - a.real * b.imag) * np.ones(pdst[i].size - 2)
+
+                C2[i] = Asrc[[AIdxs[i], AIdxs[i+1] -1], :]
+                d2[i] = np.array((a, b))
+
+            # TODO check if tocsc is required
+            C[i] = hstack(((a-b).imag * A1, (-(a-b).real * A1)))
+
+        C = vstack(C).tocsc() # scipy.sparse.vstack
+        d = np.hstack(d)
+
+        if line_constraint_type == 1:
+            C2 = vstack(C2).tocsc()
+            d2 = np.hstack(d2)
+            
+            # remove possibly contradicting constraints for same points
+            _, ia =  np.unique(C2.dot(x), return_index=True)
+            
+            C2 = C2[ia, :]
+            d2 = d2[ia]
+
+            c_1 = hstack((C2.real, -C2.imag))
+            c_1.eliminate_zeros()
+            c_2 = hstack((C2.imag, C2.real))
+            c_2.eliminate_zeros()
+            C = vstack((C, c_1, c_2)).tocsc()
+            d = np.hstack((d, d2.real, d2.imag))
+            
+        # remove constraints (possibly contradicting) for same points
+        # qr does not work on sparse
+        #d, C = qr_multiply(C.toarray(), d)
+        #print csc_matrix(d)
+        #print
+        #print csc_matrix(C)
+        #print
+        # TODO any, lines 79f
+        
+        #Lr = hstack((hstack((L.real, -L.imag)), hstack((L.imag, L.real)).T))
+        #print Lr
+        print L
+
+        #print
+        #print hstack((-L.imag, L.real))
+        #print
+        #print (hstack((L.imag, L.real))).T
+
+
+
+
+    # TODO line_constraint_type == 0
+    return  -1#y
