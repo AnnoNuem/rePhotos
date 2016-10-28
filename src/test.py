@@ -80,7 +80,7 @@ def test():
     cv2.destroyAllWindows()
 
     # morph
-    src_img_morphed, dst_img_cropped, src_img_cropped = aaap_morph(src_img, dst_img, src_lines, dst_lines, line_constraint_type=1, grid_size=200)
+    src_img_morphed, dst_img_cropped, src_img_cropped = aaap_morph(src_img, dst_img, src_lines, dst_lines, line_constraint_type=2, grid_size=5)
 
     # compute overlay
     overlay_morphed = cv2.addWeighted(dst_img_cropped, 0.5, src_img_morphed, 0.5, 0)

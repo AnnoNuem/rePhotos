@@ -2,8 +2,11 @@ import numpy as np
 from scipy.sparse import csc_matrix
 from scipy.sparse import hstack
 from scipy.sparse import vstack
+from scipy.sparse import bmat
+from scipy.sparse.linalg import spsolve
 from scipy.linalg import qr
 from scipy.linalg import qr_multiply
+
 
 def build_regular_mesh(width, height, grid_size):
     """
@@ -158,7 +161,9 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
         y: geometry of the deformed quadmesh
     """
 
+    xreal = False
     if x.dtype != 'complex128':
+        xreal = True
         x = x[:, 0] + 1j * x[:, 1]
 
     nv =  x.shape[0]
@@ -225,17 +230,24 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
         #print
         # TODO any, lines 79f
         
-        #Lr = hstack((hstack((L.real, -L.imag)), hstack((L.imag, L.real)).T))
-        #print Lr
-        print L
+        l_imag = L.imag
+        l_real = L.real
+        l_real.eliminate_zeros()
+        l_imag.eliminate_zeros()
+        Lr =  bmat([[l_real, -l_imag], [l_imag, l_real]]).tocsc()
 
-        #print
-        #print hstack((-L.imag, L.real))
-        #print
-        #print (hstack((L.imag, L.real))).T
+        b = np.zeros((nv * 2 + d.size))
+        b[nv * 2:] = d
 
+        y = spsolve(bmat([[Lr * 2, C.T], [C, csc_matrix((d.size, d.size))]]).tocsc(), b)
+        
+        y = y[0:nv] + 1j * y[nv:nv+nv]
+        if xreal:
+            y = np.array([y.real, y.imag])
+
+        
 
 
 
     # TODO line_constraint_type == 0
-    return  -1#y
+    return  y
