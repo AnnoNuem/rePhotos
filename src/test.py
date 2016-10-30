@@ -75,7 +75,6 @@ def test():
         key = cv2.waitKey(0)
         if key == 27:
             cv2.destroyAllWindows()
-            eng.quit()
             exit()
     cv2.destroyAllWindows()
 

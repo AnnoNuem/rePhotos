@@ -73,15 +73,14 @@ if flexLineConstraints>0
     end
     
 
-    bla = full(C)';
-    C_old = bla;
     %% remove constraints (possibly contradicting) for same points
     [d, C] = qr(C, d);
     d = d(any(C,2));
     C = C(any(C,2),:);
-    bla = full(C)';
+    
     Lr = [real(L) -imag(L); imag(L) real(L)];
     y = [Lr*2 C.'; C sparse(numel(d), numel(d))] \ [zeros(nv*2,1); d];
+
     
     %% soft constraints
     %     lambda = 10;
@@ -99,9 +98,9 @@ else % flex_line == 0
     %% solve with hard-constraints
     C = [sparse(1:nb, B1, 1, nb, nv); Asrc];
     d = [x(B1); pdst];
-    [d, C] = qr(C, d);
-    d = d(any(C,2));
-    C = C(any(C,2),:);
+    %[d, C] = qr(C, d);
+    %d = d(any(C,2));
+    %C = C(any(C,2),:);
 
     %% solve in complex
     y = [L*2 C.'; C sparse(numel(d), numel(d))] \ [zeros(nv,1); d];

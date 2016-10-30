@@ -170,7 +170,6 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
 
     B1 = []
     nb = 0
-
     
     if line_constraint_type > 0:
         n_samples_in_line = np.zeros((len(pdst) + 1))
@@ -229,10 +228,10 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
         d_qr, C_qr, _ = qr_multiply(C.toarray(), d, pivoting=True)
         C_qr_s = csc_matrix(C_qr)
 
-        print d_qr
-        print
-        print C_qr
-        print
+        #print d_qr
+        #print
+        #print C_qr
+        #print
         # TODO any, lines 79f
         #d_qr = d
         #C_qr_s = C
@@ -245,16 +244,30 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
 
         b = np.zeros((nv * 2 + d.size))
         b[nv * 2:] = d_qr
-
-        y = spsolve(bmat([[Lr * 2, C_qr_s.T], [C, csc_matrix((d_qr.size, d_qr.size))]]).tocsc(), b)
+        y = spsolve(bmat([[Lr * 2, C_qr_s.T], [C_qr_s, csc_matrix((d_qr.size, d_qr.size))]]).tocsc(), b)
         
         y = y[0:nv] + 1j * y[nv:nv+nv]
-        if xreal:
-            y = np.array([y.real, y.imag])
-
         
+    else: # line_constraint_type == 0
+        
+        pdst = np.hstack(pdst)
 
+        _, ia = np.unique(Asrc*x, return_index=True)
+        Asrc = Asrc[ia,:]
+        pdst = pdst[ia]
 
+        C = Asrc
+        d = pdst
+        # TODO QR line 102
 
-    # TODO line_constraint_type == 0
+        b = np.zeros((nv + d.size), dtype=complex)
+        b[nv:] = d
+        y = spsolve(bmat([[L * 2, C.T], [C, csc_matrix((d.size, d.size))]]).tocsc(), b)
+        
+        y = y[0:nv]
+        print y
+
+    if xreal:
+        y = np.array([y.real, y.imag])
+
     return  y

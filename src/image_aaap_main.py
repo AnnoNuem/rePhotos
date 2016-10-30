@@ -51,15 +51,6 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=50,
     # create energy matrix
     L = construct_mesh_energy(grid_points, quads, deform_energy_weights)
 
-    # change coordinate sytem of lines to matlab images
-    y_max = src_img_alpha.shape[0]
-    for line in src_lines:
-        line[1] = y_max - line[1]
-        line[3] = y_max - line[3]
-    for line in dst_lines:
-        line[1] = y_max - line[1]
-        line[3] = y_max - line[3]
-
     # discretisize lines
     src_points, dst_points = sample_lines(src_lines, dst_lines, float(n_samples_per_grid)/grid_size)
 
@@ -85,23 +76,15 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=50,
     #print 
     #print type(y) 
 
-    # transform point coordinates from matlab to numpy
-    points_old = []
-    points_new = []
-    max_x = dst_img_alpha.shape[1]
-    max_y = dst_img_alpha.shape[0]
-    for point in grid_points:
-        points_old.append((point[0], max_y - point[1]))
-    for point in y_p:
-        points_new.append((point[0], max_y - point[1]))
 
     # morph image
-    (src_img_morphed, dst_img_cropped, src_img_cropped) = morph(dst_img_alpha, src_img_alpha, points_old, points_new, quads)
+    (src_img_morphed, dst_img_cropped, src_img_cropped) = morph(dst_img_alpha, src_img_alpha, grid_points, y_p, quads)
 
+    # transform point coordinates from matlab to numpy
     points_new = []
     for point in y:
-        points_new.append((point[0], max_y - point[1]))
-    (src_img_morphed_m, dst_img_cropped_m,_) = morph(dst_img_alpha, src_img_alpha, points_old, points_new, quads)
+        points_new.append((point[0], point[1]))
+    (src_img_morphed_m, dst_img_cropped_m,_) = morph(dst_img_alpha, src_img_alpha, grid_points, points_new, quads)
 
     # postprocess
     src_img_morphed = np.uint8(src_img_morphed[:, :, 0:3])
