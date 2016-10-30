@@ -81,11 +81,10 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=50,
         lineConstraintType, deformEnergyWeights, gridSize)', nargout=1)
     
     y_p = y_p.T
-    print y_p
-    print 
-    print y
+    #print y_p
+    #print 
+    #print type(y) 
 
-    y = y_p
     # transform point coordinates from matlab to numpy
     points_old = []
     points_new = []
@@ -93,17 +92,24 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=50,
     max_y = dst_img_alpha.shape[0]
     for point in grid_points:
         points_old.append((point[0], max_y - point[1]))
-    for point in y:
+    for point in y_p:
         points_new.append((point[0], max_y - point[1]))
 
     # morph image
     (src_img_morphed, dst_img_cropped, src_img_cropped) = morph(dst_img_alpha, src_img_alpha, points_old, points_new, quads)
 
+    points_new = []
+    for point in y:
+        points_new.append((point[0], max_y - point[1]))
+    (src_img_morphed_m, dst_img_cropped_m,_) = morph(dst_img_alpha, src_img_alpha, points_old, points_new, quads)
+
     # postprocess
     src_img_morphed = np.uint8(src_img_morphed[:, :, 0:3])
+    src_img_morphed_m = np.uint8(src_img_morphed_m[:, :, 0:3])
     dst_img_cropped = np.uint8(dst_img_cropped[:, :, 0:3])
+    dst_img_cropped_m = np.uint8(dst_img_cropped_m[:, :, 0:3])
     src_img_cropped = np.uint8(src_img_cropped[:, :, 0:3])
 
     eng.quit()
-    return src_img_morphed, dst_img_cropped, src_img_cropped
+    return src_img_morphed, dst_img_cropped, src_img_cropped, src_img_morphed_m, dst_img_cropped_m
 

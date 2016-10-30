@@ -187,7 +187,6 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
         for i in range(0, n_lines):
             a = (pdst[i])[0]
             b = (pdst[i])[-1]
-
             if line_constraint_type == 2:
                 A1 = Asrc[AIdxs[i]:AIdxs[i+1], :]
                 d[i] = (a.imag * b.real - a.real * b.imag) * np.ones(pdst[i].size)
@@ -198,7 +197,6 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
                 C2[i] = Asrc[[AIdxs[i], AIdxs[i+1] -1], :]
                 d2[i] = np.array((a, b))
 
-            # TODO check if tocsc is required
             C[i] = hstack(((a-b).imag * A1, (-(a-b).real * A1)))
 
         C = vstack(C).tocsc() # scipy.sparse.vstack
@@ -221,15 +219,24 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
             C = vstack((C, c_1, c_2)).tocsc()
             d = np.hstack((d, d2.real, d2.imag))
             
+        print C.toarray()
+        print
+
+
+
         # remove constraints (possibly contradicting) for same points
         # qr does not work on sparse
-        #d, C = qr_multiply(C.toarray(), d)
-        #print csc_matrix(d)
-        #print
-        #print csc_matrix(C)
-        #print
+        d_qr, C_qr, _ = qr_multiply(C.toarray(), d, pivoting=True)
+        C_qr_s = csc_matrix(C_qr)
+
+        print d_qr
+        print
+        print C_qr
+        print
         # TODO any, lines 79f
-        
+        #d_qr = d
+        #C_qr_s = C
+
         l_imag = L.imag
         l_real = L.real
         l_real.eliminate_zeros()
@@ -237,9 +244,9 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
         Lr =  bmat([[l_real, -l_imag], [l_imag, l_real]]).tocsc()
 
         b = np.zeros((nv * 2 + d.size))
-        b[nv * 2:] = d
+        b[nv * 2:] = d_qr
 
-        y = spsolve(bmat([[Lr * 2, C.T], [C, csc_matrix((d.size, d.size))]]).tocsc(), b)
+        y = spsolve(bmat([[Lr * 2, C_qr_s.T], [C, csc_matrix((d_qr.size, d_qr.size))]]).tocsc(), b)
         
         y = y[0:nv] + 1j * y[nv:nv+nv]
         if xreal:

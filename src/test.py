@@ -80,19 +80,26 @@ def test():
     cv2.destroyAllWindows()
 
     # morph
-    src_img_morphed, dst_img_cropped, src_img_cropped = aaap_morph(src_img, dst_img, src_lines, dst_lines, line_constraint_type=2, grid_size=5)
+    src_img_morphed, dst_img_cropped, src_img_cropped, src_img_morphed_m, dst_img_cropped_m = aaap_morph(src_img, dst_img, src_lines, dst_lines, line_constraint_type=2, grid_size=100)
 
     # compute overlay
     overlay_morphed = cv2.addWeighted(dst_img_cropped, 0.5, src_img_morphed, 0.5, 0)
+    overlay_morphed_m = cv2.addWeighted(dst_img_cropped_m, 0.5, src_img_morphed_m, 0.5, 0)
 #    overlay_orig = cv2.addWeighted(src_img, 0.5, dst_img, 0.5, 0)
     
     # display
     cv2.namedWindow('overlay', cv2.WINDOW_KEEPRATIO)
     cv2.imshow('overlay', cv2.addWeighted(dst_img_cropped, 0.5, src_img_morphed, 0.5, 0))
     cv2.resizeWindow('overlay', 640, 480)
+    cv2.namedWindow('overlay_m', cv2.WINDOW_KEEPRATIO)
+    cv2.imshow('overlay_m', cv2.addWeighted(dst_img_cropped_m, 0.5, src_img_morphed_m, 0.5, 0))
+    cv2.resizeWindow('overlay_m', 640, 480)
     cv2.namedWindow('src_morphed', cv2.WINDOW_KEEPRATIO)
     cv2.imshow('src_morphed', src_img_morphed)
     cv2.resizeWindow('src_morphed', 640, 480)
+    cv2.namedWindow('src_morphed_m', cv2.WINDOW_KEEPRATIO)
+    cv2.imshow('src_morphed_m', src_img_morphed_m)
+    cv2.resizeWindow('src_morphed_m', 640, 480)
     
     # write2disk
     filenname_prefix = 'results/' + (src_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + \

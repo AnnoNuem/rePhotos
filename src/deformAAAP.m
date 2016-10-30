@@ -48,8 +48,7 @@ if flexLineConstraints>0
         else % flexLineConstraints==1
             A1 = Asrc(AIdxs(i)+1:AIdxs(i+1)-2, :);
             d{i} = (imag(a)*real(b) - real(a)*imag(b))*ones(numel(pdst{i})-2, 1);
-            
-            
+                    
             C2{i} = Asrc([AIdxs(i) AIdxs(i+1)-1], :);
             d2{i} = [a; b];
         end
@@ -73,12 +72,14 @@ if flexLineConstraints>0
         d = [d; real(d2); imag(d2)];
     end
     
-    
-    %% remove constraints (possibly contradicting) for same points
-    %[d, C] = qr(C, d);
-    %d = d(any(C,2));
-    %C = C(any(C,2),:);
 
+    bla = full(C)';
+    C_old = bla;
+    %% remove constraints (possibly contradicting) for same points
+    [d, C] = qr(C, d);
+    d = d(any(C,2));
+    C = C(any(C,2),:);
+    bla = full(C)';
     Lr = [real(L) -imag(L); imag(L) real(L)];
     y = [Lr*2 C.'; C sparse(numel(d), numel(d))] \ [zeros(nv*2,1); d];
     
