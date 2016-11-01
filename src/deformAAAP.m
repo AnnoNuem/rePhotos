@@ -98,9 +98,9 @@ else % flex_line == 0
     %% solve with hard-constraints
     C = [sparse(1:nb, B1, 1, nb, nv); Asrc];
     d = [x(B1); pdst];
-    %[d, C] = qr(C, d);
-    %d = d(any(C,2));
-    %C = C(any(C,2),:);
+    [d, C] = qr(C, d);
+    d = d(any(C,2));
+    C = C(any(C,2),:);
 
     %% solve in complex
     y = [L*2 C.'; C sparse(numel(d), numel(d))] \ [zeros(nv,1); d];

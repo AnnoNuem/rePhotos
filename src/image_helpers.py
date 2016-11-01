@@ -263,3 +263,25 @@ def scale(img1, img2, lines_img1, lines_img2):
 
     return img1, img2, lines_img1, lines_img2
 
+
+def statistic_canny(img, sigma=0.33):
+    """
+    Edge detection depending on image properties.
+    
+    Args:
+        img: Image on which to detect edges.
+        sigma: Standard deviation.
+
+    Returns:
+        img: Edged image.
+    """
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = cv2.GaussianBlur(img, (3,3), 0)
+    #m = np.median(img)
+
+    #lower_bound = int(max(0, (1.0 - sigma) * m))
+    #upper_bound = int(min(255, (1.0 + sigma) * m))
+
+    #return cv2.Canny(img, lower_bound, upper_bound, L2gradient=True)
+
+    return cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 10)

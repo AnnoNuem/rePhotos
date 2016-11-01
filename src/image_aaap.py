@@ -233,8 +233,8 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
         #print C_qr
         #print
         # TODO any, lines 79f
-        #d_qr = d
-        #C_qr_s = C
+        d_qr = d
+        C_qr_s = C
 
         l_imag = L.imag
         l_real = L.real
