@@ -5,10 +5,13 @@ from image_aaap_main import aaap_morph
 from image_lines import get_line
 
 
-def draw_line(img, start, end, color):
-    thickness = int((img.shape[0] + img.shape[1]) / 800  )
+def draw_line(img, start, end, color, l_number):
+    thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
     lineType = 8
     cv2.line(img, start, end, color, thickness, lineType )
+    if l_number > 0:
+        text_size = float(thickness)/2 
+        cv2.putText(img, str(l_number), end, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, text_size, (0,255,0), thickness)
 
 
 drag_start = (0,0)
@@ -21,26 +24,28 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, win_name, color)):
         drag_start = (x, y)
 
     elif event == cv2.EVENT_MOUSEMOVE and (flags==cv2.EVENT_FLAG_LBUTTON or flags==cv2.EVENT_FLAG_RBUTTON):
-        draw_line(img_tmp, drag_start,(x,y), color)
+        draw_line(img_tmp, drag_start,(x,y), color, -1)
         cv2.imshow(win_name, img_tmp)
           
     elif event == cv2.EVENT_LBUTTONUP:
-        draw_line(img, drag_start,(x,y), color)
-        cv2.imshow(win_name, img)
         lines.append([drag_start[0], drag_start[1], x, y])
+        draw_line(img, drag_start,(x,y), color, len(line))
+        cv2.imshow(win_name, img)
 
     elif event == cv2.EVENT_RBUTTONUP:
         line = get_line(drag_start, (x,y), img_orig)
-        draw_line(img,(line[0], line[1]), (line[2], line[3]), color)
-        cv2.imshow(win_name, img)
         lines.append(line)
+        draw_line(img,(line[0], line[1]), (line[2], line[3]), color, len(lines))
+        cv2.imshow(win_name, img)
 
     elif event == cv2.EVENT_MBUTTONUP and len(lines) > 0:
         del lines[-1]
         # np.copy creates new array, local img points to new array, main img still points to old img with lines
         img[:] = img_orig[:]
+        i = 1
         for line in lines:
-            draw_line(img, (line[0], line[1]), (line[2], line[3]), color)
+            draw_line(img, (line[0], line[1]), (line[2], line[3]), color, i)
+            i+=1
         cv2.imshow(win_name, img)
 
 
@@ -48,6 +53,7 @@ def test():
     if len(sys.argv) != 3:
         print("Usage: test <img_src> <img_dst>")
         exit()
+    print("LMB: Draw Line\nMMB: Delete last line in active Window\nRMB: Drawing line with RMB finds nearest line\nSpace: Start morphing\nEsc: Quit program")
     src_name = sys.argv[1]
     dst_name = sys.argv[2]
 
