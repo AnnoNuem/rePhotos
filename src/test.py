@@ -2,8 +2,7 @@ import cv2
 import numpy as np
 import sys
 from image_aaap_main import aaap_morph
-from image_lines import get_line
-
+import image_lines as i_l
 
 def draw_line(img, start, end, color, l_number):
     thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
@@ -33,9 +32,12 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, win_name, color)):
         cv2.imshow(win_name, img)
 
     elif event == cv2.EVENT_RBUTTONUP:
-        line = get_line(drag_start, (x,y), img_orig)
+        line = i_l.get_line(drag_start, (x,y), img_orig, i_l.PST)
         lines.append(line)
         draw_line(img,(line[0], line[1]), (line[2], line[3]), color, len(lines))
+        #line = i_l.get_line(drag_start, (x,y), img_orig, i_l.STAT_CANNY)
+        #lines.append(line)
+        #draw_line(img,(line[0], line[1]), (line[2], line[3]), (0,255,0), len(lines))
         cv2.imshow(win_name, img)
 
     elif event == cv2.EVENT_MBUTTONUP and len(lines) > 0:

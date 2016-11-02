@@ -1,7 +1,5 @@
 import numpy as np
 import cv2
-from image_helpers import get_corners 
-from image_helpers import weighted_average_point
 from image_helpers import get_crop_indices
 
 

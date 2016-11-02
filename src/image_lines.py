@@ -1,11 +1,17 @@
 import numpy as np
 import cv2
 from image_helpers import statistic_canny
+from image_helpers import adaptive_thresh
+from image_helpers import pst_wrapper
 
 # Patch Size Divisor: Area arround line in which similar line is searched
 psd = 60
 
-def get_line(p1, p2, img):
+ADAPT_THRESH = 0
+STAT_CANNY = 1
+PST = 2
+
+def get_line(p1, p2, img, method):
     """
     Search in image for most similar line of a given line.
 
@@ -37,8 +43,15 @@ def get_line(p1, p2, img):
     patch = img[x_min: x_max, y_min: y_max]
 
     # Edge detection
-    patch_p = statistic_canny(patch) 
-    cv2.imshow('as2df', patch_p)
+    if method == ADAPT_THRESH:
+        patch_p  = adaptive_thresh(patch) 
+        cv2.imshow('thresh', patch_p)
+    elif method == STAT_CANNY:
+        patch_p  = statistic_canny(patch) 
+        cv2.imshow('canny', patch_p)
+    elif method == PST:
+        patch_p  = pst_wrapper(patch) 
+        cv2.imshow('pst', patch_p)
 
     # Generate mask of patch size
     mask = np.zeros((img.shape[0], img.shape[1]), dtype=patch_p.dtype)
@@ -59,7 +72,7 @@ def get_line(p1, p2, img):
     p_y_max = max(p1_o[0],p2_o[0])
     min_line_length = np.sqrt((p_x_max - p_x_min) * (p_x_max - p_x_min) + (p_y_max - p_y_min) * (p_y_max - p_y_min))/1.8 
     max_gap = min_line_length/7
-    lines = cv2.HoughLinesP(patch_p, 1, np.pi/180.0, 40, np.array([]), min_line_length, max_gap)
+    lines = cv2.HoughLinesP(patch_p, 1, np.pi/180.0, 1, np.array([]), min_line_length, max_gap)
 
     # return given points if no lines found else:
     if lines is not None:
@@ -76,12 +89,15 @@ def get_line(p1, p2, img):
         a,b,c = lines.shape
         line_img = np.empty(weight_img.shape, dtype=np.uint8)
         weights = np.empty((a), dtype=np.float32)
+        tmp_img = np.zeros(weight_img.shape, dtype=np.uint8)
         for i in range(a):
             line_img[:] = 0
             cv2.line(line_img, (lines[i][0][0], lines[i][0][1]), (lines[i][0][2], lines[i][0][3]), 1, 1, 4)
+            cv2.line(tmp_img, (lines[i][0][0], lines[i][0][1]), (lines[i][0][2], lines[i][0][3]), 255, 1, 4)
             # Multiply line_img with weight_img and sum all entries
             weights[i] = np.einsum('ij,ij->', line_img, weight_img)
         
+        cv2.imshow('hough'+ str(method), tmp_img)
         p1 = lines[weights.argmax()][0][:2] + offset
         p2 = lines[weights.argmax()][0][2:] + offset
     

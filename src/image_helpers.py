@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+from image_pst import pst
 
 def lce(img, kernel = 11 , ammount = 0.5):
     """
@@ -32,8 +33,17 @@ def get_crop_indices(img):
     Get crop indices to crop black border from image.
     Crops non linear borders.
     Starts with small rectangle in middle, grows till black pixels are reached
-    at each site. This inefficient method has to be used since delaunaymorphing
+    at each site. This inefficient method has to be used since morphing
     does not necessarily produce straight edges.
+
+    Args: 
+        img1: BGRA image. Alpha channel is used to determine crop indices.
+
+    Returns:
+        x_min:
+        x_max:
+        y_min:
+        y_max:
 
     """        
     
@@ -102,93 +112,22 @@ def get_crop_indices(img):
     return x_min, x_max, y_min, y_max
 
 
-def weighted_average_point(point1, point2, alpha):
-    """
-    Return the average point between two points weighted by alpha.
-    """
-    x = int((1 - alpha) * point1[0] + alpha * point2[0])
-    y = int((1 - alpha) * point1[1] + alpha * point2[1])
-    return (x,y)
-
-
-def compute_corner(corner_x, corner_y, f, corners_img1, corners_img2, pointpairs, x_max, y_max, x_mean, y_mean):
-    """
-    Computes the position of a corner or edgemidpoint, given former corner or edgemidpoint position and sorting function.
-    """
-    pointpair = min(pointpairs, key=f)
-
-    delta_x_half = int((pointpair[0][0] - pointpair[1][0])/2)
-    delta_y_half = int((pointpair[0][1] - pointpair[1][1])/2)
-
-    if corner_x == 0:
-        x_1 = 0 + abs(delta_x_half) + delta_x_half
-        x_2 = 0 + abs(delta_x_half) - delta_x_half
-    elif corner_x == x_max:
-        x_1 = x_max - abs(delta_x_half) + delta_x_half
-        x_2 = x_max - abs(delta_x_half) - delta_x_half
-    elif corner_x == x_mean:
-        x_1 = x_mean - abs(delta_x_half) + delta_x_half
-        x_2 = x_mean - abs(delta_x_half) - delta_x_half
-
-    if corner_y == 0:
-        y_1 = 0 + abs(delta_y_half) + delta_y_half
-        y_2 = 0 + abs(delta_y_half) - delta_y_half
-    elif corner_y == y_max:
-        y_1 = y_max - abs(delta_y_half) + delta_y_half
-        y_2 = y_max - abs(delta_y_half) - delta_y_half
-    elif corner_y == y_mean:
-        y_1 = y_mean - abs(delta_y_half) + delta_y_half
-        y_2 = y_mean - abs(delta_y_half) - delta_y_half
-
-    corners_img1.append((x_1, y_1))
-    corners_img2.append((x_2, y_2))
-
-    return
-
-
-def get_corners(img, img2, points_img1, points_img2):
-    """Adds the corners and middle point of edges to pointlists.
-    Finds the user selectet points which are nearest to the four corners and the
-    four middle points of the edges of the image. Computes the delta between
-    them and their coresponding points. Adds corner points and middle points of
-    edges to the point lists and offsets them using the computet delta values.
-    Returns the global max and minima used for cropping
-    """
-
-    x_max = min(img.shape[1], img2.shape[1]) - 1
-    y_max = min(img.shape[0], img2.shape[0]) - 1
-    x_mean = int(x_max / 2)
-    y_mean = int(y_max / 2)
-    corners_img1 = []
-    corners_img2 = []
-    pointpairs = zip(points_img1[:], points_img2[:])
-
-    # bottom left 
-    compute_corner(0, y_max, lambda p: ((p[0])[0] + (y_max - (p[0])[1])), corners_img1, corners_img2, pointpairs, x_max, y_max, x_mean, y_mean)
-    # bottom mean
-    compute_corner(x_mean, y_max, lambda p: ((abs(x_mean - (p[0])[0]))  + (y_max - (p[0])[1])), corners_img1, corners_img2, pointpairs, x_max, y_max, x_mean, y_mean)
-    # bottom right
-    compute_corner(x_max, y_max, lambda p: ((x_max - (p[0])[0]) + (y_max - (p[0])[1])), corners_img1, corners_img2, pointpairs, x_max, y_max, x_mean, y_mean)
-    # mean right
-    compute_corner(x_max, y_mean, lambda p: ((x_max - (p[0])[0]) + abs(y_mean - (p[0])[1])), corners_img1, corners_img2, pointpairs, x_max, y_max, x_mean, y_mean)
-    # top right
-    compute_corner(x_max, 0, lambda p: ((x_max - (p[0])[0]) + (p[0])[1]), corners_img1, corners_img2, pointpairs, x_max, y_max, x_mean, y_mean)
-    # top mean
-    compute_corner(x_mean, 0, lambda p: ((abs(x_mean - (p[0])[0]))  + (p[0])[1]), corners_img1, corners_img2, pointpairs, x_max, y_max, x_mean, y_mean)
-    # top left
-    compute_corner(0, 0, lambda p: ((p[0])[0] + (p[0])[1]), corners_img1, corners_img2, pointpairs, x_max, y_max, x_mean, y_mean)
-    # mean left
-    compute_corner(0, y_mean, lambda p: ((p[0])[0]  + abs(y_mean - (p[0])[1])), corners_img1, corners_img2, pointpairs, x_max, y_max, x_mean, y_mean)
-
-    points_img1 += corners_img1
-    points_img2 += corners_img2
-    return 
-
-
 def scale(img1, img2, lines_img1, lines_img2):
     """
-    Prescales images and lines to allow delaunay morphing of images of different sizes.
-    Upsacles the smaller image
+    Upscales the smaller image and coresponding lines of two given images.
+    Aspect ratio is preserved, blank space is filled with zeros.
+    Args:
+        img1: Image 1.
+        img2: Image 2.
+        lines_img_1: Lines in image 1.
+        lines_img_2: Lines in image 2.
+
+    Returns:
+        img1: If img1 is bigger returns img1 else scaled img1.
+        img2: If img2 is bigger returns img2 else scaled img2.
+        lines_img_1: Lines in image 1, scaled if img1 is scaled.
+        lines_img_2: Lines in image 2, scaled if img2 is scaled.
+
     """
     y_size_img1, x_size_img1, z_size_img1 = img1.shape
     y_size_img2, x_size_img2, z_size_img2 = img2.shape
@@ -264,6 +203,31 @@ def scale(img1, img2, lines_img1, lines_img2):
     return img1, img2, lines_img1, lines_img2
 
 
+def adaptive_thresh(img):
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = cv2.GaussianBlur(img, (3,3), 0)
+    
+    return cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 10)
+
+
+def pst_wrapper(img):
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    #pst_img = abs(pst(img, morph_flag=True))
+    #pst_img =  np.uint8((pst_img/pst_img.max())*255)
+    pst_img = pst(img, thresh_min=-1, thresh_max=1, morph_flag=True) 
+
+    struct_elem = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
+    #h_m = cv2.morphologyEx(pst_img, cv2.MORPH_OPEN, struct_elem, iterations=1)
+    h_m = cv2.erode(pst_img, struct_elem, iterations=1)
+    print h_m.max()
+    cv2.imshow('h_m', h_m * 255)
+    pst_cleaned = pst_img * (1-h_m)
+    print pst_img.max()
+    #pst_img = cv2.morphologyEx(pst_img, cv2.MORPH_GRADIENT, (3,3))
+    cv2.imshow('cleaned', pst_cleaned)
+    return np.uint8(pst_img* 255)
+
+
 def statistic_canny(img, sigma=0.33):
     """
     Edge detection depending on image properties.
@@ -277,11 +241,10 @@ def statistic_canny(img, sigma=0.33):
     """
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     img = cv2.GaussianBlur(img, (3,3), 0)
-    #m = np.median(img)
+    m = np.median(img)
 
-    #lower_bound = int(max(0, (1.0 - sigma) * m))
-    #upper_bound = int(min(255, (1.0 + sigma) * m))
+    lower_bound = int(max(0, (1.0 - sigma) * m))
+    upper_bound = int(min(255, (1.0 + sigma) * m))
 
-    #return cv2.Canny(img, lower_bound, upper_bound, L2gradient=True)
+    return cv2.Canny(img, lower_bound, upper_bound, L2gradient=True)
 
-    return cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 10)
