@@ -1,7 +1,6 @@
-﻿def pst(image, lpf=0.21, phase_strength=0.48, warp_strength=12.14, thresh_min=-0.5, thresh_max=0.5, morph_flag=False):
+﻿def pst(image, lpf=0.5, phase_strength=0.5, warp_strength=0.5, thresh_min=-0.5, thresh_max=0.5, morph_flag=False):
     # port of https://github.com/JalaliLabUCLA/Image-feature-detection-using-Phase-Stretch-Transform
     # restrictions on usage apply, consult the original source!
-
     import numpy
     from numpy.fft import fft2, ifft2, fftshift
 
@@ -56,21 +55,12 @@
     if morph_flag == False:
         return result
     else:
-        res_neg = numpy.zeros(image.shape, dtype=numpy.uint8)
-        res_pos = numpy.zeros(image.shape, dtype=numpy.uint8)
-        res_neg = result[result<0]
-        res_pos = result[result>0]
-        mean_neg = res_neg.mean()
-        mean_pos = res_pos.mean()
+        binary = numpy.zeros_like(image, dtype=bool)
 
-        binary = numpy.zeros(image.shape, dtype=numpy.uint8)
-        
-        thresh_neg = mean_neg
-        thresh_pos = mean_pos
-        binary[result > thresh_pos] = 1
-        binary[result < thresh_neg] = 1 
-        #binary[image < image.max() / 20] = 0
-        
+        binary[result > thresh_max] = 1
+        binary[result < thresh_min] = 1    
+        binary[image < image.max() / 20] = 0
+
         # the matlab version does post-processing (cleaning) here!
 
         return binary

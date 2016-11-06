@@ -209,24 +209,27 @@ def adaptive_thresh(img):
     
     return cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 10)
 
-
+'''
 def pst_wrapper(img):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    #img = cv2.GaussianBlur(img, (5,5), 0)
     #pst_img = abs(pst(img, morph_flag=True))
     #pst_img =  np.uint8((pst_img/pst_img.max())*255)
-    pst_img = pst(img, thresh_min=-1, thresh_max=1, morph_flag=True) 
+    img = cv2.resize(img, (0,0), fx=2, fy=2)
+    pst_img = pst(img, morph_flag=True) 
 
     struct_elem = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
-    #h_m = cv2.morphologyEx(pst_img, cv2.MORPH_OPEN, struct_elem, iterations=1)
+    h_m = cv2.morphologyEx(pst_img, cv2.MORPH_OPEN, struct_elem, iterations=1)
     h_m = cv2.erode(pst_img, struct_elem, iterations=1)
-    print h_m.max()
+    #print h_m.max()
     cv2.imshow('h_m', h_m * 255)
     pst_cleaned = pst_img * (1-h_m)
-    print pst_img.max()
+    #print pst_img.max()
     #pst_img = cv2.morphologyEx(pst_img, cv2.MORPH_GRADIENT, (3,3))
     cv2.imshow('cleaned', pst_cleaned)
+    pst_img = cv2.resize(pst_img, (0,0), fx=0.5, fy=0.5)
     return np.uint8(pst_img* 255)
-
+'''
 
 def statistic_canny(img, sigma=0.33):
     """
@@ -248,3 +251,29 @@ def statistic_canny(img, sigma=0.33):
 
     return cv2.Canny(img, lower_bound, upper_bound, L2gradient=True)
 
+
+def line_intersect(a1, a2, b1, b2) :
+    """
+    Compute intersection of two lines.
+    All input points have to be float.
+    Returns startpoint of second line if lines are parallel.
+    Args:
+        a1: Startpoint first line.
+        a2: Endpoint first line.
+        b1: Startpoint second line.
+        b2: Endpoint second line.
+
+    Returns:
+        intersection point.
+    """
+    da = a2 - a1
+    db = b2 - b1
+    dp = a1 - b1
+    dap = np.empty_like(da)
+    dap[0] = -da[1]
+    dap[1] = da[0]
+    denom = np.dot(dap, db)
+    if denom == 0:
+        return b1
+    num = np.dot(dap, dp)
+    return (num / denom) * db + b1

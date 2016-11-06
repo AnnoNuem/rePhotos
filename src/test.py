@@ -3,6 +3,7 @@ import numpy as np
 import sys
 from image_aaap_main import aaap_morph
 import image_lines as i_l
+from image_sac import getPointFromPoint
 
 def draw_line(img, start, end, color, l_number):
     thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
@@ -19,8 +20,11 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, win_name, color)):
     
     img_tmp = np.copy(img)
 
-    if event == cv2.EVENT_LBUTTONDOWN or event == cv2.EVENT_RBUTTONDOWN:
+    if event == cv2.EVENT_LBUTTONDOWN:
         drag_start = (x, y)
+
+    if event == cv2.EVENT_RBUTTONDOWN:
+        drag_start = getPointFromPoint(img, (x, y))
 
     elif event == cv2.EVENT_MOUSEMOVE and (flags==cv2.EVENT_FLAG_LBUTTON or flags==cv2.EVENT_FLAG_RBUTTON):
         draw_line(img_tmp, drag_start,(x,y), color, -1)
@@ -28,16 +32,17 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, win_name, color)):
           
     elif event == cv2.EVENT_LBUTTONUP:
         lines.append([drag_start[0], drag_start[1], x, y])
-        draw_line(img, drag_start,(x,y), color, len(line))
+        draw_line(img, drag_start,(x,y), color, len(lines))
         cv2.imshow(win_name, img)
 
     elif event == cv2.EVENT_RBUTTONUP:
-        line = i_l.get_line(drag_start, (x,y), img_orig, i_l.PST)
-        lines.append(line)
-        draw_line(img,(line[0], line[1]), (line[2], line[3]), color, len(lines))
-        #line = i_l.get_line(drag_start, (x,y), img_orig, i_l.STAT_CANNY)
+        #line = i_l.get_line(drag_start, (x,y), img_orig, i_l.PST)
         #lines.append(line)
-        #draw_line(img,(line[0], line[1]), (line[2], line[3]), (0,255,0), len(lines))
+        #draw_line(img,(line[0], line[1]), (line[2], line[3]), color, len(lines))
+        drag_end = getPointFromPoint(img, (x, y))
+        line = i_l.get_line(drag_start, drag_end, img_orig, i_l.STAT_CANNY)
+        lines.append(line)
+        draw_line(img,(line[0], line[1]), (line[2], line[3]), (0,255,0), len(lines))
         cv2.imshow(win_name, img)
 
     elif event == cv2.EVENT_MBUTTONUP and len(lines) > 0:
