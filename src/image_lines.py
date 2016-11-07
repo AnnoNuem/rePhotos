@@ -13,8 +13,26 @@ ADAPT_THRESH = 0
 STAT_CANNY = 1
 PST = 2
 
+#TODO lce
+
 def lim_line_length(p1_h, p2_h, p1_o, p2_o):
-    # Limit line length to length of user drawn line
+    """
+    Limits length of line h to linesegment o.
+    Computes a line segment of line h found by hough transform to the
+    length of user drawn line segment o by computing the normals at start
+    and end point of user drawn line segment and their intersection with
+    hough line.
+    
+    Args:
+        p1_h: First point on hough line.
+        p2_h: Second point on hough line.
+        p1_o: Startpoint of user drawn line segment.
+        p2_o: Endpoint of user drawn line segment.
+
+    Returns:
+        z1: Startpoint of line segment of hough line.
+        z2: Endpoint of line segment of hough line.
+    """
     p1_o = np.array(p1_o, dtype=np.float32)
     p2_o = np.array(p2_o, dtype=np.float32)
     p1_h = np.array(p1_h, dtype=np.float32)
@@ -27,6 +45,24 @@ def lim_line_length(p1_h, p2_h, p1_o, p2_o):
     z1 = (np.rint(z1)).astype(int)
     z2 = (np.rint(z2)).astype(int)
     return z1, z2
+
+
+def get_theta(p1, p2):
+    """
+    Computes gradient angle of line.
+
+    Args:
+        p1_o: First point of line.
+        p2_o: Second point of line.
+
+    Returns:
+        theta: Gradient angle.
+    """
+    if p2[0] - p1[0] == 0:
+        return 0
+    else:
+        m = (float(p2[1] - p1[1]) / float(p2[0] - p1[0]))
+        return np.arctan(m) + np.pi/2
 
 
 def get_line(p1, p2, img, method):
@@ -116,17 +152,14 @@ def get_line(p1, p2, img, method):
             weights_user = np.empty((nl), dtype=np.float32)
             line_segs = np.empty((nl), dtype=object)
             i, j = 0, 0
-            theta_o = np.abs(np.arctan(float(p2_o[0] - p1_o[0]) / float(p2_o[1] - p1_o[1])))
-            print theta_o 
-            while  j < nl and i < 10 :
-                # allow only lines with roughly the same slope as user drawn lines
+            theta_o = get_theta_o(p1_o, p2_o)    
+            while  j < lines.shape[0] and i < 10 :
                 rho = lines[j][0][0]
                 theta = lines[j][0][1]
                 j += 1
 
-                print i
-                print theta 
-                if np.abs(theta_o - theta) < .2:
+                # allow only lines with roughly the same slope as user drawn lines
+                if np.abs(theta_o - theta) < .05 or np.pi - np.abs(theta_o - theta) < 0.05:
                     line_img[:] = 0
                     a = np.cos(theta)
                     b = np.sin(theta)
@@ -143,14 +176,16 @@ def get_line(p1, p2, img, method):
                     i += 1
             weights_user = (weights_user - weights_user.min()) / (weights_user.max() - weights_user.min())
             weights_patch= (weights_patch - weights_patch.min()) / (weights_patch.max() - weights_patch.min())
-            print weights_user
-            print weights_patch
-            weights = weights_patch + 0.5 * weights_user
-            print weights
-            print
-            i = weights.argmax()
-            p1 = line_segs[i][0] + offset
-            p2 = line_segs[i][1] + offset
+            #print weights_user
+            #print weights_patch
+            weights = weights_patch #+ 0.5 * weights_user
+            #print weights[:i]
+            #print
+            if i > 0:
+                k = weights[:i].argmax()
+                p1 = line_segs[k][0] + offset
+                p2 = line_segs[k][1] + offset
+            
         
         ###  hough probabilistic
         if False:
