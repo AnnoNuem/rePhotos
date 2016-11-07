@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 from image_pst import pst
 
-def lce(img, kernel = 11 , ammount = 0.5):
+def lce(img, kernel = 11 , amount = 0.5):
     """
     Local Contrast Enhancement by unsharp mask.
     """
@@ -17,7 +17,7 @@ def lce(img, kernel = 11 , ammount = 0.5):
     img_v = img_hsv[:,:,2] 
     img_v_blurred = cv2.GaussianBlur(img_v, (kernel, kernel), 0, 0)
     img_t = img_v - img_v_blurred
-    img_v = img_v + img_t * ammount
+    img_v = img_v + img_t * amount
     
     img_v[img_v > 1] = 1
     img_v[img_v < 0] = 0

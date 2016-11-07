@@ -3,18 +3,14 @@ import cv2
 from image_helpers import statistic_canny
 from image_helpers import adaptive_thresh
 from image_helpers import line_intersect 
+from image_helpers import lce
 
 # Patch Size Divisor: Area arround line in which similar line is searched
 psd = 70
-scale_factor = 2
 
 ADAPT_THRESH = 0
 STAT_CANNY = 1
 PST = 2
-
-#TODO gaus on line image
-#TODO lce
-#TODO check if comparison between user drawn and hough line is required
 
 
 def lim_line_length(p1_h, p2_h, p1_o, p2_o):
@@ -115,6 +111,9 @@ def weight_lines(patch_p, lines, p1_o, p2_o):
         k = weights[:i].argmax()
         p1 = line_segs[k][0] 
         p2 = line_segs[k][1] 
+    else:
+        p1 = p1_o
+        p2 = p2_o
 
     return p1, p2
 
@@ -150,6 +149,7 @@ def get_line(p1, p2, img, method):
     y_max = int(min(img.shape[1], p.T[0,:].max()))
 
     patch = img[x_min: x_max, y_min: y_max]
+    #patch = np.uint8(lce(patch, amount=1) * 255)
 
     # Edge detection
     if method == ADAPT_THRESH:
