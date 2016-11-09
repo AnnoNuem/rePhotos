@@ -1,11 +1,13 @@
 import numpy as np
 from scipy.sparse import csc_matrix
+from scipy.sparse import coo_matrix
 from scipy.sparse import hstack
 from scipy.sparse import vstack
 from scipy.sparse import bmat
 from scipy.sparse.linalg import spsolve
 from scipy.linalg import qr
 from scipy.linalg import qr_multiply
+import spqr
 
 
 def build_regular_mesh(width, height, grid_size):
@@ -218,23 +220,37 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
             C = vstack((C, c_1, c_2)).tocsc()
             d = np.hstack((d, d2.real, d2.imag))
             
-        print C.toarray()
-        print
+        #print C.toarray()
+        #print
 
 
 
         # remove constraints (possibly contradicting) for same points
         # qr does not work on sparse
-        d_qr, C_qr, _ = qr_multiply(C.toarray(), d, pivoting=True)
-        C_qr_s = csc_matrix(C_qr)
+        #d_qr, C_qr, _ = qr_multiply(C.toarray(), d, pivoting=True)
+        #C_qr_s = csc_matrix(C_qr)
 
         #print d_qr
         #print
         #print C_qr
         #print
         # TODO any, lines 79f
-        d_qr = d
-        C_qr_s = C
+
+        C_tmp = coo_matrix(C)
+        C_data, C_i, C_j, r_data, r_i, r_j = spqr.qr_solve(C_tmp.data, C_tmp.row, C_tmp.col, C_tmp.nnz, C_tmp.shape[0], C_tmp.shape[1], d)
+        #C_tmp = csc_matrix((C_data, (C_i, C_j)), shape=(d.shape[0], d.shape[1]))
+        #print C_tmp2
+        C_qr_s = coo_matrix((r_data, (r_i, r_j)), shape=C_tmp.get_shape())
+        d_qr = C_data[C_i]
+        
+        print(d_qr)
+        print(C_qr_s)
+        
+
+
+        #print C_data
+        #d_qr = d
+        #C_qr_s = C
 
         l_imag = L.imag
         l_real = L.real
