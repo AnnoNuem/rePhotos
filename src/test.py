@@ -4,6 +4,34 @@ import sys
 from image_aaap_main import aaap_morph
 import image_lines as i_l
 from image_sac import getPointFromPoint
+import json
+
+
+use_line_file= True
+line_file_name_end = "line_file.txt"
+
+def read_lines(filename):
+    try:
+        f = open(filename, "r")
+    except IOError:
+        print("Could not open line file.")
+        return [], []
+
+    with f:
+        [src_lines, dst_lines] = json.load(f)
+
+    return src_lines, dst_lines
+
+
+def write_lines(src_lines, dst_lines, filename):
+    try:
+        f = open(filename, "w")
+    except IOError:
+        print("Could not save lines to file.")
+
+    with f:
+        json.dump([src_lines, dst_lines], f)
+    
 
 def draw_line(img, start, end, color, l_number):
     thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
@@ -63,8 +91,8 @@ def test():
     print("LMB: Draw Line\nMMB: Delete last line in active Window\nRMB: Drawing line with RMB finds nearest line\nSpace: Start morphing\nEsc: Quit program")
     src_name = sys.argv[1]
     dst_name = sys.argv[2]
-    src_name = "/home/axel/Downloads/CheckerboardCube.png"
-    dst_name = "/home/axel/Downloads/CheckerboardCubeTransformed.png"
+    #src_name = "/home/axel/Downloads/CheckerboardCube.png"
+    #dst_name = "/home/axel/Downloads/CheckerboardCubeTransformed.png"
     src_img = cv2.imread(src_name)
     dst_img = cv2.imread(dst_name)
 
@@ -78,8 +106,20 @@ def test():
     src_img_orig = np.copy(src_img)
     dst_img_orig = np.copy(dst_img)
 
-    src_lines = []
-    dst_lines = []
+    if use_line_file:
+        line_file_name = src_name.rsplit('.', 1)[0] + "_" + line_file_name_end
+        src_lines, dst_lines = read_lines(line_file_name)
+        i = 0
+        for line in src_lines:
+            draw_line(src_img, (line[0], line[1]), (line[2], line[3]), (255,255,0), i)
+            i += 1
+        i = 0
+        for line in dst_lines:
+            draw_line(dst_img, (line[0], line[1]), (line[2], line[3]), (0,0 ,255), i)
+            i += 1
+    else:
+        src_lines = []
+        dst_lines = []
 
     cv2.namedWindow("src_img", cv2.WINDOW_KEEPRATIO)
     cv2.namedWindow("dst_img", cv2.WINDOW_KEEPRATIO)
@@ -98,6 +138,9 @@ def test():
             cv2.destroyAllWindows()
             exit()
     cv2.destroyAllWindows()
+
+    if use_line_file:
+        write_lines(src_lines, dst_lines, line_file_name)
 
     # morph
     src_img_morphed, dst_img_cropped, src_img_cropped, src_img_morphed_m, dst_img_cropped_m = aaap_morph(src_img, dst_img, src_lines, dst_lines, line_constraint_type=2, grid_size=10)

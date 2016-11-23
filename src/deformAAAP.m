@@ -74,9 +74,15 @@ if flexLineConstraints>0
     
 
     %% remove constraints (possibly contradicting) for same points
+    %disp(d)
+    %disp(C)
+    
     [d, C] = qr(C, d);
     d = d(any(C,2));
     C = C(any(C,2),:);
+    
+    %disp(d)
+    %disp(C)
     
     Lr = [real(L) -imag(L); imag(L) real(L)];
     y = [Lr*2 C.'; C sparse(numel(d), numel(d))] \ [zeros(nv*2,1); d];

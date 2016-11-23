@@ -86,7 +86,7 @@ size_t qr_solve(double const *A_data, long const *A_row, long const *A_col, size
     cholmod_sparse *R, *Csparse;
     int econ = A_csc->nrow;
     double tol = SPQR_DEFAULT_TOL;
-    int ordering = SPQR_ORDERING_DEFAULT;
+    int ordering = SPQR_ORDERING_FIXED;//VERY IMPORTANT TO GET SAME RESULTS AS MATLAB
     rank = SuiteSparseQR_C (ordering, tol, econ, 0, A_csc,
                     NULL, b, &Csparse, NULL, &R, &Qfill, NULL, NULL, NULL, cc) ;
 

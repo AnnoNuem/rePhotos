@@ -8,6 +8,7 @@ from scipy.sparse.linalg import spsolve
 from scipy.linalg import qr
 from scipy.linalg import qr_multiply
 import spqr
+import json
 
 
 def build_regular_mesh(width, height, grid_size):
@@ -148,6 +149,18 @@ def bilinear_point_in_quad_mesh(pts, X, P, qmSize):
     return Ascr
 
 
+def write_points(C, d, filename):
+    try:
+        f = open(filename, "w")
+    except IOError:
+        print("Could not save points to file.")
+
+    with f:
+        C_coo = coo_matrix(C)
+        C_tmp = np.array([C_coo.row.T, C_coo.col.T, C_coo.data.T], dtype=np.float32)
+        json.dump([C_tmp.T.tolist(),d.tolist()], f)
+
+
 def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
     """
     AAAP/ASAP deform a quadmesh with line constraints
@@ -220,38 +233,34 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
             C = vstack((C, c_1, c_2)).tocsc()
             d = np.hstack((d, d2.real, d2.imag))
             
-        #print C.toarray()
-        #print
-
-
-
         # remove constraints (possibly contradicting) for same points
-        # qr does not work on sparse
-        #d_qr, C_qr, _ = qr_multiply(C.toarray(), d, pivoting=True)
-        #C_qr_s = csc_matrix(C_qr)
-
-        #print d_qr
-        #print
-        #print C_qr
-        #print
-        # TODO any, lines 79f
-
-        C_tmp = coo_matrix(C)
-        C_data, C_i, C_j, r_data, r_i, r_j = spqr.qr_solve(C_tmp.data, C_tmp.row, C_tmp.col, C_tmp.nnz, C_tmp.shape[0], C_tmp.shape[1], d)
-        #C_tmp = csc_matrix((C_data, (C_i, C_j)), shape=(d.shape[0], d.shape[1]))
-        #print C_tmp2
-        C_qr_s = coo_matrix((r_data, (r_i, r_j)), shape=C_tmp.get_shape())
+        # call to suitesparse
+        print d
+        print C
+        C = coo_matrix(C)
+        print C.nnz
+        C_data, C_i, C_j, r_data, r_i, r_j = spqr.qr_solve(C.data, C.row, C.col, C.nnz, C.shape[0], C.shape[1], d)
+        C_qr_s = csc_matrix((r_data, (r_i, r_j)), shape=C.get_shape())
         d_qr = C_data[C_i]
-        
-        print(d_qr)
+        #print(d_qr)
+        index = np.unique(C_qr_s.nonzero()[0])
+        #print index
+        C_qr_s.eliminate_zeros()
+        d_qr_any = d_qr[index]
+        print(d_qr_any)
         print(C_qr_s)
+        print(C_qr_s.nnz)
+        #print(d_qr.shape)
+        # TODO all() in matlab
+        #print
+        #print (d_qr - d_qr_any)
+        #print d_qr.shape
+        #print d_qr_any.shape
         
-
-
-        #print C_data
+        #C_qr_s = csc_matrix(C)
         #d_qr = d
-        #C_qr_s = C
-
+        write_points(C_qr_s, d_qr, 'aadf.txt')
+        
         l_imag = L.imag
         l_real = L.real
         l_real.eliminate_zeros()
