@@ -235,10 +235,10 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
             
         # remove constraints (possibly contradicting) for same points
         # call to suitesparse
-        print d
-        print C
+        #print d
+        #print C
         C = coo_matrix(C)
-        print C.nnz
+        #print C.nnz
         C_data, C_i, C_j, r_data, r_i, r_j = spqr.qr_solve(C.data, C.row, C.col, C.nnz, C.shape[0], C.shape[1], d)
         C_qr_s = csc_matrix((r_data, (r_i, r_j)), shape=C.get_shape())
         d_qr = C_data[C_i]
@@ -247,9 +247,9 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
         #print index
         C_qr_s.eliminate_zeros()
         d_qr_any = d_qr[index]
-        print(d_qr_any)
-        print(C_qr_s)
-        print(C_qr_s.nnz)
+        #print(d_qr_any)
+        #print(C_qr_s)
+        #print(C_qr_s.nnz)
         #print(d_qr.shape)
         # TODO all() in matlab
         #print
@@ -257,9 +257,9 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
         #print d_qr.shape
         #print d_qr_any.shape
         
-        #C_qr_s = csc_matrix(C)
-        #d_qr = d
-        write_points(C_qr_s, d_qr, 'aadf.txt')
+        C_qr_s = csc_matrix(C)
+        d_qr = d
+        #write_points(C_qr_s, d_qr, 'aadf.txt')
         
         l_imag = L.imag
         l_real = L.real
