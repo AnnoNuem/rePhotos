@@ -5,7 +5,9 @@ from image_helpers import get_crop_indices
 
 def apply_affine_transform(src, src_quad, dst_quad, size):
     """
-    Apply affine transform calculated using src_quad and dst_quad to src and output an image of size.
+    Apply affine transform calculated using src_quad and dst_quad to src and 
+    output an image of size.
+
     """
     # Given a pair of quads, find the affine transform. 3 points give unique solution 
     warp_mat = cv2.getAffineTransform(np.float32(src_quad[0:3]), np.float32(dst_quad[0:3]))

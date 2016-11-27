@@ -94,7 +94,8 @@ def weight_lines(patch_p, lines, p1_o, p2_o):
         theta = lines[j][0][1]
         j += 1
         # allow only lines with roughly the same slope as user drawn lines
-        if np.abs(theta_o - theta) < .05 or np.pi - np.abs(theta_o - theta) < 0.05:
+        if np.abs(theta_o - theta) < .05 or \
+            np.pi - np.abs(theta_o - theta) < 0.05:
             line_img[:] = 0
             a = np.cos(theta)
             b = np.sin(theta)
@@ -132,7 +133,8 @@ def get_line(p1, p2, img, method):
     """
 
     # Get length and slope of line
-    length = np.sqrt((p1[1] - p2[1]) * (p1[1] - p2[1]) + (p1[0] - p2[0]) * (p1[0] - p2[0])) 
+    length = np.sqrt((p1[1] - p2[1]) * (p1[1] - p2[1]) + (p1[0] - p2[0]) * 
+        (p1[0] - p2[0])) 
     v = np.array([(p2[1] - p1[1])/length, (p2[0] - p1[0])/length])
 
     # Compute rectangle with line in the middle and same rotation as line

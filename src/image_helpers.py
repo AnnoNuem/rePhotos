@@ -145,7 +145,8 @@ def scale(img1, img2, lines_img1, lines_img2):
         temp_lines = []
         # X scale is smaller
         if x_scale_factor < y_scale_factor:
-            img2 = cv2.resize(img2,  (0,0), fx=x_scale_factor, fy=x_scale_factor, interpolation=cv2.INTER_LINEAR)
+            img2 = cv2.resize(img2,  (0,0), fx=x_scale_factor, 
+                fy=x_scale_factor, interpolation=cv2.INTER_LINEAR)
             for line in lines_img2:
                 temp_line = []
                 for value in line:
@@ -154,7 +155,8 @@ def scale(img1, img2, lines_img1, lines_img2):
 
         # Y scale is smaller
         else:
-            img2 = cv2.resize(img2, (0,0), fx=y_scale_factor, fy=y_scale_factor, interpolation=cv2.INTER_LINEAR)
+            img2 = cv2.resize(img2, (0,0), fx=y_scale_factor, 
+                fy=y_scale_factor, interpolation=cv2.INTER_LINEAR)
             for line in lines_img2:
                 temp_line = []
                 for value in line:
@@ -171,7 +173,8 @@ def scale(img1, img2, lines_img1, lines_img2):
         temp_lines = []
         # X scale is smaller. we need the inverse
         if x_scale_factor > y_scale_factor:
-            img1 = cv2.resize(img1, (0,0), fx=(1/x_scale_factor), fy=(1/x_scale_factor), interpolation=cv2.INTER_LINEAR)
+            img1 = cv2.resize(img1, (0,0), fx=(1/x_scale_factor), 
+                fy=(1/x_scale_factor), interpolation=cv2.INTER_LINEAR)
             for line in lines_img1:
                 temp_line = []
                 for value in line:
@@ -180,7 +183,8 @@ def scale(img1, img2, lines_img1, lines_img2):
 
         # Y scale is smaller
         else:
-            img1 = cv2.resize(img1, (0,0), fx=1/y_scale_factor, fy=1/y_scale_factor, interpolation=cv2.INTER_LINEAR)
+            img1 = cv2.resize(img1, (0,0), fx=1/y_scale_factor, 
+                fy=1/y_scale_factor, interpolation=cv2.INTER_LINEAR)
             for line in lines_img1:
                 temp_line = []
                 for value in line:
@@ -191,9 +195,12 @@ def scale(img1, img2, lines_img1, lines_img2):
         lines_img1 = temp_lines
         img1 = temp_img
 
-    # Images size relations are not the same i.e. x_scale < 1 and y_scale > 1 or vice versa
+    # Images size relations are not the same i.e. x_scale < 1 and y_scale > 1 
+    # or vice versa
     else:
-        temp_img = np.zeros((max(y_size_img1, y_size_img2), max(x_size_img1, x_size_img2), max(z_size_img1, z_size_img2)), dtype=img1.dtype)
+        temp_img = np.zeros((max(y_size_img1, y_size_img2), 
+            max(x_size_img1, x_size_img2), max(z_size_img1, z_size_img2)), 
+            dtype=img1.dtype)
         temp_img2 = np.copy(temp_img)
         temp_img[0:img1.shape[0], 0:img1.shape[1], 0:img1.shape[2]] = img1
         img1 = temp_img
@@ -207,7 +214,9 @@ def adaptive_thresh(img):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     img = cv2.GaussianBlur(img, (3,3), 0)
     
-    return cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 10)
+    return cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+        cv2.THRESH_BINARY_INV, 11, 10)
+
 
 '''
 def pst_wrapper(img):
@@ -230,6 +239,7 @@ def pst_wrapper(img):
     pst_img = cv2.resize(pst_img, (0,0), fx=0.5, fy=0.5)
     return np.uint8(pst_img* 255)
 '''
+
 
 def statistic_canny(img, sigma=0.33):
     """
