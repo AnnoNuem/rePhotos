@@ -1,6 +1,18 @@
 import numpy as np
 import cv2
+from ler.image_ler import max_size
 from image_helpers import get_crop_indices
+    
+    
+    
+def draw_frame(img, x_min, x_max, y_min, y_max):
+    thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
+    lineType = 8
+    color = (255,255,255)
+    cv2.line(img, (x_min, y_min), (x_min, y_max), color, thickness, lineType )
+    cv2.line(img, (x_min, y_max), (x_max, y_max), color, thickness, lineType )
+    cv2.line(img, (x_max, y_max), (x_max, y_min), color, thickness, lineType )
+    cv2.line(img, (x_max, y_min), (x_min, y_min), color, thickness, lineType )
 
 
 def apply_affine_transform(src, src_quad, dst_quad, size):
@@ -92,11 +104,22 @@ def morph(src_img, dst_img, points_old, points_new, quads):
             morph_quad(src_img, img_morph, quad_old, quad_new)
 
     # Crop images
-    x_min_2, x_max_2, y_min_2, y_max_2 = get_crop_indices(dst_img)
-    x_min_1, x_max_1, y_min_1, y_max_1 = get_crop_indices(img_morph)
-    x_min, x_max, y_min, y_max = max(x_min_1, x_min_2), min(x_max_1, x_max_2), max(y_min_1, y_min_2), min(y_max_1, y_max_2)
+    print("Compute crop...")
+    c_idx_1 = max_size(img_morph[::10,::10, 3], 255)
+    print c_idx_1
+    c_idx_2 = max_size(dst_img[::10,::10, 3], 255)
+    print c_idx_2
+    c_idx = np.hstack(np.array([np.maximum(c_idx_1[0:2], c_idx_2[0:2]), np.minimum(c_idx_1[2:4], c_idx_2[2:4])])) * 10
+    print c_idx
 
-    return (img_morph[y_min:y_max, x_min: x_max, :], 
-        dst_img[y_min:y_max, x_min: x_max, :],
-        src_img[y_min:y_max, x_min: x_max, :])
-#    return(img_morph, dst_img, src_img)
+    #x_min_2, x_max_2, y_min_2, y_max_2 = get_crop_indices(dst_img)
+    #x_min_1, x_max_1, y_min_1, y_max_1 = get_crop_indices(img_morph)
+    #x_min, x_max, y_min, y_max = max(x_min_1, x_min_2), min(x_max_1, x_max_2), max(y_min_1, y_min_2), min(y_max_1, y_max_2)
+
+    #return (img_morph[y_min:y_max, x_min: x_max, :], 
+    #    dst_img[y_min:y_max, x_min: x_max, :],
+    #    src_img[y_min:y_max, x_min: x_max, :])
+    draw_frame(img_morph, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
+    draw_frame(dst_img, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
+    draw_frame(src_img, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
+    return(img_morph, dst_img, src_img)

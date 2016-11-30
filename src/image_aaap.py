@@ -280,15 +280,15 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
         #print C
         C = coo_matrix(C)
         #print C.nnz
-        C_data, C_i, C_j, r_data, r_i, r_j = spqr.qr_solve(C.data, C.row, 
-            C.col, C.nnz, C.shape[0], C.shape[1], d)
-        C_qr_s = csc_matrix((r_data, (r_i, r_j)), shape=C.get_shape())
-        d_qr = C_data[C_i]
+        #C_data, C_i, C_j, r_data, r_i, r_j = spqr.qr_solve(C.data, C.row, 
+        #    C.col, C.nnz, C.shape[0], C.shape[1], d)
+        #C_qr_s = csc_matrix((r_data, (r_i, r_j)), shape=C.get_shape())
+        #d_qr = C_data[C_i]
         #print(d_qr)
-        index = np.unique(C_qr_s.nonzero()[0])
+        #index = np.unique(C_qr_s.nonzero()[0])
         #print index
-        C_qr_s.eliminate_zeros()
-        d_qr_any = d_qr[index]
+        #C_qr_s.eliminate_zeros()
+        #d_qr_any = d_qr[index]
         #print(d_qr_any)
         #print(C_qr_s)
         #print(C_qr_s.nnz)
