@@ -1,20 +1,6 @@
 import numpy as np
 import cv2
-from ler.image_ler import max_size
-from image_helpers import get_crop_indices
     
-    
-    
-def draw_frame(img, x_min, x_max, y_min, y_max):
-    thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
-    lineType = 8
-    color = (255,255,255)
-    cv2.line(img, (x_min, y_min), (x_min, y_max), color, thickness, lineType )
-    cv2.line(img, (x_min, y_max), (x_max, y_max), color, thickness, lineType )
-    cv2.line(img, (x_max, y_max), (x_max, y_min), color, thickness, lineType )
-    cv2.line(img, (x_max, y_min), (x_min, y_min), color, thickness, lineType )
-
-
 def apply_affine_transform(src, src_quad, dst_quad, size):
     """
     Apply affine transform calculated using src_quad and dst_quad to src and 
@@ -74,52 +60,38 @@ def morph(src_img, dst_img, points_old, points_new, quads):
     img_morph = np.zeros((max(src_img.shape[0], dst_img.shape[0]), max(src_img.shape[1], dst_img.shape[1]),
         max(src_img.shape[2], dst_img.shape[2])), dtype=src_img.dtype)
 
-    x_max = img_morph.shape[1]
-    y_max = img_morph.shape[0]
+    x_max = img_morph.shape[1] - 1 
+    y_max = img_morph.shape[0] - 1
     for quad in quads:
         # -1 to account for matlab indices begin with 1
-        a = int(quad[0]) - 1
-        b = int(quad[1]) - 1
-        c = int(quad[2]) - 1
-        d = int(quad[3]) - 1 
-        if 0 <= points_old[a][0] < x_max and 0 <= points_old[a][1] < y_max and \
-            0 <= points_old[b][0] < x_max and 0 <= points_old[b][1] < y_max and \
-            0 <= points_old[c][0] < x_max and 0 <= points_old[c][1] < y_max and \
-            0 <= points_old[d][0] < x_max and 0 <= points_old[d][1] < y_max and \
-            0 <= points_new[a][0] < x_max and 0 <= points_new[a][1] < y_max and \
-            0 <= points_new[b][0] < x_max and 0 <= points_new[b][1] < y_max and \
-            0 <= points_new[c][0] < x_max and 0 <= points_new[c][1] < y_max and \
-            0 <= points_new[d][0] < x_max and 0 <= points_new[d][1] < y_max:
-            quad_old = [points_old[a], points_old[b], points_old[c], points_old[d]]
-            quad_new = [points_new[a], points_new[b], points_new[c], points_new[d]]
-            
-            quad_old_zipped = list(zip(*quad_old))
-            quad_old_min_x = int(min(quad_old_zipped[0])) 
-            quad_old_max_x = int(max(quad_old_zipped[0]))
-            quad_old_min_y = int(min(quad_old_zipped[1])) 
-            quad_old_max_y = int(max(quad_old_zipped[1]))
-            quad_img = src_img[quad_old_min_y:quad_old_max_y, 
-                quad_old_min_x:quad_old_max_x]
-            
-            morph_quad(src_img, img_morph, quad_old, quad_new)
+        a = int(quad[0]) #- 1
+        b = int(quad[1]) #- 1
+        c = int(quad[2]) #- 1
+        d = int(quad[3]) #- 1 
+#        if 0 <= points_old[a][0] < x_max and 0 <= points_old[a][1] < y_max and \
+#            0 <= points_old[b][0] < x_max and 0 <= points_old[b][1] < y_max and \
+#            0 <= points_old[c][0] < x_max and 0 <= points_old[c][1] < y_max and \
+#            0 <= points_old[d][0] < x_max and 0 <= points_old[d][1] < y_max and \
+#            0 <= points_new[a][0] < x_max and 0 <= points_new[a][1] < y_max and \
+#            0 <= points_new[b][0] < x_max and 0 <= points_new[b][1] < y_max and \
+#            0 <= points_new[c][0] < x_max and 0 <= points_new[c][1] < y_max and \
+#            0 <= points_new[d][0] < x_max and 0 <= points_new[d][1] < y_max:
 
-    # Crop images
-    print("Compute crop...")
-    c_idx_1 = max_size(img_morph[::10,::10, 3], 255)
-    print c_idx_1
-    c_idx_2 = max_size(dst_img[::10,::10, 3], 255)
-    print c_idx_2
-    c_idx = np.hstack(np.array([np.maximum(c_idx_1[0:2], c_idx_2[0:2]), np.minimum(c_idx_1[2:4], c_idx_2[2:4])])) * 10
-    print c_idx
+        # clip quadpoints to img size
+        c_p = lambda point: (min(max(point[0], 0,), x_max), min(max(point[1], 0), y_max))
 
-    #x_min_2, x_max_2, y_min_2, y_max_2 = get_crop_indices(dst_img)
-    #x_min_1, x_max_1, y_min_1, y_max_1 = get_crop_indices(img_morph)
-    #x_min, x_max, y_min, y_max = max(x_min_1, x_min_2), min(x_max_1, x_max_2), max(y_min_1, y_min_2), min(y_max_1, y_max_2)
+        quad_old = [c_p(points_old[a]), c_p(points_old[b]), c_p(points_old[c]), c_p(points_old[d])]
+        quad_new = [c_p(points_new[a]), c_p(points_new[b]), c_p(points_new[c]), c_p(points_new[d])]
+        
+        quad_old_zipped = list(zip(*quad_old))
+        quad_old_min_x = int(min(quad_old_zipped[0])) 
+        quad_old_max_x = int(max(quad_old_zipped[0]))
+        quad_old_min_y = int(min(quad_old_zipped[1])) 
+        quad_old_max_y = int(max(quad_old_zipped[1]))
+        quad_img = src_img[quad_old_min_y:quad_old_max_y, 
+            quad_old_min_x:quad_old_max_x]
+        
+        morph_quad(src_img, img_morph, quad_old, quad_new)
 
-    #return (img_morph[y_min:y_max, x_min: x_max, :], 
-    #    dst_img[y_min:y_max, x_min: x_max, :],
-    #    src_img[y_min:y_max, x_min: x_max, :])
-    draw_frame(img_morph, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
-    draw_frame(dst_img, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
-    draw_frame(src_img, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
+
     return(img_morph, dst_img, src_img)

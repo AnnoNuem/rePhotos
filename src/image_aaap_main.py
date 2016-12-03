@@ -7,7 +7,18 @@ from image_aaap import sample_lines
 from image_aaap import bilinear_point_in_quad_mesh
 from image_aaap import deform_aaap 
 from image_helpers import scale
+from image_helpers import get_crop_idx
 from image_morphing import morph
+
+
+def draw_frame(img, x_min, x_max, y_min, y_max):
+    thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
+    lineType = 8
+    color = (255,255,255)
+    cv2.line(img, (x_min, y_min), (x_min, y_max), color, thickness, lineType )
+    cv2.line(img, (x_min, y_max), (x_max, y_max), color, thickness, lineType )
+    cv2.line(img, (x_max, y_max), (x_max, y_min), color, thickness, lineType )
+    cv2.line(img, (x_max, y_min), (x_min, y_min), color, thickness, lineType )
 
 
 def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=-1, 
@@ -49,13 +60,20 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=-1,
     dst_img_alpha = np.ones((dst_img.shape[0], dst_img.shape[1], 4), 
         np.float32) * 255
     dst_img_alpha[:, :, 0:3] = np.float32(dst_img[:,:,0:3])
-    src_img_alpha, dst_img_alpha, src_lines, dst_lines = scale(src_img_alpha, dst_img_alpha, src_lines, dst_lines)
+    src_img_alpha, dst_img_alpha, src_lines, dst_lines, x_max, y_max = \
+        scale(src_img_alpha, dst_img_alpha, src_lines, dst_lines)
+
+    print src_img.shape
+    print src_img_alpha.shape
+    print dst_img.shape
+    print dst_img_alpha.shape
 
     # init grid 
     print("Init grid...")
     grid_points, quads, grid_shape = build_regular_mesh(src_img_alpha.shape[1],
         src_img_alpha.shape[0], grid_size)
 
+    print grid_points.shape
     # create energy matrix
     print("Creating energy matrix...")
     L = construct_mesh_energy(grid_points, quads, deform_energy_weights)
@@ -74,10 +92,24 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=-1,
     print("Deforming grid...")
     y_p = deform_aaap(grid_points, Asrc, dst_points, L, line_constraint_type).T
 
+
     # morph image
     print("Morphing...")
     (src_img_morphed, dst_img_cropped, src_img_cropped) = morph(dst_img_alpha,
         src_img_alpha, grid_points, y_p, quads)
+
+    # Crop images
+    print("Compute crop...")
+    c_idx = get_crop_idx(y_p, grid_shape, src_img_morphed.shape, x_max, y_max) 
+
+    print("Postprocess...")
+
+    #(img_morph[y_min:y_max, x_min: x_max, :], 
+    #    dst_img[y_min:y_max, x_min: x_max, :],
+    #    src_img[y_min:y_max, x_min: x_max, :])
+    draw_frame(src_img_morphed, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
+    draw_frame(dst_img_cropped, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
+    draw_frame(src_img_cropped, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
 
     # postprocess
     src_img_morphed = np.uint8(src_img_morphed[:, :, 0:3])

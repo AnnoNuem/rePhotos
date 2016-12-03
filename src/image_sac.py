@@ -38,7 +38,7 @@ def getPointFromRectangle(img1, point1, point2):
     apertureSize = 3
     k = 0.04
     # Detecting corners
-    corners = cv2.cornerHarris( subimageF, blockSize, apertureSize, k, cv2.BORDER_DEFAULT )
+    corners = cv2.cornerHarris( subimageF, blockSize, apertureSize, k, borderType=cv2.BORDER_DEFAULT )
 
     # Assume that user wants to mark point in middle of rectangle, hence weight cornes using gaussian
     rows, cols = corners.shape

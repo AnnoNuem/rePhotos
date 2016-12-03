@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 from image_pst import pst
+from ler.image_ler import max_size
 
 def lce(img, kernel = 11 , amount = 0.5):
     """
@@ -28,88 +29,122 @@ def lce(img, kernel = 11 , amount = 0.5):
 
     return img_bgr
 
-def get_crop_indices(img):
-    """
-    Get crop indices to crop black border from image.
-    Crops non linear borders.
-    Starts with small rectangle in middle, grows till black pixels are reached
-    at each site. This inefficient method has to be used since morphing
-    does not necessarily produce straight edges.
 
-    Args: 
-        img1: BGRA image. Alpha channel is used to determine crop indices.
+def get_crop_idx(y_p, grid_shape, img_shape, x_max, y_max, scale = 400):
+    """
+    Computes crop indices based on deformed mesh 
+
+    Args:
+        y_p: Point coordinates of mesh.
+        grid_shape: Number of rows and columns in grid
+        img_shape: Size of image to be cropped
+        x_max: Maximum x value for right crop index
+        y_max: Maximum y value for left crop index
 
     Returns:
-        x_min:
-        x_max:
-        y_min:
-        y_max:
+        idx: Cropindices [x_min, y_min, x_max, y_max]
+    """
 
-    """        
-    
-    x_min= int(img.shape[1] / 2) - 1
-    y_min= int(img.shape[0] / 2) - 1
-    x_max= int(img.shape[1] / 2) + 1
-    y_max= int(img.shape[0] / 2) + 1
-    
-    x_step_size = int((img.shape[1]/300) * 2)
-    y_step_size = int((img.shape[0]/300) * 2) 
+    # Get outline points from grid
+    left = y_p[0:grid_shape[0]]
+    right = y_p[-grid_shape[0]:]
+    bottom = y_p[grid_shape[0]-1::grid_shape[0]]
+    top = y_p[::grid_shape[0]]
 
-    top_done = False
-    left_done = False
-    bottom_done = False
-    right_done = False
+    # Create crop image
+    pp = np.int32(np.vstack([left, bottom, right[::-1], top[::-1]]))#.clip(min=0)
+    pp[:,0] = pp[:,0].clip(max=x_max)
+    pp[:,1] = pp[:,1].clip(max=y_max)
+    crop_image = np.zeros((img_shape[0], img_shape[1]), np.uint8)
+    cv2.fillPoly(crop_image, [pp], (1))
 
-    while not top_done or not right_done or not bottom_done or not left_done:
-        # check left  
-        if not left_done and x_min - x_step_size > -1: 
-            for y in range(y_min, y_max):
-                if  img[y, x_min - x_step_size, 3] == 0:
-                    left_done = True   
-                    break
-            if y == y_max -1 :
-                left_done = False
-                x_min -= x_step_size
-        else:
-            left_done = True
+    # Speed up by downsmpling the crop image costs accuracy of crop indices
+    ac = int(np.sum(img_shape)/scale)
+    return  max_size(crop_image[::ac,::ac], 1) * ac + [ac, ac, -ac, -ac]
 
-        # check bottom
-        if not bottom_done and y_max + y_step_size < img.shape[0] :
-            for x in range(x_min, x_max):
-                if img[y_max + y_step_size, x, 3] == 0:
-                    bottom_done = True 
-                    break
-            if x == x_max - 1:
-                bottom_done = False 
-                y_max += y_step_size
-        else:
-            bottom_done = True
 
-        # check right
-        if not right_done and x_max + x_step_size < img.shape[1] :
-            for y in range(y_min, y_max):
-                if img[y, x_max + x_step_size, 3] == 0:
-                    right_done = True
-                    break
-            if y == y_max - 1:
-                right_done = False
-                x_max += x_step_size
-        else:
-            right_done = True
-
-        # check top  
-        if not top_done and y_min - y_step_size > -1:
-            for x in range(x_min, x_max):
-                if img[y_min - y_step_size, x, 3] == 0:
-                    top_done = True
-                    break
-            if x == x_max - 1:
-                top_done = False
-                y_min -= y_step_size
-        else:
-            top_done = True
-
-    return x_min, x_max, y_min, y_max
+#def get_crop_indices(img):
+#    """
+#    Get crop indices to crop black border from image.
+#    Crops non linear borders.
+#    Starts with small rectangle in middle, grows till black pixels are reached
+#    at each site. This inefficient method has to be used since morphing
+#    does not necessarily produce straight edges.
+#
+#    Args: 
+#        img1: BGRA image. Alpha channel is used to determine crop indices.
+#
+#    Returns:
+#        x_min:
+#        x_max:
+#        y_min:
+#        y_max:
+#
+#    """        
+#    
+#    x_min= int(img.shape[1] / 2) - 1
+#    y_min= int(img.shape[0] / 2) - 1
+#    x_max= int(img.shape[1] / 2) + 1
+#    y_max= int(img.shape[0] / 2) + 1
+#    
+#    x_step_size = int((img.shape[1]/300) * 2)
+#    y_step_size = int((img.shape[0]/300) * 2) 
+#
+#    top_done = False
+#    left_done = False
+#    bottom_done = False
+#    right_done = False
+#
+#    while not top_done or not right_done or not bottom_done or not left_done:
+#        # check left  
+#        if not left_done and x_min - x_step_size > -1: 
+#            for y in range(y_min, y_max):
+#                if  img[y, x_min - x_step_size, 3] == 0:
+#                    left_done = True   
+#                    break
+#            if y == y_max -1 :
+#                left_done = False
+#                x_min -= x_step_size
+#        else:
+#            left_done = True
+#
+#        # check bottom
+#        if not bottom_done and y_max + y_step_size < img.shape[0] :
+#            for x in range(x_min, x_max):
+#                if img[y_max + y_step_size, x, 3] == 0:
+#                    bottom_done = True 
+#                    break
+#            if x == x_max - 1:
+#                bottom_done = False 
+#                y_max += y_step_size
+#        else:
+#            bottom_done = True
+#
+#        # check right
+#        if not right_done and x_max + x_step_size < img.shape[1] :
+#            for y in range(y_min, y_max):
+#                if img[y, x_max + x_step_size, 3] == 0:
+#                    right_done = True
+#                    break
+#            if y == y_max - 1:
+#                right_done = False
+#                x_max += x_step_size
+#        else:
+#            right_done = True
+#
+#        # check top  
+#        if not top_done and y_min - y_step_size > -1:
+#            for x in range(x_min, x_max):
+#                if img[y_min - y_step_size, x, 3] == 0:
+#                    top_done = True
+#                    break
+#            if x == x_max - 1:
+#                top_done = False
+#                y_min -= y_step_size
+#        else:
+#            top_done = True
+#
+#    return x_min, x_max, y_min, y_max
 
 
 def scale(img1, img2, lines_img1, lines_img2):
@@ -127,6 +162,8 @@ def scale(img1, img2, lines_img1, lines_img2):
         img2: If img2 is bigger returns img2 else scaled img2.
         lines_img_1: Lines in image 1, scaled if img1 is scaled.
         lines_img_2: Lines in image 2, scaled if img2 is scaled.
+        x_max: After x_max one image is padded with zeros in x direction.
+        y_max: After y_max one image is padded with zeros in y direction.
 
     """
     y_size_img1, x_size_img1, z_size_img1 = img1.shape
@@ -137,7 +174,8 @@ def scale(img1, img2, lines_img1, lines_img2):
 
     # Images are of same size
     if x_size_img1 == x_size_img2 and y_size_img1 == y_size_img2:
-        return img1, img2, lines_img1, lines_img2
+        return img1, img2, lines_img1, lines_img2, img1.shape[1],\
+            img1.shape[0]
 
     # Image 1 is bigger
     elif x_size_img1 >= x_size_img2 and y_size_img1 >= y_size_img2:
@@ -164,6 +202,8 @@ def scale(img1, img2, lines_img1, lines_img2):
                 temp_lines.append(temp_line)
 
         temp_img[0:img2.shape[0], 0:img2.shape[1], 0:img2.shape[2]] = img2
+        x_max = img2.shape[1]
+        y_max = img2.shape[0]
         lines_img2 = temp_lines
         img2 = temp_img
 
@@ -192,6 +232,8 @@ def scale(img1, img2, lines_img1, lines_img2):
                 temp_lines.append(temp_line)
 
         temp_img[0:img1.shape[0], 0:img1.shape[1], 0:img1.shape[2]] = img1
+        x_max = img1.shape[1]
+        y_max = img1.shape[0]
         lines_img1 = temp_lines
         img1 = temp_img
 
@@ -202,12 +244,14 @@ def scale(img1, img2, lines_img1, lines_img2):
             max(x_size_img1, x_size_img2), max(z_size_img1, z_size_img2)), 
             dtype=img1.dtype)
         temp_img2 = np.copy(temp_img)
+        x_max = min(img1.shape[1], img2.shape[1])
+        y_max = min(img1.shape[0], img2.shape[0])
         temp_img[0:img1.shape[0], 0:img1.shape[1], 0:img1.shape[2]] = img1
         img1 = temp_img
         temp_img2[0:img2.shape[0], 0:img2.shape[1], 0:img2.shape[2]] = img2
         img2 = temp_img2
 
-    return img1, img2, lines_img1, lines_img2
+    return img1, img2, lines_img1, lines_img2, x_max, y_max
 
 
 def adaptive_thresh(img):

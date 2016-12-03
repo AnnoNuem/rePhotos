@@ -334,7 +334,7 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
             [C, csc_matrix((d.size, d.size))]]).tocsc(), b)
         
         y = y[0:nv]
-        print y
+        #print y
 
     if xreal:
         y = np.array([y.real, y.imag])
