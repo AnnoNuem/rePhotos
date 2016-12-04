@@ -1,97 +1,86 @@
 import numpy as np
 import cv2
     
-def apply_affine_transform(src, src_quad, dst_quad, size):
-    """
-    Apply affine transform calculated using src_quad and dst_quad to src and 
-    output an image of size.
 
-    """
-    # Given a pair of quads, find the affine transform. 3 points give unique solution 
-    warp_mat = cv2.getAffineTransform(np.float32(src_quad[0:3]), np.float32(dst_quad[0:3]))
-
-    
-    # Apply the Affine Transform just found to the src image
-    dst = cv2.warpAffine(src, warp_mat, (size[0], size[1]), None, flags=cv2.INTER_LINEAR,
-                         borderMode=cv2.BORDER_REFLECT_101)
-
-    return dst
-
-
-def morph_quad(img1, img, t1, t):
-    """
-    Warps and alpha blends quad regions from img1 and img2 to img.
-    """
-    # Find bounding rectangle for each quad
-    r1 = cv2.boundingRect(np.float32([t1]))
-    r = cv2.boundingRect(np.float32([t]))
-
-    # Offset points by left top corner of the respective rectangles
-    t1_rect = []
-    t_rect = []
-
-    for i in range(0, 4):
-        t_rect.append(((t[i][0] - r[0]), (t[i][1] - r[1])))
-        t1_rect.append(((t1[i][0] - r1[0]), (t1[i][1] - r1[1])))
-
-    # Get mask by filling quadangle
-    mask = np.zeros((r[3], r[2], 4), dtype=np.float32)
-    #print mask.shape
-    cv2.fillConvexPoly(mask, np.int32(t_rect), (1.0, 1.0, 1.0, 1.0), 16, 0)
-
-    # Apply warpImage to small rectangular patches
-    img1_rect = img1[r1[1]:r1[1] + r1[3], r1[0]:r1[0] + r1[2]]
-
-    size = (r[2], r[3])
-    img_rect = apply_affine_transform(img1_rect, t1_rect, t_rect, size)
-
-    # Copy quadangular region of the rectangular patch to the output image
-    img[r[1]:r[1] + r[3], r[0]:r[0] + r[2]] = img[r[1]:r[1] + r[3], r[0]:r[0] + r[2]] * (1 - mask) + img_rect * mask
-
-
-def morph(src_img, dst_img, points_old, points_new, quads):
+def morph(src_img, points_old, points_new, quads, grid_size, scale=4):
     """
     Returns morphed image given points of old and new grid and quads 
     """
     assert len(points_old) == len(points_new), "Point lists have different size."
     assert len(points_old) > 0, "Point lists are empty."
 
+    if scale != 1:
+        src_img = cv2.resize(src_img, (0,0), fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+        points_old = np.array((points_old + grid_size ) * scale) 
+        points_new = np.array((points_new + grid_size ) * scale)
+        s_grid_size = scale * grid_size
+    else:
+        points_old = np.array(points_old + grid_size)
+        points_new = np.array(points_new + grid_size)
+        s_grid_size = grid_size
+
     # Allocate space for final output
-    img_morph = np.zeros((max(src_img.shape[0], dst_img.shape[0]), max(src_img.shape[1], dst_img.shape[1]),
-        max(src_img.shape[2], dst_img.shape[2])), dtype=src_img.dtype)
+    img_morph = np.zeros((src_img.shape[0] + 2 * s_grid_size, src_img.shape[1] + 2 * s_grid_size, src_img.shape[2]), dtype=np.float32)
+    s_src_img = np.zeros(img_morph.shape)
+    s_src_img[s_grid_size:-s_grid_size, s_grid_size:-s_grid_size] = src_img
 
     x_max = img_morph.shape[1] - 1 
     y_max = img_morph.shape[0] - 1
     for quad in quads:
-        # -1 to account for matlab indices begin with 1
-        a = int(quad[0]) #- 1
-        b = int(quad[1]) #- 1
-        c = int(quad[2]) #- 1
-        d = int(quad[3]) #- 1 
-#        if 0 <= points_old[a][0] < x_max and 0 <= points_old[a][1] < y_max and \
-#            0 <= points_old[b][0] < x_max and 0 <= points_old[b][1] < y_max and \
-#            0 <= points_old[c][0] < x_max and 0 <= points_old[c][1] < y_max and \
-#            0 <= points_old[d][0] < x_max and 0 <= points_old[d][1] < y_max and \
-#            0 <= points_new[a][0] < x_max and 0 <= points_new[a][1] < y_max and \
-#            0 <= points_new[b][0] < x_max and 0 <= points_new[b][1] < y_max and \
-#            0 <= points_new[c][0] < x_max and 0 <= points_new[c][1] < y_max and \
-#            0 <= points_new[d][0] < x_max and 0 <= points_new[d][1] < y_max:
-
         # clip quadpoints to img size
         c_p = lambda point: (min(max(point[0], 0,), x_max), min(max(point[1], 0), y_max))
 
-        quad_old = [c_p(points_old[a]), c_p(points_old[b]), c_p(points_old[c]), c_p(points_old[d])]
-        quad_new = [c_p(points_new[a]), c_p(points_new[b]), c_p(points_new[c]), c_p(points_new[d])]
+        quad_old = [c_p(points_old[int(quad[0])]), 
+                    c_p(points_old[int(quad[1])]), 
+                    c_p(points_old[int(quad[2])]), 
+                    c_p(points_old[int(quad[3])])]
+        quad_new = [c_p(points_new[int(quad[0])]), 
+                    c_p(points_new[int(quad[1])]), 
+                    c_p(points_new[int(quad[2])]), 
+                    c_p(points_new[int(quad[3])])]
+        #morph_quad(src_img, img_morph, quad_old, quad_new)
         
-        quad_old_zipped = list(zip(*quad_old))
-        quad_old_min_x = int(min(quad_old_zipped[0])) 
-        quad_old_max_x = int(max(quad_old_zipped[0]))
-        quad_old_min_y = int(min(quad_old_zipped[1])) 
-        quad_old_max_y = int(max(quad_old_zipped[1]))
-        quad_img = src_img[quad_old_min_y:quad_old_max_y, 
-            quad_old_min_x:quad_old_max_x]
+        bbox = cv2.boundingRect(np.float32(quad_new))
+        bbox_old = cv2.boundingRect(np.float32(quad_old))
+
+        t1_rect = []
+        t_rect = []
+
+        for i in range(0, 4):
+            t_rect.append(((quad_new[i][0] - bbox[0]), (quad_new[i][1] - bbox[1])))
+            t1_rect.append(((quad_old[i][0] - bbox_old[0]), (quad_old[i][1] - bbox_old[1])))
+        warp_mat = cv2.getPerspectiveTransform(np.float32(t1_rect), 
+                                               np.float32(t_rect))
+
+         
+        mask = np.zeros((bbox[3],bbox[2], 3), dtype=np.uint8)
+        cv2.fillConvexPoly(mask, np.int32(t_rect), (1,1,1), 4, 0)
+        #img_morph[bbox[1]:bbox[1]+bbox[3], bbox[0]:bbox[0]+bbox[2]] += mask*255
+#        cv2.imshow('asgf', img_morph)
+#        cv2.waitKey(0)
+        img_morph[bbox[1]:bbox[1]+bbox[3], bbox[0]:bbox[0]+bbox[2]] = \
+            img_morph[bbox[1]:bbox[1]+bbox[3], bbox[0]:bbox[0]+bbox[2]] * (1-mask) +\
+            cv2.warpPerspective(s_src_img[quad_old[0][1] : quad_old[2][1], 
+                                        quad_old[0][0] : quad_old[2][0]], 
+                                        warp_mat, (bbox[2], bbox[3]), None, 
+                                        flags=cv2.INTER_LINEAR, 
+                                        borderMode=cv2.BORDER_REFLECT) * mask 
+
+#        img_morph[bbox[1]:bbox[1]+bbox[3], bbox[0]:bbox[0]+bbox[2]] += \
+#            cv2.warpPerspective(s_src_img[quad_old[0][1] : quad_old[2][1], 
+#                                        quad_old[0][0] : quad_old[2][0]], 
+#                                        warp_mat, (bbox[2], bbox[3]), None, 
+#                                        flags=cv2.INTER_NEAREST, 
+#                                        borderMode=cv2.BORDER_CONSTANT)  
         
-        morph_quad(src_img, img_morph, quad_old, quad_new)
+
+   
+    img_morph = img_morph[s_grid_size:-s_grid_size, s_grid_size:-s_grid_size]
+ #   img_morph = cv2.morphologyEx(img_morph, cv2.MORPH_CLOSE, (5,5))
+    
+    if scale !=1:
+        img_morph = cv2.resize(img_morph, (0,0), fx=1./scale, fy=1./scale, 
+            interpolation=cv2.INTER_AREA)
 
 
-    return(img_morph, dst_img, src_img)
+    return(img_morph)

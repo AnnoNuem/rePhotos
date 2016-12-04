@@ -27,8 +27,28 @@ def lce(img, kernel = 11 , amount = 0.5):
 
     img_bgr = cv2.cvtColor(img_hsv, cv2.COLOR_HSV2BGR)
 
-    return img_bgr
+    return img_bgr*255
 
+
+def unsharp_mask(img, sigma=1, amount=0.8):
+    """
+    Sharpends given image via unsharp mask.
+
+    Args:
+        img: Image to be sharpened.
+        sigma: Sigma of Gaussian kernel for bluring.
+        amount: Amount of sharpening.
+
+    Returns:
+        img: Sharpened Image.
+    """
+
+    img_blured = cv2.GaussianBlur(img, (0,0), sigma)
+    img = img + (img - img_blured) * amount
+    img[img > 255] = 255
+    img[img < 0] = 0
+
+    return img
 
 def get_crop_idx(y_p, grid_shape, img_shape, x_max, y_max, scale = 400):
     """
@@ -57,10 +77,12 @@ def get_crop_idx(y_p, grid_shape, img_shape, x_max, y_max, scale = 400):
     pp[:,1] = pp[:,1].clip(max=y_max)
     crop_image = np.zeros((img_shape[0], img_shape[1]), np.uint8)
     cv2.fillPoly(crop_image, [pp], (1))
+    cv2.imshow('afg', crop_image * 255)
 
     # Speed up by downsmpling the crop image costs accuracy of crop indices
     ac = int(np.sum(img_shape)/scale)
     return  max_size(crop_image[::ac,::ac], 1) * ac + [ac, ac, -ac, -ac]
+    #return max_size(crop_image, 1)
 
 
 #def get_crop_indices(img):

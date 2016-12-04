@@ -91,8 +91,6 @@ def test():
     print("LMB: Draw Line\nMMB: Delete last line in active Window\nRMB: Drawing line with RMB finds nearest line\nSpace: Start morphing\nEsc: Quit program")
     src_name = sys.argv[1]
     dst_name = sys.argv[2]
-    #src_name = "/home/axel/Downloads/CheckerboardCube.png"
-    #dst_name = "/home/axel/Downloads/CheckerboardCubeTransformed.png"
     src_img = cv2.imread(src_name)
     dst_img = cv2.imread(dst_name)
 
