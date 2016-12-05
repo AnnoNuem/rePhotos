@@ -95,7 +95,7 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
     print("Morphing...")
     t = time.time()
     src_img_morphed = morph(dst_img, grid_points, y_p, quads, grid_size, scale = 4)
-    print ('time', time.time() -t)
+    print('time', time.time() - t)
 
     # Crop images
     print("Compute crop...")
