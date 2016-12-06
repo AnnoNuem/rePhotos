@@ -4,14 +4,14 @@ import os
 import multiprocessing as mp
 import ctypes
 
-def morph_process(shared_src, shared_dst, src_shape, points_new, points_old, quads):
+def morph_process(src_img, s_x_min, shared_dst, src_shape, points_new, points_old, quads):
 
-    print 'startet', os.getpid()
+    #print 'startet', os.getpid()
 
     x_max = src_shape[1] - 1 
     y_max = src_shape[0] - 1
 
-    src_img = np.reshape(to_numpy_array(shared_src), src_shape)
+#    src_img = np.reshape(to_numpy_array(shared_src), src_shape)
     dst_img = np.reshape(to_numpy_array(shared_dst), src_shape)
 
     for quad in quads:
@@ -43,18 +43,19 @@ def morph_process(shared_src, shared_dst, src_shape, points_new, points_old, qua
          
         mask = np.zeros((bbox[3],bbox[2], 3), dtype=np.uint8)
         cv2.fillConvexPoly(mask, np.int32(t_rect), (1,1,1), 4, 0)
-        dst_img[bbox[1]:bbox[1]+bbox[3], bbox[0]:bbox[0]+bbox[2]] = \
-            dst_img[bbox[1]:bbox[1]+bbox[3], bbox[0]:bbox[0]+bbox[2]] * (1-mask) +\
-            cv2.warpPerspective(src_img[quad_old[0][1] : quad_old[2][1], 
-                                        quad_old[0][0] : quad_old[2][0]], 
+        tmp_img =  cv2.warpPerspective(src_img[quad_old[0][1] : quad_old[2][1], 
+                                        quad_old[0][0]-s_x_min : quad_old[2][0]-s_x_min], 
                                         warp_mat, (bbox[2], bbox[3]), None, 
                                         flags=cv2.INTER_LINEAR, 
-                                        borderMode=cv2.BORDER_REPLICATE) * mask 
+                                        borderMode=cv2.BORDER_REPLICATE) 
+        dst_img[bbox[1]:bbox[1]+bbox[3], bbox[0]:bbox[0]+bbox[2]] = \
+            dst_img[bbox[1]:bbox[1]+bbox[3], bbox[0]:bbox[0]+bbox[2]] * (1-mask) +\
+           tmp_img * mask 
 
     #l.acquire()
     #img_morph += tmp_img
     #l.release()
-    print 'ended', os.getpid()
+    #print 'ended', os.getpid()
 
 def to_numpy_array(mp_arr):
     return np.frombuffer(mp_arr.get_obj())
@@ -83,45 +84,34 @@ def morph(src_img, points_old, points_new, quads, grid_size, scale=4, processes=
 
     # Allocate space for final output
 
-    print 1
     s_src_img = np.zeros((src_img.shape[0] + 2 * s_grid_size, \
                           src_img.shape[1] + 2 * s_grid_size, \
                           src_img.shape[2]), dtype=np.float32)
     s_src_img[s_grid_size:-s_grid_size, s_grid_size:-s_grid_size] = src_img
-    print 11
 
-    shared_src = mp.Array(ctypes.c_double, s_src_img.size)
-    shared_src_np = to_numpy_array(shared_src)
-    shared_src_np[:] = s_src_img.flatten()[:]
-    print 2
+#    shared_src = mp.Array(ctypes.c_double, s_src_img.size,)
+#    shared_src_np = to_numpy_array(shared_src)
+#    shared_src_np[:] = s_src_img.flatten()[:]
 
     shared_dst = mp.Array(ctypes.c_double, s_src_img.size)
 
-    print 3
 
 
 
-#    result_queue = Queue()
-    #morphers = [morph_process(shared_src, s_src_img.shape, points_new, points_old, quad_block, x_max, y_max) for quad_block in np.vsplit(quads, processes)]
-    #for mphr in morphers:
-    #    p = Process(mphr)
-    #    jobs.append(p)
-    #    p.start()
-    
-#    jobs = [Process(mp) for mp in morphers]
-#    for job in jobs: job.start()
-#    for job in jobs: job.join()
-#
-#    for mp in morphers:
-#        img_morph += result_queue.get()
-#    results = [result_queue.get() for mp in morphers]
     jobs = []
-   # l = Lock()
     chunk_size = quads.shape[0]/processes 
-    #result_queue = Queue()
-    #print chunk_size
     for i in xrange(processes):
-        p = mp.Process(target=morph_process, args=(shared_src, shared_dst, s_src_img.shape, points_new, points_old, quads[chunk_size*i:chunk_size*i+chunk_size,:]))
+        # Assume that quads are ordered in quad list.
+        # Assume that points are ordered in quad
+    #    print quads[chunk_size * i]
+
+
+        x_min = (points_old[(quads[chunk_size *i])[0]])[0]
+        x_max = (points_old[(quads[chunk_size *i + chunk_size - 1])[2]])[0]
+#        cv2.imshow('dsf', s_src_img[:,x_min:x_max,:])
+#        cv2.waitKey(0)
+
+        p = mp.Process(target=morph_process, args=(s_src_img[:,x_min:x_max,], x_min, shared_dst, s_src_img.shape, points_new, points_old, quads[chunk_size*i:chunk_size*i+chunk_size,:]))
         
         jobs.append(p)
         p.start()
@@ -131,7 +121,7 @@ def morph(src_img, points_old, points_new, quads, grid_size, scale=4, processes=
         
     img_morph = np.reshape(to_numpy_array(shared_dst), s_src_img.shape)
     img_morph = img_morph[s_grid_size:-s_grid_size, s_grid_size:-s_grid_size]
- #   img_morph = cv2.morphologyEx(img_morph, cv2.MORPH_CLOSE, (5,5))
+    #img_morph = cv2.morphologyEx(img_morph, cv2.MORPH_CLOSE, (5,5))
     
     if scale !=1:
         img_morph = cv2.resize(img_morph, (0,0), fx=1./scale, fy=1./scale, 
