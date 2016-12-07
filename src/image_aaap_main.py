@@ -56,7 +56,7 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
 
     src_img = np.float32(src_img)
     dst_img = np.float32(dst_img)
-    # scale images, create alpha channel for easy cropping
+    # scale images
     print("Scaling...")
     src_img, dst_img, src_lines, dst_lines, x_max, y_max = \
         scale(src_img, dst_img, src_lines, dst_lines)
@@ -94,7 +94,8 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
     # morph image
     print("Morphing...")
     t = time.time()
-    src_img_morphed = morph(dst_img, grid_points, y_p, quads, grid_size, scale = 4)
+    src_img_morphed = morph(dst_img, grid_points, y_p, quads, grid_size, 
+                            scale=4, processes=4)
     print ('time', time.time() -t)
 
     # Crop images
@@ -103,12 +104,14 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
 
     print("Postprocess...")
 
-    #(img_morph[y_min:y_max, x_min: x_max, :], 
-    #    dst_img[y_min:y_max, x_min: x_max, :],
-    #    src_img[y_min:y_max, x_min: x_max, :])
-
-
+    # sharpen image
     src_img_morphed = unsharp_mask(src_img_morphed, 1, .7)
+
+#    return (np.uint8(src_img_morphed[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
+#            np.uint8(src_img[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
+#            np.uint8(dst_img[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]))
+
+
 
     draw_frame(src_img_morphed, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
     draw_frame(dst_img, c_idx[0], c_idx[2], c_idx[1], c_idx[3])

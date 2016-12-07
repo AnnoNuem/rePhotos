@@ -57,7 +57,7 @@ def to_numpy_array(mp_arr):
     return np.frombuffer(mp_arr.get_obj())
 
 
-def morph(src_img, points_old, points_new, quads, grid_size, scale=4, processes=8):
+def morph(src_img, points_old, points_new, quads, grid_size, scale=1, processes=1):
     """
     Returns morphed image given points of old and new grid and quadindices. 
 
