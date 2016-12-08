@@ -11,6 +11,7 @@ from image_helpers import scale
 from image_helpers import unsharp_mask
 from image_helpers import get_crop_idx
 from image_morphing import morph
+from image_draw_grid import draw_grid
 
 
 def draw_frame(img, x_min, x_max, y_min, y_max):
@@ -106,15 +107,25 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
 
     # sharpen image
     src_img_morphed = unsharp_mask(src_img_morphed, 1, .7)
+    
+    src_img_morphed_grid = np.copy(src_img_morphed)
+    src_img_grid = np.copy(dst_img)
 
-#    return (np.uint8(src_img_morphed[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
-#            np.uint8(src_img[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
-#            np.uint8(dst_img[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]))
+    draw_grid(src_img_morphed_grid, y_p, quads)
+    draw_grid(src_img_grid, grid_points, quads)
+    
+    
+    return (np.uint8(src_img_morphed[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
+            np.uint8(src_img[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
+            np.uint8(dst_img[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
+            np.uint8(src_img_morphed_grid[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
+            np.uint8(src_img_grid[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]))
 
 
 
-    draw_frame(src_img_morphed, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
-    draw_frame(dst_img, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
-    draw_frame(src_img, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
-    return np.uint8(src_img_morphed), np.uint8(src_img), np.uint8(dst_img)
+#    draw_frame(src_img_morphed, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
+#    draw_frame(dst_img, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
+#    draw_frame(src_img, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
+#    return np.uint8(src_img_morphed), np.uint8(src_img), np.uint8(dst_img),\
+#           np.uint8(src_img_morphed_grid), np.uint8(src_img_grid)
 

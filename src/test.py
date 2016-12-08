@@ -141,7 +141,7 @@ def test():
         write_lines(src_lines, dst_lines, line_file_name)
 
     # morph
-    src_img_morphed, dst_img_cropped, src_img_cropped = aaap_morph(src_img, dst_img, src_lines, dst_lines, line_constraint_type=2, grid_size=10)
+    src_img_morphed, dst_img_cropped, src_img_cropped, src_img_morphed_grid, src_img_grid = aaap_morph(src_img_orig, dst_img_orig, src_lines, dst_lines, line_constraint_type=2, grid_size=10)
 
     # compute overlay
     overlay_morphed = cv2.addWeighted(dst_img_cropped, 0.5, src_img_morphed, 0.5, 0)
@@ -157,16 +157,24 @@ def test():
     cv2.namedWindow('src_morphed', cv2.WINDOW_KEEPRATIO)
     cv2.imshow('src_morphed', src_img_morphed)
     cv2.resizeWindow('src_morphed', 640, 480)
+    cv2.namedWindow('src_grid', cv2.WINDOW_KEEPRATIO)
+    cv2.imshow('src_grid', src_img_grid)
+    cv2.resizeWindow('src_grid', 640, 480)
+    cv2.namedWindow('src_morphed_grid', cv2.WINDOW_KEEPRATIO)
+    cv2.imshow('src_morphed_grid', src_img_morphed_grid)
+    cv2.resizeWindow('src_morphed_grid', 640, 480)
     
     # write2disk
     filenname_prefix = 'results/' + (src_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + \
         '_' + (dst_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + '__'
-    cv2.imwrite(filenname_prefix + 'src.jpg', dst_img)
-    cv2.imwrite(filenname_prefix + 'dst.jpg', src_img)
+    #cv2.imwrite(filenname_prefix + 'src.jpg', dst_img)
+    #cv2.imwrite(filenname_prefix + 'dst.jpg', src_img)
     cv2.imwrite(filenname_prefix + 'src_morphed.jpg', src_img_morphed)
     cv2.imwrite(filenname_prefix + 'dst_cropped.jpg', dst_img_cropped)
-    cv2.imwrite(filenname_prefix + 'src_cropped.jpg', src_img_cropped)
-    cv2.imwrite(filenname_prefix + 'overlay_morphed.jpg', overlay_morphed)
+    #cv2.imwrite(filenname_prefix + 'src_cropped.jpg', src_img_cropped)
+    #cv2.imwrite(filenname_prefix + 'overlay_morphed.jpg', overlay_morphed)
+    cv2.imwrite(filenname_prefix + 'morphed_grid.jpg', src_img_morphed_grid)
+    cv2.imwrite(filenname_prefix + 'grid.jpg', src_img_grid)
     #cv2.imwrite(filenname_prefix + 'overlay_orig.jpg', overlay_orig)
 
     while cv2.waitKey(0) != 27:
