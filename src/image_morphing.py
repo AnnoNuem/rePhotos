@@ -14,14 +14,14 @@ def morph_process(src_img, s_x_min, shared_dst, dst_shape, points_new, points_ol
         c_p = lambda point: (min(max(point[0], 0,), x_max), \
                              min(max(point[1], 0), y_max))
 
-        quad_old = [(points_old[int(quad[0])]), 
-                    (points_old[int(quad[1])]), 
-                    (points_old[int(quad[2])]), 
-                    (points_old[int(quad[3])])]
-        quad_new = [c_p(points_new[int(quad[0])]), 
-                    c_p(points_new[int(quad[1])]), 
-                    c_p(points_new[int(quad[2])]), 
-                    c_p(points_new[int(quad[3])])]
+        quad_old = [(points_old[quad[0]]), 
+                    (points_old[quad[1]]), 
+                    (points_old[quad[2]]), 
+                    (points_old[quad[3]])]
+        quad_new = [c_p(points_new[quad[0]]), 
+                    c_p(points_new[quad[1]]), 
+                    c_p(points_new[quad[2]]), 
+                    c_p(points_new[quad[3]])]
         
         bbox = cv2.boundingRect(np.float32(quad_new))
         bbox_old = cv2.boundingRect(np.float32(quad_old))
