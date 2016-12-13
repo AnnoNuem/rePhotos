@@ -141,7 +141,7 @@ def test():
         write_lines(src_lines, dst_lines, line_file_name)
 
     # morph
-    src_img_morphed, dst_img_cropped, src_img_cropped = aaap_morph(src_img, dst_img, src_lines, dst_lines, line_constraint_type=2, grid_size=10)
+    src_img_morphed, src_img_cropped, dst_img_cropped = aaap_morph(src_img, dst_img, src_lines, dst_lines, line_constraint_type=2, grid_size=10, scale_factor=4)
 
     # compute overlay
     overlay_morphed = cv2.addWeighted(dst_img_cropped, 0.5, src_img_morphed, 0.5, 0)

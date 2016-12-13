@@ -50,7 +50,8 @@ def unsharp_mask(img, sigma=1, amount=0.8):
 
     return img
 
-def get_crop_idx(y_p, grid_shape, img_shape, x_max, y_max, scale = 400):
+#def get_crop_idx(y_p, grid_shape, img_shape, x_max, y_max, scale = 400):
+def get_crop_idx(crop_img, scale = 400):
     """
     Computes crop indices based on deformed mesh 
 
@@ -60,28 +61,31 @@ def get_crop_idx(y_p, grid_shape, img_shape, x_max, y_max, scale = 400):
         img_shape: Size of image to be cropped
         x_max: Maximum x value for right crop index
         y_max: Maximum y value for left crop index
+        scale: Downsample image by img size / scale to speed up
 
     Returns:
         idx: Cropindices [x_min, y_min, x_max, y_max]
     """
 
     # Get outline points from grid
-    left = y_p[0:grid_shape[0]]
-    right = y_p[-grid_shape[0]:]
-    bottom = y_p[grid_shape[0]-1::grid_shape[0]]
-    top = y_p[::grid_shape[0]]
+    #left = y_p[0:grid_shape[0]]
+    #right = y_p[-grid_shape[0]:]
+    #bottom = y_p[grid_shape[0]-1::grid_shape[0]]
+    #top = y_p[::grid_shape[0]]
 
     # Create crop image
-    pp = np.int32(np.vstack([left, bottom, right[::-1], top[::-1]]))#.clip(min=0)
-    pp[:,0] = pp[:,0].clip(max=x_max)
-    pp[:,1] = pp[:,1].clip(max=y_max)
-    crop_image = np.zeros((img_shape[0], img_shape[1]), np.uint8)
-    cv2.fillPoly(crop_image, [pp], (1))
-    cv2.imshow('afg', crop_image * 255)
+    #pp = np.int32(np.vstack([left, bottom, right[::-1], top[::-1]]))#.clip(min=0)
+    #pp[:,0] = pp[:,0].clip(max=x_max)
+    #pp[:,1] = pp[:,1].clip(max=y_max)
+    #crop_image = np.zeros((img_shape[0], img_shape[1]), np.uint8)
+    #cv2.fillPoly(crop_image, [pp], (1))
+    #cv2.imshow('afg', crop_image * 255)
 
     # Speed up by downsmpling the crop image costs accuracy of crop indices
-    ac = int(np.sum(img_shape)/scale)
-    return  max_size(crop_image[::ac,::ac], 1) * ac + [ac, ac, -ac, -ac]
+    cv2.imshow('adf', crop_img)
+    print crop_img
+    ac = int(np.sum(crop_img.shape)/scale)
+    return  max_size(crop_img[::ac,::ac], 2) * ac + [ac, ac, -ac, -ac]
     #return max_size(crop_image, 1)
 
 
@@ -169,7 +173,38 @@ def get_crop_idx(y_p, grid_shape, img_shape, x_max, y_max, scale = 400):
 #    return x_min, x_max, y_min, y_max
 
 
-def scale(img1, img2, lines_img1, lines_img2):
+def scale_image_lines(img, lines, scale_factor):
+
+    scale_lines = lambda ls, f: [[v * f for v in l] for l in ls]   
+
+    if scale_factor > 1:
+        method = cv2.INTER_CUBIC
+    else:
+        method = cv2.INTER_AREA
+
+    img = cv2.resize(img, (0,0), fx=scale_factor, fy=scale_factor,
+          interpolation=method)
+
+    lines = scale_lines(lines, scale_factor)
+
+    return img, lines
+    
+
+def do_scale(img1, img2, lines_img1, lines_img2, scale_img1, scale_img2, 
+    scale_factor):
+    scale_img1 *= scale_factor
+    scale_img2 *= scale_factor
+
+    if scale_img1 != 1:
+        img1, lines_img1 = scale_image_lines(img1, lines_img1, scale_img1)
+
+    if scale_img2 != 1:
+        img2, lines_img2 = scale_image_lines(img2, lines_img2, scale_img2)
+
+    return img1, img2, lines_img1, lines_img2
+        
+
+def scale(img1, img2, lines_img1, lines_img2, scale_factor=1):
     """
     Upscales the smaller image and coresponding lines of two given images.
     Aspect ratio is preserved, blank space is filled with zeros.
@@ -178,6 +213,7 @@ def scale(img1, img2, lines_img1, lines_img2):
         img2: Image 2.
         lines_img_1: Lines in image 1.
         lines_img_2: Lines in image 2.
+        scale_factor: Scaling factor for first image and both line lists. 
 
     Returns:
         img1: If img1 is bigger returns img1 else scaled img1.
@@ -193,75 +229,38 @@ def scale(img1, img2, lines_img1, lines_img2):
     x_scale_factor = float(x_size_img1)/ float(x_size_img2)
     y_scale_factor = float(y_size_img1)/ float(y_size_img2)
 
+   
 
     # Images are of same size
     if x_size_img1 == x_size_img2 and y_size_img1 == y_size_img2:
-        return img1, img2, lines_img1, lines_img2, img1.shape[1],\
-            img1.shape[0]
+        img1, img2, lines_img1, lines_img2 = do_scale(img1, img2, lines_img1, lines_img2, 1, 1, scale_factor)
+        x_max = img1.shape[1]
+        y_max = img1.shape[0]
 
     # Image 1 is bigger
     elif x_size_img1 >= x_size_img2 and y_size_img1 >= y_size_img2:
-        temp_img = np.zeros(img1.shape, dtype=img1.dtype)
-        temp_lines = []
-        # X scale is smaller
-        if x_scale_factor < y_scale_factor:
-            img2 = cv2.resize(img2,  (0,0), fx=x_scale_factor, 
-                fy=x_scale_factor, interpolation=cv2.INTER_LINEAR)
-            for line in lines_img2:
-                temp_line = []
-                for value in line:
-                    temp_line.append(value * x_scale_factor)
-                temp_lines.append(temp_line)
-
-        # Y scale is smaller
-        else:
-            img2 = cv2.resize(img2, (0,0), fx=y_scale_factor, 
-                fy=y_scale_factor, interpolation=cv2.INTER_LINEAR)
-            for line in lines_img2:
-                temp_line = []
-                for value in line:
-                    temp_line.append(value * y_scale_factor)
-                temp_lines.append(temp_line)
-
+        img1, img2, lines_img1, lines_img2 = do_scale(img1, img2, lines_img1, lines_img2, 1, 
+            min(x_scale_factor, y_scale_factor), scale_factor)
+        temp_img = np.zeros_like(img1)
         temp_img[0:img2.shape[0], 0:img2.shape[1], 0:img2.shape[2]] = img2
         x_max = img2.shape[1]
         y_max = img2.shape[0]
-        lines_img2 = temp_lines
         img2 = temp_img
 
     # Image 1 is smaller
     elif x_size_img1 <= x_size_img2 and y_size_img1 <= y_size_img2:
-        temp_img = np.zeros(img2.shape, dtype=img2.dtype)
-        temp_lines = []
-        # X scale is smaller. we need the inverse
-        if x_scale_factor > y_scale_factor:
-            img1 = cv2.resize(img1, (0,0), fx=(1/x_scale_factor), 
-                fy=(1/x_scale_factor), interpolation=cv2.INTER_LINEAR)
-            for line in lines_img1:
-                temp_line = []
-                for value in line:
-                    temp_line.append(value * 1/x_scale_factor)
-                temp_lines.append(temp_line)
-
-        # Y scale is smaller
-        else:
-            img1 = cv2.resize(img1, (0,0), fx=1/y_scale_factor, 
-                fy=1/y_scale_factor, interpolation=cv2.INTER_LINEAR)
-            for line in lines_img1:
-                temp_line = []
-                for value in line:
-                    temp_line.append(value * 1/y_scale_factor)
-                temp_lines.append(temp_line)
-
+        img1, img2, lines_img1, lines_img2 = do_scale(img1, img2, lines_img1, lines_img2,  
+            1/max(x_scale_factor, y_scale_factor), 1, scale_factor)
+        temp_img = np.zeros_like(img2)
         temp_img[0:img1.shape[0], 0:img1.shape[1], 0:img1.shape[2]] = img1
         x_max = img1.shape[1]
         y_max = img1.shape[0]
-        lines_img1 = temp_lines
         img1 = temp_img
 
     # Images size relations are not the same i.e. x_scale < 1 and y_scale > 1 
     # or vice versa
     else:
+        img1, img2, lines_img1, lines_img2 = do_scale(img1, img2, lines_img1, lines_img2, 1, 1, scale_factor)
         temp_img = np.zeros((max(y_size_img1, y_size_img2), 
             max(x_size_img1, x_size_img2), max(z_size_img1, z_size_img2)), 
             dtype=img1.dtype)
