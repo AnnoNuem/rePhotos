@@ -24,9 +24,9 @@ def draw_frame(img, x_min, x_max, y_min, y_max):
     cv2.line(img, (x_max, y_min), (x_min, y_min), color, thickness, lineType )
 
 
-def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15, 
+def aaap_morph(src_img, dst_img, dst_lines, src_lines, grid_size=15, 
         line_constraint_type=2, deform_energy_weights=np.array([1,0.0100, 0,0]),
-        n_samples_per_grid=1):
+        n_samples_per_grid=1, scale_factor=1):
 
     """
     Wrapper for As-Affine-As-Possible Warping.
@@ -48,6 +48,8 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
         deform_energy_weights: Weighting affinity of warping. 
             [alpha, beta, 0,0]. See paper for details.
         n_samples_per_grid = Number of line discretisation points per grid block.
+        scale_factor: Scaling factor for first image and both line lists. 
+                      Second image is not scaled since not used for computation.
 
     Returns:
         src_img_morphed: Warped and cropped source image.
@@ -55,22 +57,26 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
         src_img_cropped: Source image cropped to evaluate warp.
     """
 
+    grid_size = grid_size * scale_factor
+
     src_img = np.float32(src_img)
     dst_img = np.float32(dst_img)
     # scale images
     print("Scaling...")
+    src_img = np.concatenate([src_img, np.ones((src_img.shape[0], src_img.shape[1],1))], axis=2)
+    dst_img = np.concatenate([dst_img, np.ones((dst_img.shape[0], dst_img.shape[1],1))], axis=2)
+
     src_img, dst_img, src_lines, dst_lines, x_max, y_max = \
-        scale(src_img, dst_img, src_lines, dst_lines)
-    #x_max = dst_img.shape[1]
-    #y_max = dst_img.shape[0]
+        scale(src_img, dst_img, src_lines, dst_lines, scale_factor)
 
+    #cv2.imshow('1', src_img[:,:,3])
+    #cv2.imshow('2', dst_img[:,:,3])
+    #cv2.waitKey(0)
 
-    print src_img.shape
-    print dst_img.shape
     # init grid 
     print("Init grid...")
-    grid_points, quads, grid_shape = build_regular_mesh(src_img.shape[1],
-        src_img.shape[0], grid_size)
+    grid_points, quads, grid_shape = build_regular_mesh(dst_img.shape[1],
+        dst_img.shape[0], grid_size)
 
     print grid_points.shape
     # create energy matrix
@@ -95,15 +101,33 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
     # morph image
     print("Morphing...")
     t = time.time()
-    src_img_morphed = morph(dst_img, grid_points, y_p, quads, grid_size, 
-                            scale=4, processes=4)
+    src_img_morphed = morph(src_img, grid_points, y_p, quads, grid_size, 
+                            processes=4)
     print ('time', time.time() -t)
+    
+    # Downscale images
+    if scale_factor !=1:
+        src_img_morphed = cv2.resize(src_img_morphed, (0,0), fx=1./scale_factor, 
+                          fy=1./scale_factor, interpolation=cv2.INTER_AREA)
+        src_img_cropped= cv2.resize(src_img, (0,0), fx=1./scale_factor, 
+                 fy=1./scale_factor, interpolation=cv2.INTER_AREA)
+        dst_img_cropped = cv2.resize(dst_img, (0,0), fx=1./scale_factor, 
+                          fy=1./scale_factor, interpolation=cv2.INTER_AREA)
+    else:
+        src_img_cropped = src_img
+        dst_img_cropped = dst_img
 
     # Crop images
     print("Compute crop...")
-    c_idx = get_crop_idx(y_p, grid_shape, src_img_morphed.shape, x_max, y_max) 
+    #c_idx = get_crop_idx(y_p, grid_shape, src_img_morphed.shape, x_max, y_max) 
+
+    c_idx = get_crop_idx(src_img_morphed[:,:,3] + dst_img_cropped[:,:,3])
 
     print("Postprocess...")
+
+    src_img_morphed = src_img_morphed[:,:,0:-1]
+    src_img_cropped = src_img_cropped[:,:,0:-1]
+    dst_img_cropped = dst_img_cropped[:,:,0:-1]
 
     # sharpen image
     src_img_morphed = unsharp_mask(src_img_morphed, 1, .7)
