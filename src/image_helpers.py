@@ -82,8 +82,8 @@ def get_crop_idx(crop_img, scale = 400):
     #cv2.imshow('afg', crop_image * 255)
 
     # Speed up by downsmpling the crop image costs accuracy of crop indices
-    cv2.imshow('adf', crop_img)
-    print crop_img
+#    cv2.imshow('adf', crop_img)
+    #print crop_img
     ac = int(np.sum(crop_img.shape)/scale)
     return  max_size(crop_img[::ac,::ac], 2) * ac + [ac, ac, -ac, -ac]
     #return max_size(crop_image, 1)

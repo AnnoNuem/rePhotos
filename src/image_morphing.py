@@ -9,7 +9,7 @@ def morph_process(src_img, s_x_min, shared_dst, dst_shape, points_new, points_ol
     y_max = dst_shape[0] - 1
 
     dst_img = np.reshape(to_numpy_array(shared_dst), dst_shape)
-    print dst_img.shape
+    #print dst_img.shape
     for quad in quads:
         # clip quadpoints to img size
         c_p = lambda point: (min(max(point[0], 0,), x_max), \
@@ -44,12 +44,12 @@ def morph_process(src_img, s_x_min, shared_dst, dst_shape, points_new, points_ol
          
         mask = np.zeros((bbox[3],bbox[2], 4), dtype=np.uint8)
         cv2.fillConvexPoly(mask, np.int32(t_rect), (1,1,1), 4, 0)
+        mask[:,:,3] = mask[:,:,2]
         tmp_img =  cv2.warpPerspective(src_img[quad_old[0][1] : quad_old[2][1], 
                    quad_old[0][0] - s_x_min : quad_old[2][0] - s_x_min], 
                    warp_mat, (bbox[2], bbox[3]), None, 
                    flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE) 
         
-        print tmp_img.shape
         dst_img[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]] = \
            dst_img[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]] *\
            (1-mask) + tmp_img * mask 
@@ -77,6 +77,7 @@ def morph(src_img, points_old, points_new, quads, grid_size, processes=1):
     assert len(points_old) == len(points_new), "Point lists of different size."
     assert len(points_old) > 0, "Point lists are empty."
     
+    cv2.imshow('gg', src_img[:,:,3])
     # offset point for new image. New image is framed with grid size
     # to allow for quads ending outside of new image
     points_new = np.array(points_new + grid_size)
@@ -103,12 +104,14 @@ def morph(src_img, points_old, points_new, quads, grid_size, processes=1):
             points_new, 
             points_old, 
             quads[chunk_size*i:chunk_size*i+chunk_size,:]))
-        
+         
         jobs.append(p)
         p.start()
     
     for j in jobs:
         j.join()
+
+#    morph_process(src_img, 0, shared_dst, dst_shape, points_new, points_old, quads)
         
     img_morph = (np.reshape(to_numpy_array(shared_dst), dst_shape))\
                 [grid_size:-grid_size, grid_size:-grid_size]

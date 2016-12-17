@@ -68,6 +68,10 @@ def aaap_morph(src_img, dst_img, dst_lines, src_lines, grid_size=15,
     src_img, dst_img, src_lines, dst_lines, x_max, y_max = \
         scale(src_img, dst_img, src_lines, dst_lines, scale_factor)
 
+    #cv2.imshow('1', src_img[:,:,3])
+    #cv2.imshow('2', dst_img[:,:,3])
+    #cv2.waitKey(0)
+
     # init grid 
     print("Init grid...")
     grid_points, quads, grid_shape = build_regular_mesh(dst_img.shape[1],
@@ -108,12 +112,15 @@ def aaap_morph(src_img, dst_img, dst_lines, src_lines, grid_size=15,
                  fy=1./scale_factor, interpolation=cv2.INTER_AREA)
         dst_img_cropped = cv2.resize(dst_img, (0,0), fx=1./scale_factor, 
                           fy=1./scale_factor, interpolation=cv2.INTER_AREA)
+    else:
+        src_img_cropped = src_img
+        dst_img_cropped = dst_img
 
     # Crop images
     print("Compute crop...")
     #c_idx = get_crop_idx(y_p, grid_shape, src_img_morphed.shape, x_max, y_max) 
 
-    c_idx = get_crop_idx(src_img_morphed[:,:,3])#+ dst_img_cropped[:,:,3])
+    c_idx = get_crop_idx(src_img_morphed[:,:,3] + dst_img_cropped[:,:,3])
 
     print("Postprocess...")
 
