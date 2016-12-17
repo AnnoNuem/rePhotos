@@ -3,7 +3,7 @@ import numpy as np
 
 def draw_grid(img, grid_points, quad_indices):
     
-    thickness = 1
+    thickness = int((img.shape[0] + img.shape[1]) / 2200  ) + 1
     color = (255,255,255)
     x_max = img.shape[1]
     y_max = img.shape[0]

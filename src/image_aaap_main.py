@@ -105,6 +105,12 @@ def aaap_morph(src_img, dst_img, dst_lines, src_lines, grid_size=15,
                             processes=4)
     print ('time', time.time() -t)
     
+    src_img_morphed_grid = np.copy(src_img_morphed)
+    src_img_grid = np.copy(src_img)
+
+    draw_grid(src_img_morphed_grid, y_p, quads)
+    draw_grid(src_img_grid, grid_points, quads)
+
     # Downscale images
     if scale_factor !=1:
         src_img_morphed = cv2.resize(src_img_morphed, (0,0), fx=1./scale_factor, 
@@ -112,6 +118,10 @@ def aaap_morph(src_img, dst_img, dst_lines, src_lines, grid_size=15,
         src_img_cropped= cv2.resize(src_img, (0,0), fx=1./scale_factor, 
                  fy=1./scale_factor, interpolation=cv2.INTER_AREA)
         dst_img_cropped = cv2.resize(dst_img, (0,0), fx=1./scale_factor, 
+                          fy=1./scale_factor, interpolation=cv2.INTER_AREA)
+        src_img_morphed_grid = cv2.resize(src_img_morphed_grid, (0,0), fx=1./scale_factor, 
+                          fy=1./scale_factor, interpolation=cv2.INTER_AREA)
+        src_img_grid = cv2.resize(src_img_grid, (0,0), fx=1./scale_factor, 
                           fy=1./scale_factor, interpolation=cv2.INTER_AREA)
     else:
         src_img_cropped = src_img
@@ -125,31 +135,33 @@ def aaap_morph(src_img, dst_img, dst_lines, src_lines, grid_size=15,
 
     print("Postprocess...")
 
-    src_img_morphed = src_img_morphed[:,:,0:-1]
-    src_img_cropped = src_img_cropped[:,:,0:-1]
-    dst_img_cropped = dst_img_cropped[:,:,0:-1]
+    src_img_morphed = np.uint8(src_img_morphed[:,:,0:-1])
+    src_img_cropped = np.uint8(src_img_cropped[:,:,0:-1])
+    dst_img_cropped = np.uint8(dst_img_cropped[:,:,0:-1])
+    dst_img = np.uint8(dst_img[:,:,0:-1])
+    src_img = np.uint8(src_img[:,:,0:-1])
+    src_img_morphed_grid = np.uint8(src_img_morphed_grid[:,:,0:-1])
+    src_img_grid = np.uint8(src_img_grid[:,:,0:-1])
 
     # sharpen image
     src_img_morphed = unsharp_mask(src_img_morphed, 1, .7)
     
-    src_img_morphed_grid = np.copy(src_img_morphed)
-    src_img_grid = np.copy(dst_img)
-
-    draw_grid(src_img_morphed_grid, y_p, quads)
-    draw_grid(src_img_grid, grid_points, quads)
     
     
-    return (np.uint8(src_img_morphed[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
-            np.uint8(src_img[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
-            np.uint8(dst_img[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
-            np.uint8(src_img_morphed_grid[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
-            np.uint8(src_img_grid[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]))
+#    return (np.uint8(src_img_morphed[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
+#            np.uint8(dst_img_cropped[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
+#            np.uint8(src_img_cropped[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
+#            np.uint8(src_img_morphed_grid[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
+#            np.uint8(src_img_grid[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]))
 
+    draw_frame(dst_img_cropped, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
+    draw_frame(src_img_morphed, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
+    draw_frame(src_img_cropped, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
+    draw_frame(src_img_morphed_grid, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
+    draw_frame(src_img_grid, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
 
-
-#    draw_frame(src_img_morphed, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
-#    draw_frame(dst_img, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
-#    draw_frame(src_img, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
-#    return np.uint8(src_img_morphed), np.uint8(src_img), np.uint8(dst_img),\
-#           np.uint8(src_img_morphed_grid), np.uint8(src_img_grid)
-
+    return (np.uint8(src_img_morphed),
+            np.uint8(dst_img_cropped),
+            np.uint8(src_img_cropped),
+            np.uint8(src_img_morphed_grid),
+            np.uint8(src_img_grid))

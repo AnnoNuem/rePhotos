@@ -77,7 +77,6 @@ def morph(src_img, points_old, points_new, quads, grid_size, processes=1):
     assert len(points_old) == len(points_new), "Point lists of different size."
     assert len(points_old) > 0, "Point lists are empty."
     
-    cv2.imshow('gg', src_img[:,:,3])
     # offset point for new image. New image is framed with grid size
     # to allow for quads ending outside of new image
     points_new = np.array(points_new + grid_size)
@@ -115,7 +114,6 @@ def morph(src_img, points_old, points_new, quads, grid_size, processes=1):
         
     img_morph = (np.reshape(to_numpy_array(shared_dst), dst_shape))\
                 [grid_size:-grid_size, grid_size:-grid_size]
-    cv2.imshow('ggg', img_morph[:,:,3])
 
     #img_morph = cv2.morphologyEx(img_morph, cv2.MORPH_CLOSE, (5,5))
     

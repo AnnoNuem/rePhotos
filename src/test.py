@@ -142,9 +142,10 @@ def test():
 
     # morph
     src_img_morphed, dst_img_cropped, src_img_cropped, src_img_morphed_grid, src_img_grid = aaap_morph(src_img_orig, dst_img_orig, src_lines, dst_lines, line_constraint_type=2, grid_size=10, scale_factor=4)
-    src_img_morphed, src_img_cropped, dst_img_cropped = aaap_morph(src_img, dst_img, src_lines, dst_lines, line_constraint_type=2, grid_size=10, scale_factor=4)
 
     # compute overlay
+    print dst_img_cropped.shape
+    print src_img_morphed.shape
     overlay_morphed = cv2.addWeighted(dst_img_cropped, 0.5, src_img_morphed, 0.5, 0)
     overlay_orig = cv2.addWeighted(dst_img_cropped, 0.5, src_img_cropped, 0.5, 0)
     
