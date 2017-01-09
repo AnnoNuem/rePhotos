@@ -3,6 +3,15 @@ import cv2
 from image_pst import pst
 from ler.image_ler import max_size
 
+def draw_line(img, start, end, color, l_number=-1):
+    thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
+    lineType = 8
+    cv2.line(img, start, end, color, thickness, lineType )
+    if l_number > 0:
+        text_size = float(thickness)/2 
+        cv2.putText(img, str(l_number), end, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, text_size, (0,255,0), thickness)
+
+
 def lce(img, kernel = 11 , amount = 0.5):
     """
     Local Contrast Enhancement by unsharp mask.

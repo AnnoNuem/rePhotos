@@ -23,7 +23,7 @@ def draw_frame(img, x_min, x_max, y_min, y_max):
     cv2.line(img, (x_max, y_min), (x_min, y_min), color, thickness, lineType )
 
 
-def aaap_morph(src_img, dst_img, dst_lines, src_lines, grid_size=15, 
+def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15, 
         line_constraint_type=2, deform_energy_weights=np.array([1,0.0100, 0,0]),
         n_samples_per_grid=1, scale_factor=1):
 
@@ -68,10 +68,6 @@ def aaap_morph(src_img, dst_img, dst_lines, src_lines, grid_size=15,
     src_img, dst_img, src_lines, dst_lines, x_max, y_max = \
         scale(src_img, dst_img, src_lines, dst_lines, scale_factor)
 
-    #cv2.imshow('1', src_img[:,:,3])
-    #cv2.imshow('2', dst_img[:,:,3])
-    #cv2.waitKey(0)
-
     # init grid 
     print("Init grid...")
     grid_points, quads, grid_shape = build_regular_mesh(dst_img.shape[1],
@@ -84,7 +80,7 @@ def aaap_morph(src_img, dst_img, dst_lines, src_lines, grid_size=15,
 
     # discretisize lines
     print("Discretizesing lines...")
-    src_points, dst_points = sample_lines(src_lines, dst_lines, 
+    src_points, dst_points = sample_lines(dst_lines, src_lines, 
         float(n_samples_per_grid)/grid_size)
 
     # express points by quads
