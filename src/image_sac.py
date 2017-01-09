@@ -103,7 +103,7 @@ def getCorespondingPoint(img1, img2, point):
     #subimage1F = cv2.erode(subimage1F, None)
     subimage1F = cv2.normalize(subimage1F, subimage1F, 0, 1, cv2.NORM_MINMAX)
 
-    cv2.namedWindow("template", cv2.WINDOW_KEEPRATIO)
+    cv2.namedWindow("template", cv2.WINDOW_NORMAL)
     cv2.imshow("template", np.uint8(cv2.normalize(subimage1F, subimage1F, 0, 255, cv2.NORM_MINMAX)))
     cv2.resizeWindow("template", 640, 480)
 
@@ -120,7 +120,7 @@ def getCorespondingPoint(img1, img2, point):
     #subimage2F = cv2.erode(subimage2F, None)
     subimage2F = cv2.normalize(subimage2F, subimage2F, 0, 1, cv2.NORM_MINMAX)
 
-    cv2.namedWindow("subimage", cv2.WINDOW_KEEPRATIO)
+    cv2.namedWindow("subimage", cv2.WINDOW_NORMAL)
     cv2.imshow("subimage", np.uint8(cv2.normalize(subimage2F, subimage2F, 0, 255, cv2.NORM_MINMAX)))
     cv2.resizeWindow("subimage", 640, 480)
 
@@ -135,7 +135,7 @@ def getCorespondingPoint(img1, img2, point):
     templateResult = cv2.matchTemplate(subimage2F, subimage1F, CV_TM_CCOEFF_NORMED)
     templateResult1 = cv2.normalize(templateResult, templateResult, 0, 1, cv2.NORM_MINMAX)
 
-    cv2.namedWindow("result", cv2.WINDOW_KEEPRATIO)
+    cv2.namedWindow("result", cv2.WINDOW_NORMAL)
     cv2.imshow("result", np.uint8(cv2.normalize(templateResult1, templateResult1, 0, 255, cv2.NORM_MINMAX)))
     cv2.resizeWindow("result", 640, 480)
 
