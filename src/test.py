@@ -119,8 +119,8 @@ def test():
         src_lines = []
         dst_lines = []
 
-    cv2.namedWindow("src_img", cv2.WINDOW_KEEPRATIO)
-    cv2.namedWindow("dst_img", cv2.WINDOW_KEEPRATIO)
+    cv2.namedWindow("src_img", cv2.WINDOW_NORMAL)
+    cv2.namedWindow("dst_img", cv2.WINDOW_NORMAL)
     cv2.setMouseCallback("src_img", onMouse, (src_img, src_img_orig, src_lines, 'src_img', (255,255,0)))
     cv2.setMouseCallback("dst_img", onMouse, (dst_img, dst_img_orig, dst_lines, 'dst_img', (0,0,255)))
     cv2.imshow("src_img", src_img)
@@ -150,19 +150,19 @@ def test():
     overlay_orig = cv2.addWeighted(dst_img_cropped, 0.5, src_img_cropped, 0.5, 0)
     
     # display
-    cv2.namedWindow('overlay', cv2.WINDOW_KEEPRATIO)
+    cv2.namedWindow('overlay', cv2.WINDOW_NORMAL)
     cv2.imshow('overlay', overlay_morphed)
     cv2.resizeWindow('overlay', 640, 480)
-    cv2.namedWindow('overlay_orig', cv2.WINDOW_KEEPRATIO)
+    cv2.namedWindow('overlay_orig', cv2.WINDOW_NORMAL)
     cv2.imshow('overlay_orig', overlay_orig)
     cv2.resizeWindow('overlay_orig', 640, 480)
-    cv2.namedWindow('src_morphed', cv2.WINDOW_KEEPRATIO)
+    cv2.namedWindow('src_morphed', cv2.WINDOW_NORMAL)
     cv2.imshow('src_morphed', src_img_morphed)
     cv2.resizeWindow('src_morphed', 640, 480)
-    cv2.namedWindow('src_grid', cv2.WINDOW_KEEPRATIO)
+    cv2.namedWindow('src_grid', cv2.WINDOW_NORMAL)
     cv2.imshow('src_grid', src_img_grid)
     cv2.resizeWindow('src_grid', 640, 480)
-    cv2.namedWindow('src_morphed_grid', cv2.WINDOW_KEEPRATIO)
+    cv2.namedWindow('src_morphed_grid', cv2.WINDOW_NORMAL)
     cv2.imshow('src_morphed_grid', src_img_morphed_grid)
     cv2.resizeWindow('src_morphed_grid', 640, 480)
     
