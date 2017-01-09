@@ -4,6 +4,7 @@ import sys
 from image_aaap_main import aaap_morph
 import image_lines as i_l
 from image_sac import getPointFromPoint
+from image_helpers import draw_line
 import json
 
 
@@ -32,15 +33,6 @@ def write_lines(src_lines, dst_lines, filename):
     with f:
         json.dump([src_lines, dst_lines], f)
     
-
-def draw_line(img, start, end, color, l_number):
-    thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
-    lineType = 8
-    cv2.line(img, start, end, color, thickness, lineType )
-    if l_number > 0:
-        text_size = float(thickness)/2 
-        cv2.putText(img, str(l_number), end, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, text_size, (0,255,0), thickness)
-
 
 drag_start = (0,0)
 def onMouse(event, x, y, flags, (img, img_orig, lines, win_name, color)):
