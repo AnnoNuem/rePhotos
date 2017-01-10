@@ -73,7 +73,6 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
     grid_points, quads, grid_shape = build_regular_mesh(dst_img.shape[1],
         dst_img.shape[0], grid_size)
 
-    print grid_points.shape
     # create energy matrix
     print("Creating energy matrix...")
     L = construct_mesh_energy(grid_points, quads, deform_energy_weights)
@@ -98,7 +97,6 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
     t = time.time()
     src_img_morphed = morph(src_img, grid_points, y_p, quads, grid_size, 
                             processes=4)
-    print ('time', time.time() -t)
     
     # Downscale images
     if scale_factor !=1:

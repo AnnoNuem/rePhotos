@@ -17,7 +17,9 @@ __pycache__/
 *.so
 
 # snapshot folder
-src/snapshot/
+snapshots/
+# result images folder
+src/results
 
 # Distribution / packaging
 .Python
