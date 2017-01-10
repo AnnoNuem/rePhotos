@@ -12,6 +12,18 @@ def draw_line(img, start, end, color, l_number=-1):
         cv2.putText(img, str(l_number), end, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, text_size, (0,255,0), thickness)
 
 
+def draw_rectangle(img, start, end, color):
+    thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
+    lineType = 8
+    cv2.rectangle(img, start, end, color, thickness, lineType )
+
+
+def draw_circle(img, center, color):
+    radius = int((img.shape[0] + img.shape[1]) / 400 ) + 1
+    linetype = -1
+    cv2.circle(img, center, radius, color, linetype)
+
+
 def lce(img, kernel = 11 , amount = 0.5):
     """
     Local Contrast Enhancement by unsharp mask.
@@ -182,9 +194,10 @@ def get_crop_idx(crop_img, scale = 400):
 #    return x_min, x_max, y_min, y_max
 
 
-def scale_image_lines(img, lines, scale_factor):
+def scale_image_lines_points(img, lines, points, scale_factor):
 
     scale_lines = lambda ls, f: [[v * f for v in l] for l in ls]   
+    scale_points = lambda ps, f: [[pc * f for pc in p] for p in ps]
 
     if scale_factor > 1:
         method = cv2.INTER_CUBIC
@@ -195,25 +208,27 @@ def scale_image_lines(img, lines, scale_factor):
           interpolation=method)
 
     lines = scale_lines(lines, scale_factor)
+    points = scale_points(points, scale_factor)
 
-    return img, lines
+    return img, lines, points
     
 
-def do_scale(img1, img2, lines_img1, lines_img2, scale_img1, scale_img2, 
+def do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_img1, scale_img2, 
     scale_factor):
     scale_img1 *= scale_factor
     scale_img2 *= scale_factor
 
+    print(scale_img1, scale_img2)
     if scale_img1 != 1:
-        img1, lines_img1 = scale_image_lines(img1, lines_img1, scale_img1)
+        img1, lines_img1, points_img1 = scale_image_lines_points(img1, lines_img1, points_img1, scale_img1)
 
     if scale_img2 != 1:
-        img2, lines_img2 = scale_image_lines(img2, lines_img2, scale_img2)
+        img2, lines_img2, points_img2  = scale_image_lines_points(img2, lines_img2, points_img2, scale_img2)
 
-    return img1, img2, lines_img1, lines_img2
+    return img1, img2, lines_img1, lines_img2, points_img1, points_img2
         
 
-def scale(img1, img2, lines_img1, lines_img2, scale_factor=1):
+def scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_factor=1):
     """
     Upscales the smaller image and coresponding lines of two given images.
     Aspect ratio is preserved, blank space is filled with zeros.
@@ -242,13 +257,13 @@ def scale(img1, img2, lines_img1, lines_img2, scale_factor=1):
 
     # Images are of same size
     if x_size_img1 == x_size_img2 and y_size_img1 == y_size_img2:
-        img1, img2, lines_img1, lines_img2 = do_scale(img1, img2, lines_img1, lines_img2, 1, 1, scale_factor)
+        img1, img2, lines_img1, lines_img2, points_img1, points_img2 = do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, 1, 1, scale_factor)
         x_max = img1.shape[1]
         y_max = img1.shape[0]
 
     # Image 1 is bigger
     elif x_size_img1 >= x_size_img2 and y_size_img1 >= y_size_img2:
-        img1, img2, lines_img1, lines_img2 = do_scale(img1, img2, lines_img1, lines_img2, 1, 
+        img1, img2, lines_img1, lines_img2, points_img1, points_img2 = do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, 1, 
             min(x_scale_factor, y_scale_factor), scale_factor)
         temp_img = np.zeros_like(img1)
         temp_img[0:img2.shape[0], 0:img2.shape[1], 0:img2.shape[2]] = img2
@@ -258,7 +273,7 @@ def scale(img1, img2, lines_img1, lines_img2, scale_factor=1):
 
     # Image 1 is smaller
     elif x_size_img1 <= x_size_img2 and y_size_img1 <= y_size_img2:
-        img1, img2, lines_img1, lines_img2 = do_scale(img1, img2, lines_img1, lines_img2,  
+        img1, img2, lines_img1, lines_img2, points_img1, points_img2 = do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2,  
             1/max(x_scale_factor, y_scale_factor), 1, scale_factor)
         temp_img = np.zeros_like(img2)
         temp_img[0:img1.shape[0], 0:img1.shape[1], 0:img1.shape[2]] = img1
@@ -269,7 +284,7 @@ def scale(img1, img2, lines_img1, lines_img2, scale_factor=1):
     # Images size relations are not the same i.e. x_scale < 1 and y_scale > 1 
     # or vice versa
     else:
-        img1, img2, lines_img1, lines_img2 = do_scale(img1, img2, lines_img1, lines_img2, 1, 1, scale_factor)
+        img1, img2, lines_img1, lines_img2, points_img1, points_img2 = do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, 1, 1, scale_factor)
         temp_img = np.zeros((max(y_size_img1, y_size_img2), 
             max(x_size_img1, x_size_img2), max(z_size_img1, z_size_img2)), 
             dtype=img1.dtype)
@@ -281,7 +296,7 @@ def scale(img1, img2, lines_img1, lines_img2, scale_factor=1):
         temp_img2[0:img2.shape[0], 0:img2.shape[1], 0:img2.shape[2]] = img2
         img2 = temp_img2
 
-    return img1, img2, lines_img1, lines_img2, x_max, y_max
+    return img1, img2, lines_img1, lines_img2, points_img1, points_img2, x_max, y_max
 
 
 def adaptive_thresh(img):

@@ -7,7 +7,6 @@ from image_aaap import build_regular_mesh
 from image_aaap import sample_lines
 from image_aaap import bilinear_point_in_quad_mesh
 from image_aaap import deform_aaap 
-from image_helpers import scale
 from image_helpers import unsharp_mask
 from image_helpers import get_crop_idx
 from image_morphing import morph
@@ -25,7 +24,7 @@ def draw_frame(img, x_min, x_max, y_min, y_max):
 
 def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15, 
         line_constraint_type=2, deform_energy_weights=np.array([1,0.0100, 0,0]),
-        n_samples_per_grid=1, scale_factor=1):
+        n_samples_per_grid=1, scale_factor=4):
 
     """
     Wrapper for As-Affine-As-Possible Warping.
@@ -57,16 +56,6 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
     """
 
     grid_size = grid_size * scale_factor
-
-    src_img = np.float32(src_img)
-    dst_img = np.float32(dst_img)
-    # scale images
-    print("Scaling...")
-    src_img = np.concatenate([src_img, np.ones((src_img.shape[0], src_img.shape[1],1))], axis=2)
-    dst_img = np.concatenate([dst_img, np.ones((dst_img.shape[0], dst_img.shape[1],1))], axis=2)
-
-    src_img, dst_img, src_lines, dst_lines, x_max, y_max = \
-        scale(src_img, dst_img, src_lines, dst_lines, scale_factor)
 
     # init grid 
     print("Init grid...")

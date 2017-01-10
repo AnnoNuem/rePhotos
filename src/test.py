@@ -1,12 +1,15 @@
 import cv2 
 import numpy as np
 import sys
-from image_aaap_main import aaap_morph
-import image_lines as i_l
-from image_sac import getPointFromPoint
-from image_helpers import draw_line
 import json
-
+import image_lines as i_l
+from image_aaap_main import aaap_morph
+from image_helpers import scale
+from image_sac import getPointFromPoint
+from image_sac import getPointFromRectangle
+from image_helpers import draw_line
+from image_helpers import draw_rectangle
+from image_helpers import draw_circle
 
 use_line_file= True
 line_file_name_end = "line_file.txt"
@@ -35,48 +38,74 @@ def write_lines(src_lines, dst_lines, filename):
     
 
 drag_start = (0,0)
-def onMouse(event, x, y, flags, (img, img_orig, lines, win_name, color)):
-    global drag_start
-    
+point_stage = True
+number_of_points = 0
+def onMouse(event, x, y, flags, (img, img_orig, lines, points, win_name, color)):
+    global drag_start, point_stage, number_of_points
+
     img_tmp = np.copy(img)
+    if point_stage and len(points) < 4:
+        if event == cv2.EVENT_LBUTTONUP:
+            points.append((x,y))
+            number_of_points = number_of_points + 1
+            draw_circle(img, (x,y), color)
+            cv2.imshow(win_name, img)
+            if number_of_points == 8:
+                point_stage = False
+        elif event == cv2.EVENT_RBUTTONDOWN:
+            drag_start = (x,y)
+        elif event == cv2.EVENT_MOUSEMOVE and flags == cv2.EVENT_FLAG_RBUTTON:
+            draw_rectangle(img_tmp, drag_start, (x,y), color)
+            cv2.imshow(win_name, img_tmp)
+        elif event == cv2.EVENT_RBUTTONUP:
+            point = getPointFromRectangle(img, drag_start, (x,y))
+            draw_circle(img, point, color)
+            cv2.imshow(win_name, img)
+            points.append(point)
+            number_of_points = number_of_points + 1
+            if number_of_points == 8:
+                point_stage = False
 
-    if event == cv2.EVENT_LBUTTONDOWN:
-        drag_start = (x, y)
+    elif not point_stage:
+        if event == cv2.EVENT_LBUTTONDOWN:
+            drag_start = (x, y)
 
-    if event == cv2.EVENT_RBUTTONDOWN:
-        drag_start = getPointFromPoint(img, (x, y))
+        if event == cv2.EVENT_RBUTTONDOWN:
+            drag_start = getPointFromPoint(img, (x, y))
 
-    elif event == cv2.EVENT_MOUSEMOVE and (flags==cv2.EVENT_FLAG_LBUTTON or flags==cv2.EVENT_FLAG_RBUTTON):
-        draw_line(img_tmp, drag_start,(x,y), color, -1)
-        cv2.imshow(win_name, img_tmp)
-          
-    elif event == cv2.EVENT_LBUTTONUP:
-        lines.append([drag_start[0], drag_start[1], x, y])
-        draw_line(img, drag_start,(x,y), color, len(lines))
-        cv2.imshow(win_name, img)
+        elif event == cv2.EVENT_MOUSEMOVE and (flags==cv2.EVENT_FLAG_LBUTTON or flags==cv2.EVENT_FLAG_RBUTTON):
+            draw_line(img_tmp, drag_start,(x,y), color, -1)
+            cv2.imshow(win_name, img_tmp)
+              
+        elif event == cv2.EVENT_LBUTTONUP:
+            lines.append([drag_start[0], drag_start[1], x, y])
+            draw_line(img, drag_start,(x,y), color, len(lines))
+            cv2.imshow(win_name, img)
 
-    elif event == cv2.EVENT_RBUTTONUP:
-        #line = i_l.get_line(drag_start, (x,y), img_orig, i_l.PST)
-        #lines.append(line)
-        #draw_line(img,(line[0], line[1]), (line[2], line[3]), color, len(lines))
-        drag_end = getPointFromPoint(img, (x, y))
-        line = i_l.get_line(drag_start, drag_end, img_orig, i_l.STAT_CANNY)
-        lines.append(line)
-        draw_line(img,(line[0], line[1]), (line[2], line[3]), (0,255,0), len(lines))
-        cv2.imshow(win_name, img)
+        elif event == cv2.EVENT_RBUTTONUP:
+            #line = i_l.get_line(drag_start, (x,y), img_orig, i_l.PST)
+            #lines.append(line)
+            #draw_line(img,(line[0], line[1]), (line[2], line[3]), color, len(lines))
+            drag_end = getPointFromPoint(img, (x, y))
+            line = i_l.get_line(drag_start, drag_end, img_orig, i_l.STAT_CANNY)
+            lines.append(line)
+            draw_line(img,(line[0], line[1]), (line[2], line[3]), (0,255,0), len(lines))
+            cv2.imshow(win_name, img)
 
-    elif event == cv2.EVENT_MBUTTONUP and len(lines) > 0:
-        del lines[-1]
-        # np.copy creates new array, local img points to new array, main img still points to old img with lines
-        img[:] = img_orig[:]
-        i = 1
-        for line in lines:
-            draw_line(img, (line[0], line[1]), (line[2], line[3]), color, i)
-            i+=1
-        cv2.imshow(win_name, img)
+        elif event == cv2.EVENT_MBUTTONUP and len(lines) > 0:
+            del lines[-1]
+            # np.copy creates new array, local img points to new array, main img still points to old img with lines
+            img[:] = img_orig[:]
+            i = 1
+            for line in lines:
+                draw_line(img, (line[0], line[1]), (line[2], line[3]), color, i)
+                i+=1
+            cv2.imshow(win_name, img)
 
 
 def test():
+    global point_stage
+
     if len(sys.argv) != 3:
         print("Usage: test <img_src> <img_dst>")
         exit()
@@ -111,10 +140,13 @@ def test():
         src_lines = []
         dst_lines = []
 
+    src_points = []
+    dst_points = []
+
     cv2.namedWindow("src_img", cv2.WINDOW_NORMAL)
     cv2.namedWindow("dst_img", cv2.WINDOW_NORMAL)
-    cv2.setMouseCallback("src_img", onMouse, (src_img, src_img_orig, src_lines, 'src_img', (255,255,0)))
-    cv2.setMouseCallback("dst_img", onMouse, (dst_img, dst_img_orig, dst_lines, 'dst_img', (0,0,255)))
+    cv2.setMouseCallback("src_img", onMouse, (src_img, src_img_orig, src_lines, src_points, 'src_img', (255,255,0)))
+    cv2.setMouseCallback("dst_img", onMouse, (dst_img, dst_img_orig, dst_lines, dst_points, 'dst_img', (0,0,255)))
     cv2.imshow("src_img", src_img)
     cv2.imshow("dst_img", dst_img)
     cv2.resizeWindow("src_img", 640, 1024)
@@ -122,7 +154,7 @@ def test():
 
     # wait till user has drawn all lines
     key = 0
-    while key != 32:
+    while key != 32 and point_stage:
         key = cv2.waitKey(0)
         if key == 27:
             cv2.destroyAllWindows()
@@ -131,6 +163,38 @@ def test():
 
     if use_line_file:
         write_lines(src_lines, dst_lines, line_file_name)
+
+    src_img = np.float32(src_img)
+    dst_img = np.float32(dst_img)
+
+    # scale images
+    print("Scaling...")
+    scale_factor = 4
+    src_img = np.concatenate([src_img, np.ones((src_img.shape[0], src_img.shape[1],1))], axis=2)
+    dst_img = np.concatenate([dst_img, np.ones((dst_img.shape[0], dst_img.shape[1],1))], axis=2)
+
+    src_img, dst_img, src_lines, dst_lines, src_points, dst_points, x_max, y_max = \
+        scale(src_img, dst_img, src_lines, dst_lines, src_points, dst_points, scale_factor)
+
+    # perspective transform
+
+    print("Perspective Transform")
+    for point in src_points:
+        draw_circle(src_img, (int(point[0]), int(point[1])), (255,255,255))
+    for point in dst_points:
+        draw_circle(dst_img, (int(point[0]), int(point[1])), (255,255,255))
+
+    cv2.namedWindow('src', cv2.WINDOW_NORMAL)
+    cv2.imshow('src', src_img)
+    cv2.resizeWindow('src', 640, 480)
+
+    cv2.namedWindow('dst', cv2.WINDOW_NORMAL)
+    cv2.imshow('dst', dst_img)
+    cv2.resizeWindow('dst', 640, 480)
+
+    cv2.waitKey()
+    cv2.destroyAllWindows()
+    
 
     # morph
     src_img_morphed, src_img_cropped, dst_img_cropped = aaap_morph(src_img, dst_img, src_lines, dst_lines, line_constraint_type=2, grid_size=10, scale_factor=4)
