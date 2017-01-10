@@ -131,6 +131,9 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
 
     print("Postprocess...")
 
+    # sharpen image
+    src_img_morphed = unsharp_mask(src_img_morphed, 1, .7)
+
     src_img_morphed = np.uint8(src_img_morphed[:,:,0:-1])
     src_img_cropped = np.uint8(src_img_cropped[:,:,0:-1])
     dst_img_cropped = np.uint8(dst_img_cropped[:,:,0:-1])
@@ -139,8 +142,6 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
     src_img_morphed_grid = np.uint8(src_img_morphed_grid[:,:,0:-1])
     src_img_grid = np.uint8(src_img_grid[:,:,0:-1])
 
-    # sharpen image
-    src_img_morphed = unsharp_mask(src_img_morphed, 1, .7)
     
     
     
