@@ -24,6 +24,15 @@ def draw_circle(img, center, color):
     cv2.circle(img, center, radius, color, linetype)
 
 
+def weighted_average_point(point1, point2, alpha):
+    """
+    Return the average point between two points weighted by alpha.
+    """
+    x = int((1 - alpha) * point1[0] + alpha * point2[0])
+    y = int((1 - alpha) * point1[1] + alpha * point2[1])
+    return (x,y)
+
+
 def lce(img, kernel = 11 , amount = 0.5):
     """
     Local Contrast Enhancement by unsharp mask.

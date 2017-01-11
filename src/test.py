@@ -10,6 +10,7 @@ from image_sac import getPointFromRectangle
 from image_helpers import draw_line
 from image_helpers import draw_rectangle
 from image_helpers import draw_circle
+from image_perspective_alignment import perspective_align
 
 use_line_file= True
 line_file_name_end = "line_file.txt"
@@ -176,13 +177,15 @@ def test():
     src_img, dst_img, src_lines, dst_lines, src_points, dst_points, x_max, y_max = \
         scale(src_img, dst_img, src_lines, dst_lines, src_points, dst_points, scale_factor)
 
-    # perspective transform
+    # perspective alignment
+    print("Perspective Alignment")
 
-    print("Perspective Transform")
-    for point in src_points:
-        draw_circle(src_img, (int(point[0]), int(point[1])), (255,255,255))
-    for point in dst_points:
-        draw_circle(dst_img, (int(point[0]), int(point[1])), (255,255,255))
+    src_img, dst_img, _, _, src_lines, dst_lines = perspective_align(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, alpha=0)
+
+    for line in np.int32(src_lines):
+        draw_line(src_img,(line[0], line[1]), (line[2], line[3]), (255,255,255))
+    for line in np.int32(dst_lines):
+        draw_line(dst_img,(line[0], line[1]), (line[2], line[3]), (255,255,255))
 
     cv2.namedWindow('src', cv2.WINDOW_NORMAL)
     cv2.imshow('src', src_img)
