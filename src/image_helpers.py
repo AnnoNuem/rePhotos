@@ -1,7 +1,36 @@
+from __future__ import print_function
 import numpy as np
 import cv2
 from image_pst import pst
 from ler.image_ler import max_size
+
+
+vprint = lambda *a, **k: None
+def set_verbose(verbose):
+    """
+    Sets the global verbosity function.
+
+    Args:
+        verbose: If true verbose output, false no verbose output.
+    """
+    if verbose:
+        def _vprint(*args, **kwargs):
+            print(*args , **kwargs)
+    else:   
+        _vprint = lambda *a, **k: None     
+    global vprint
+    vprint = _vprint
+
+
+def draw_frame(img, x_min, x_max, y_min, y_max):
+    thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
+    lineType = 8
+    color = (255,255,255)
+    cv2.line(img, (x_min, y_min), (x_min, y_max), color, thickness, lineType )
+    cv2.line(img, (x_min, y_max), (x_max, y_max), color, thickness, lineType )
+    cv2.line(img, (x_max, y_max), (x_max, y_min), color, thickness, lineType )
+    cv2.line(img, (x_max, y_min), (x_min, y_min), color, thickness, lineType )
+
 
 def draw_line(img, start, end, color, l_number=-1):
     thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
@@ -12,7 +41,7 @@ def draw_line(img, start, end, color, l_number=-1):
         cv2.putText(img, str(l_number), end, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, text_size, (0,255,0), thickness)
 
 
-def draw_rectangle(img, start, end, color):
+def draw_rectangle(img, start, end, color=(255,255,255)):
     thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
     lineType = 8
     cv2.rectangle(img, start, end, color, thickness, lineType )
@@ -113,7 +142,6 @@ def get_crop_idx(crop_img, scale = 400):
 
     # Speed up by downsmpling the crop image costs accuracy of crop indices
 #    cv2.imshow('adf', crop_img)
-    #print crop_img
     ac = int(np.sum(crop_img.shape)/scale)
     return  max_size(crop_img[::ac,::ac], 2) * ac + [ac, ac, -ac, -ac]
     #return max_size(crop_image, 1)

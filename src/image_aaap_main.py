@@ -1,25 +1,10 @@
 import time
 import cv2 
 import numpy as np
+import image_helpers as i_h
+import image_aaap as i_aaap 
 from scipy import sparse
-from image_aaap import construct_mesh_energy
-from image_aaap import build_regular_mesh
-from image_aaap import sample_lines
-from image_aaap import bilinear_point_in_quad_mesh
-from image_aaap import deform_aaap 
-from image_helpers import unsharp_mask
-from image_helpers import get_crop_idx
 from image_morphing import morph
-
-
-def draw_frame(img, x_min, x_max, y_min, y_max):
-    thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
-    lineType = 8
-    color = (255,255,255)
-    cv2.line(img, (x_min, y_min), (x_min, y_max), color, thickness, lineType )
-    cv2.line(img, (x_min, y_max), (x_max, y_max), color, thickness, lineType )
-    cv2.line(img, (x_max, y_max), (x_max, y_min), color, thickness, lineType )
-    cv2.line(img, (x_max, y_min), (x_min, y_min), color, thickness, lineType )
 
 
 def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15, 
@@ -58,31 +43,31 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
     grid_size = grid_size * scale_factor
 
     # init grid 
-    print("Init grid...")
-    grid_points, quads, grid_shape = build_regular_mesh(dst_img.shape[1],
+    i_h.vprint("Init grid...")
+    grid_points, quads, grid_shape = i_aaap.build_regular_mesh(dst_img.shape[1],
         dst_img.shape[0], grid_size)
 
     # create energy matrix
-    print("Creating energy matrix...")
-    L = construct_mesh_energy(grid_points, quads, deform_energy_weights)
+    i_h.vprint("Creating energy matrix...")
+    L = i_aaap.construct_mesh_energy(grid_points, quads, deform_energy_weights)
 
     # discretisize lines
-    print("Discretizesing lines...")
-    src_points, dst_points = sample_lines(dst_lines, src_lines, 
+    i_h.vprint("Discretizesing lines...")
+    src_points, dst_points = i_aaap.sample_lines(dst_lines, src_lines, 
         float(n_samples_per_grid)/grid_size)
 
     # express points by quads
-    print("Expressing points by quads...")
-    Asrc = bilinear_point_in_quad_mesh(src_points, grid_points, quads, 
+    i_h.vprint("Expressing points by quads...")
+    Asrc = i_aaap.bilinear_point_in_quad_mesh(src_points, grid_points, quads, 
         grid_shape)
     
     # deform grid
-    print("Deforming grid...")
-    y_p = deform_aaap(grid_points, Asrc, dst_points, L, line_constraint_type).T
+    i_h.vprint("Deforming grid...")
+    y_p = i_aaap.deform_aaap(grid_points, Asrc, dst_points, L, line_constraint_type).T
 
 
     # morph image
-    print("Morphing...")
+    i_h.vprint("Morphing...")
     t = time.time()
     src_img_morphed = morph(src_img, grid_points, y_p, quads, grid_size, 
                             processes=4)
@@ -100,12 +85,12 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
         dst_img_cropped = dst_img
 
     # Crop images
-    print("Compute crop...")
-    #c_idx = get_crop_idx(y_p, grid_shape, src_img_morphed.shape, x_max, y_max) 
+    i_h.vprint("Compute crop...")
+    #c_idx = i_h.get_crop_idx(y_p, grid_shape, src_img_morphed.shape, x_max, y_max) 
 
-    c_idx = get_crop_idx(src_img_morphed[:,:,3] + dst_img_cropped[:,:,3])
+    c_idx = i_h.get_crop_idx(src_img_morphed[:,:,3] + dst_img_cropped[:,:,3])
 
-    print("Postprocess...")
+    i_h.vprint("Postprocess...")
 
     cv2.namedWindow('src', cv2.WINDOW_NORMAL)
     cv2.imshow('src', src_img_morphed[:,:,3])
@@ -122,18 +107,16 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
     dst_img_cropped = dst_img_cropped[:,:,0:-1]
 
     # sharpen image
-    src_img_morphed = unsharp_mask(src_img_morphed, 1, .7)
-
-
+    src_img_morphed = i_h.unsharp_mask(src_img_morphed, 1, .7)
 
 #    return (np.uint8(src_img_morphed[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
 #            np.uint8(src_img[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
 #            np.uint8(dst_img[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]))
 
-    draw_frame(src_img_morphed, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
-    draw_frame(dst_img, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
-    draw_frame(src_img, c_idx[0], c_idx[2], c_idx[1], c_idx[3])
-    print 
+    i_h.draw_rectangle(src_img_morphed, (c_idx[0], c_idx[1]), (c_idx[2], c_idx[3]))
+    i_h.draw_rectangle(dst_img, (c_idx[0], c_idx[1]), (c_idx[2], c_idx[3]))
+    i_h.draw_rectangle(src_img, (c_idx[0], c_idx[1]), (c_idx[2], c_idx[3]))
 
-    return np.uint8(src_img_morphed), np.uint8(src_img_cropped), np.uint8(dst_img_cropped)
+    return np.uint8(src_img_morphed), np.uint8(src_img_cropped),\
+           np.uint8(dst_img_cropped)
 

@@ -1,15 +1,13 @@
+from __future__ import print_function
 import cv2 
 import numpy as np
 import sys
 import image_lines as i_l
 import image_io as i_io
+import image_helpers as i_h
 from image_aaap_main import aaap_morph
-from image_helpers import scale
 from image_sac import getPointFromPoint
 from image_sac import getPointFromRectangle
-from image_helpers import draw_line
-from image_helpers import draw_rectangle
-from image_helpers import draw_circle
 from image_perspective_alignment import perspective_align
 
 
@@ -30,18 +28,18 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, points, win_name, color))
         if event == cv2.EVENT_LBUTTONUP:
             points.append((x,y))
             number_of_points = number_of_points + 1
-            draw_circle(img, (x,y), color)
+            i_h.draw_circle(img, (x,y), color)
             cv2.imshow(win_name, img)
             if number_of_points == 8:
                 point_stage = False
         elif event == cv2.EVENT_RBUTTONDOWN:
             drag_start = (x,y)
         elif event == cv2.EVENT_MOUSEMOVE and flags == cv2.EVENT_FLAG_RBUTTON:
-            draw_rectangle(img_tmp, drag_start, (x,y), color)
+            i_h.draw_rectangle(img_tmp, drag_start, (x,y), color)
             cv2.imshow(win_name, img_tmp)
         elif event == cv2.EVENT_RBUTTONUP:
             point = getPointFromRectangle(img, drag_start, (x,y))
-            draw_circle(img, point, color)
+            i_h.draw_circle(img, point, color)
             cv2.imshow(win_name, img)
             points.append(point)
             number_of_points = number_of_points + 1
@@ -51,7 +49,7 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, points, win_name, color))
             del points[-1]
             img[:] = img_orig[:]
             for point in points:
-                draw_circle(img, point, color)
+                i_h.draw_circle(img, point, color)
             cv2.imshow(win_name, img)
 
     elif not point_stage:
@@ -62,22 +60,22 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, points, win_name, color))
             drag_start = getPointFromPoint(img, (x, y))
 
         elif event == cv2.EVENT_MOUSEMOVE and (flags==cv2.EVENT_FLAG_LBUTTON or flags==cv2.EVENT_FLAG_RBUTTON):
-            draw_line(img_tmp, drag_start,(x,y), color, -1)
+            i_h.draw_line(img_tmp, drag_start,(x,y), color, -1)
             cv2.imshow(win_name, img_tmp)
               
         elif event == cv2.EVENT_LBUTTONUP:
             lines.append([drag_start[0], drag_start[1], x, y])
-            draw_line(img, drag_start,(x,y), color, len(lines))
+            i_h.draw_line(img, drag_start,(x,y), color, len(lines))
             cv2.imshow(win_name, img)
 
         elif event == cv2.EVENT_RBUTTONUP:
             #line = i_l.get_line(drag_start, (x,y), img_orig, i_l.PST)
             #lines.append(line)
-            #draw_line(img,(line[0], line[1]), (line[2], line[3]), color, len(lines))
+            #i_h.draw_line(img,(line[0], line[1]), (line[2], line[3]), color, len(lines))
             drag_end = getPointFromPoint(img, (x, y))
             line = i_l.get_line(drag_start, drag_end, img_orig, i_l.STAT_CANNY)
             lines.append(line)
-            draw_line(img,(line[0], line[1]), (line[2], line[3]), (0,255,0), len(lines))
+            i_h.draw_line(img,(line[0], line[1]), (line[2], line[3]), (0,255,0), len(lines))
             cv2.imshow(win_name, img)
 
         elif event == cv2.EVENT_MBUTTONUP and len(lines) > 0:
@@ -86,10 +84,10 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, points, win_name, color))
             img[:] = img_orig[:]
             i = 1
             for line in lines:
-                draw_line(img, (line[0], line[1]), (line[2], line[3]), color, i)
+                i_h.draw_line(img, (line[0], line[1]), (line[2], line[3]), color, i)
                 i+=1
             for point in points:
-                draw_circle(img, point, color)
+                i_h.draw_circle(img, point, color)
             cv2.imshow(win_name, img)
 
 
@@ -106,25 +104,27 @@ def test():
     dst_img = cv2.imread(dst_name)
 
     if src_img is None:
-        print ("Image 1 not readable or not found")
+        print("Image 1 not readable or not found")
         exit()
     if dst_img is None:
-        print ("Image 2 not readable or not found")
+        print("Image 2 not readable or not found")
         exit()
 
     src_img_orig = np.copy(src_img)
     dst_img_orig = np.copy(dst_img)
+
+    i_h.set_verbose(True)
 
     if use_line_file:
         line_file_name = src_name.rsplit('.', 1)[0] + "_" + line_file_name_end
         src_lines, dst_lines = i_io.read_lines(line_file_name)
         i = 0
         for line in src_lines:
-            draw_line(src_img, (line[0], line[1]), (line[2], line[3]), (255,255,0), i)
+            i_h.draw_line(src_img, (line[0], line[1]), (line[2], line[3]), (255,255,0), i)
             i += 1
         i = 0
         for line in dst_lines:
-            draw_line(dst_img, (line[0], line[1]), (line[2], line[3]), (0,0 ,255), i)
+            i_h.draw_line(dst_img, (line[0], line[1]), (line[2], line[3]), (0,0 ,255), i)
             i += 1
     else:
         src_lines = []
@@ -133,11 +133,10 @@ def test():
     if use_point_file:
         point_file_name = src_name.rsplit('.', 1)[0] + "_" + point_file_name_end
         src_points, dst_points = i_io.read_points(point_file_name)
-        print src_points
         for point in src_points:
-            draw_circle(src_img, point, (255,255,0))
+            i_h.draw_circle(src_img, point, (255,255,0))
         for point in dst_points:
-            draw_circle(dst_img, point, (0,0 ,255))
+            i_h.draw_circle(dst_img, point, (0,0 ,255))
     else:
         src_points = []
         dst_points = []
@@ -176,7 +175,7 @@ def test():
     dst_img = np.concatenate([dst_img, np.ones((dst_img.shape[0], dst_img.shape[1],1))], axis=2)
 
     src_img, dst_img, src_lines, dst_lines, src_points, dst_points, x_max, y_max = \
-        scale(src_img, dst_img, src_lines, dst_lines, src_points, dst_points, scale_factor)
+        i_h.scale(src_img, dst_img, src_lines, dst_lines, src_points, dst_points, scale_factor)
 
     # perspective alignment
     print("Perspective Alignment")
@@ -184,9 +183,9 @@ def test():
     src_img, dst_img, _, _, src_lines, dst_lines = perspective_align(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, alpha=0)
 
     #for line in np.int32(src_lines):
-    #    draw_line(src_img,(line[0], line[1]), (line[2], line[3]), (255,255,255))
+    #    i_h.draw_line(src_img,(line[0], line[1]), (line[2], line[3]), (255,255,255))
     #for line in np.int32(dst_lines):
-    #    draw_line(dst_img,(line[0], line[1]), (line[2], line[3]), (255,255,255))
+    #    i_h.draw_line(dst_img,(line[0], line[1]), (line[2], line[3]), (255,255,255))
 
     cv2.namedWindow('src', cv2.WINDOW_NORMAL)
     cv2.imshow('src', src_img[:,:,3])
