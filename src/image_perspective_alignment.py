@@ -14,9 +14,11 @@ def transform_lines(lines, transform_matrix):
     Returns:
         lines: transformed lines in float32
     """
-
-    return cv2.perspectiveTransform(np.float32(lines).reshape(1,-2,2), 
-        transform_matrix).reshape(-1, 4).tolist()
+    if len(lines) > 0:
+        return cv2.perspectiveTransform(np.float32(lines).reshape(1,-2,2), 
+               transform_matrix).reshape(-1, 4).tolist()
+    else:
+        return []
 
 
 def transform_points(points, transform_matrix):

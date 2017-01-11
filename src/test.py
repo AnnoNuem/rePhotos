@@ -1,4 +1,6 @@
 from __future__ import print_function
+import argparse
+import os
 import cv2 
 import numpy as np
 import sys
@@ -11,12 +13,9 @@ from image_sac import getPointFromRectangle
 from image_perspective_alignment import perspective_align
 
 
-use_line_file = True
-use_point_file = True
 line_file_name_end = "line_file.txt"
 point_file_name_end = "point_file.txt"
     
-
 drag_start = (0,0)
 point_stage = True
 number_of_points = 0
@@ -48,6 +47,7 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, points, win_name, color))
         elif event == cv2.EVENT_MBUTTONUP and len(points) > 0:
             del points[-1]
             img[:] = img_orig[:]
+            number_of_points -= 1
             for point in points:
                 i_h.draw_circle(img, point, color)
             cv2.imshow(win_name, img)
@@ -94,14 +94,27 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, points, win_name, color))
 def test():
     global point_stage
 
-    if len(sys.argv) != 3:
-        print("Usage: test <img_src> <img_dst>")
-        exit()
+    # Argparsing
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("src_name", help="source image")
+    parser.add_argument("dst_name", help="destination image")
+    parser.add_argument("-l", "--line_file", help="read lines from and save lines\
+                        to line file", action="store_true")
+    parser.add_argument("-p", "--point_file", help="read points from and save points\
+                        to point file", action="store_true")
+    parser.add_argument("-v", "--verbose", help="increase output verbosity",
+                        action="store_true")
+    parser.add_argument("-w", "--write", help="write result images to files in\
+                        resultsfolder", action="store_true")
+    args = parser.parse_args()
+
+    if args.verbose:
+        i_h.set_verbose(True)
+
     print("LMB: Draw Line\nMMB: Delete last line in active Window\nRMB: Drawing line with RMB finds nearest line\nSpace: Start morphing\nEsc: Quit program")
-    src_name = sys.argv[1]
-    dst_name = sys.argv[2]
-    src_img = cv2.imread(src_name)
-    dst_img = cv2.imread(dst_name)
+    src_img = cv2.imread(args.src_name)
+    dst_img = cv2.imread(args.dst_name)
 
     if src_img is None:
         print("Image 1 not readable or not found")
@@ -109,14 +122,11 @@ def test():
     if dst_img is None:
         print("Image 2 not readable or not found")
         exit()
-
     src_img_orig = np.copy(src_img)
     dst_img_orig = np.copy(dst_img)
 
-    i_h.set_verbose(True)
-
-    if use_line_file:
-        line_file_name = src_name.rsplit('.', 1)[0] + "_" + line_file_name_end
+    if args.line_file:
+        line_file_name = args.src_name.rsplit('.', 1)[0] + "_" + line_file_name_end
         src_lines, dst_lines = i_io.read_lines(line_file_name)
         i = 0
         for line in src_lines:
@@ -130,8 +140,8 @@ def test():
         src_lines = []
         dst_lines = []
 
-    if use_point_file:
-        point_file_name = src_name.rsplit('.', 1)[0] + "_" + point_file_name_end
+    if args.point_file:
+        point_file_name = args.src_name.rsplit('.', 1)[0] + "_" + point_file_name_end
         src_points, dst_points = i_io.read_points(point_file_name)
         for point in src_points:
             i_h.draw_circle(src_img, point, (255,255,0))
@@ -159,10 +169,10 @@ def test():
             exit()
     cv2.destroyAllWindows()
 
-    if use_line_file:
+    if args.line_file:
         i_io.write_lines(src_lines, dst_lines, line_file_name)
 
-    if use_point_file:
+    if args.point_file:
         i_io.write_points(src_points, dst_points, point_file_name)
 
     src_img = np.float32(src_img)
@@ -217,15 +227,18 @@ def test():
     cv2.resizeWindow('src_morphed', 640, 480)
     
     # write2disk
-    filenname_prefix = 'results/' + (src_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + \
-        '_' + (dst_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + '__'
-    cv2.imwrite(filenname_prefix + 'src.jpg', dst_img)
-    cv2.imwrite(filenname_prefix + 'dst.jpg', src_img)
-    cv2.imwrite(filenname_prefix + 'src_morphed.jpg', src_img_morphed)
-    cv2.imwrite(filenname_prefix + 'dst_cropped.jpg', dst_img_cropped)
-    cv2.imwrite(filenname_prefix + 'src_cropped.jpg', src_img_cropped)
-    cv2.imwrite(filenname_prefix + 'overlay_morphed.jpg', overlay_morphed)
-    #cv2.imwrite(filenname_prefix + 'overlay_orig.jpg', overlay_orig)
+    if args.write:
+        if not os.path.exists('results'):
+            os.makedirs('results')
+        filenname_prefix = 'results/' + (args.src_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + \
+            '_' + (args.dst_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + '__'
+        cv2.imwrite(filenname_prefix + 'src.jpg', dst_img)
+        cv2.imwrite(filenname_prefix + 'dst.jpg', src_img)
+        cv2.imwrite(filenname_prefix + 'src_morphed.jpg', src_img_morphed)
+        cv2.imwrite(filenname_prefix + 'dst_cropped.jpg', dst_img_cropped)
+        cv2.imwrite(filenname_prefix + 'src_cropped.jpg', src_img_cropped)
+        cv2.imwrite(filenname_prefix + 'overlay_morphed.jpg', overlay_morphed)
+        #cv2.imwrite(filenname_prefix + 'overlay_orig.jpg', overlay_orig)
 
     while cv2.waitKey(0) != 27:
         pass

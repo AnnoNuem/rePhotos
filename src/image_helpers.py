@@ -255,7 +255,6 @@ def do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale
     scale_img1 *= scale_factor
     scale_img2 *= scale_factor
 
-    print(scale_img1, scale_img2)
     if scale_img1 != 1:
         img1, lines_img1, points_img1 = scale_image_lines_points(img1, lines_img1, points_img1, scale_img1)
 
