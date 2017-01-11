@@ -1,8 +1,8 @@
 import cv2 
 import numpy as np
 import sys
-import json
 import image_lines as i_l
+import image_io as i_io
 from image_aaap_main import aaap_morph
 from image_helpers import scale
 from image_sac import getPointFromPoint
@@ -12,30 +12,11 @@ from image_helpers import draw_rectangle
 from image_helpers import draw_circle
 from image_perspective_alignment import perspective_align
 
-use_line_file= True
+
+use_line_file = True
+use_point_file = True
 line_file_name_end = "line_file.txt"
-
-def read_lines(filename):
-    try:
-        f = open(filename, "r")
-    except IOError:
-        print("Could not open line file.")
-        return [], []
-
-    with f:
-        [src_lines, dst_lines] = json.load(f)
-
-    return src_lines, dst_lines
-
-
-def write_lines(src_lines, dst_lines, filename):
-    try:
-        f = open(filename, "w")
-    except IOError:
-        print("Could not save lines to file.")
-
-    with f:
-        json.dump([src_lines, dst_lines], f)
+point_file_name_end = "point_file.txt"
     
 
 drag_start = (0,0)
@@ -66,6 +47,12 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, points, win_name, color))
             number_of_points = number_of_points + 1
             if number_of_points == 8:
                 point_stage = False
+        elif event == cv2.EVENT_MBUTTONUP and len(points) > 0:
+            del points[-1]
+            img[:] = img_orig[:]
+            for point in points:
+                draw_circle(img, point, color)
+            cv2.imshow(win_name, img)
 
     elif not point_stage:
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -101,6 +88,8 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, points, win_name, color))
             for line in lines:
                 draw_line(img, (line[0], line[1]), (line[2], line[3]), color, i)
                 i+=1
+            for point in points:
+                draw_circle(img, point, color)
             cv2.imshow(win_name, img)
 
 
@@ -128,7 +117,7 @@ def test():
 
     if use_line_file:
         line_file_name = src_name.rsplit('.', 1)[0] + "_" + line_file_name_end
-        src_lines, dst_lines = read_lines(line_file_name)
+        src_lines, dst_lines = i_io.read_lines(line_file_name)
         i = 0
         for line in src_lines:
             draw_line(src_img, (line[0], line[1]), (line[2], line[3]), (255,255,0), i)
@@ -141,8 +130,17 @@ def test():
         src_lines = []
         dst_lines = []
 
-    src_points = []
-    dst_points = []
+    if use_point_file:
+        point_file_name = src_name.rsplit('.', 1)[0] + "_" + point_file_name_end
+        src_points, dst_points = i_io.read_points(point_file_name)
+        print src_points
+        for point in src_points:
+            draw_circle(src_img, point, (255,255,0))
+        for point in dst_points:
+            draw_circle(dst_img, point, (0,0 ,255))
+    else:
+        src_points = []
+        dst_points = []
 
     cv2.namedWindow("src_img", cv2.WINDOW_NORMAL)
     cv2.namedWindow("dst_img", cv2.WINDOW_NORMAL)
@@ -163,7 +161,10 @@ def test():
     cv2.destroyAllWindows()
 
     if use_line_file:
-        write_lines(src_lines, dst_lines, line_file_name)
+        i_io.write_lines(src_lines, dst_lines, line_file_name)
+
+    if use_point_file:
+        i_io.write_points(src_points, dst_points, point_file_name)
 
     src_img = np.float32(src_img)
     dst_img = np.float32(dst_img)
@@ -182,21 +183,20 @@ def test():
 
     src_img, dst_img, _, _, src_lines, dst_lines = perspective_align(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, alpha=0)
 
-    for line in np.int32(src_lines):
-        draw_line(src_img,(line[0], line[1]), (line[2], line[3]), (255,255,255))
-    for line in np.int32(dst_lines):
-        draw_line(dst_img,(line[0], line[1]), (line[2], line[3]), (255,255,255))
+    #for line in np.int32(src_lines):
+    #    draw_line(src_img,(line[0], line[1]), (line[2], line[3]), (255,255,255))
+    #for line in np.int32(dst_lines):
+    #    draw_line(dst_img,(line[0], line[1]), (line[2], line[3]), (255,255,255))
 
     cv2.namedWindow('src', cv2.WINDOW_NORMAL)
-    cv2.imshow('src', src_img)
+    cv2.imshow('src', src_img[:,:,3])
     cv2.resizeWindow('src', 640, 480)
 
     cv2.namedWindow('dst', cv2.WINDOW_NORMAL)
-    cv2.imshow('dst', dst_img)
+    cv2.imshow('dst', dst_img[:,:,3])
     cv2.resizeWindow('dst', 640, 480)
 
     cv2.waitKey()
-    cv2.destroyAllWindows()
     
 
     # morph

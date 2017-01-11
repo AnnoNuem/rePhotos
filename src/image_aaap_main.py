@@ -107,6 +107,16 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
 
     print("Postprocess...")
 
+    cv2.namedWindow('src', cv2.WINDOW_NORMAL)
+    cv2.imshow('src', src_img_morphed[:,:,3])
+    cv2.resizeWindow('src', 640, 480)
+
+    cv2.namedWindow('dst', cv2.WINDOW_NORMAL)
+    cv2.imshow('dst', dst_img_cropped[:,:,3])
+    cv2.resizeWindow('dst', 640, 480)
+
+    cv2.waitKey()
+    cv2.destroyAllWindows()
     src_img_morphed = src_img_morphed[:,:,0:-1]
     src_img_cropped = src_img_cropped[:,:,0:-1]
     dst_img_cropped = dst_img_cropped[:,:,0:-1]
