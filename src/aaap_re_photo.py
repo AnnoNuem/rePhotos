@@ -236,7 +236,7 @@ def test():
     if number_of_points == 8:
         i_h.vprint("Perspective Alignment...")
 
-        src_img, dst_img, _, _, src_lines, dst_lines = perspective_align(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, alpha=0.5)
+        src_img, dst_img, src_points, dst_points, src_lines, dst_lines = perspective_align(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, alpha=0.5)
 
         cv2.namedWindow('src_transformed', cv2.WINDOW_NORMAL)
         cv2.imshow('src_transformed', np.uint8(src_img))
@@ -264,7 +264,17 @@ def test():
         i_h.vprint("Not enough points for perspective transform. Skipping")
     cv2.destroyAllWindows()
 
+    # aaap warping
     if len(src_lines) > 0:    
+        # add each point from perspective transform as two short orthagonal lines
+        # to keep these points fixed during warping
+        for point in src_points:
+            src_lines.append([point[0], point[1], point[0]+1, point[1]])
+            src_lines.append([point[0], point[1], point[0], point[1]+1])
+        for point in dst_points:
+            dst_lines.append([point[0], point[1], point[0]+1, point[1]])
+            dst_lines.append([point[0], point[1], point[0], point[1]+1])
+
         # morph
         src_img_morphed, src_img_cropped, dst_img_cropped = aaap_morph(src_img, 
             dst_img, src_lines, dst_lines, line_constraint_type=2, grid_size=10, 
