@@ -179,7 +179,7 @@ def test():
     dst_img = np.float32(dst_img)
 
     # scale images
-    print("Scaling...")
+    i_h.vprint("Scaling...")
     scale_factor = 4
     src_img = np.concatenate([src_img, np.ones((src_img.shape[0], src_img.shape[1],1))], axis=2)
     dst_img = np.concatenate([dst_img, np.ones((dst_img.shape[0], dst_img.shape[1],1))], axis=2)
@@ -188,7 +188,7 @@ def test():
         i_h.scale(src_img, dst_img, src_lines, dst_lines, src_points, dst_points, scale_factor)
 
     # perspective alignment
-    print("Perspective Alignment")
+    i_h.vprint("Perspective Alignment...")
 
     src_img, dst_img, _, _, src_lines, dst_lines = perspective_align(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, alpha=0)
 

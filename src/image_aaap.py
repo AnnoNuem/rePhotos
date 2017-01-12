@@ -7,8 +7,8 @@ from scipy.sparse import bmat
 from scipy.sparse.linalg import spsolve
 from scipy.linalg import qr
 from scipy.linalg import qr_multiply
-import spqr
 import json
+import spqr.image_spqr
 
 
 def build_regular_mesh(width, height, grid_size):

@@ -369,6 +369,8 @@ def pst_wrapper(img):
 def statistic_canny(img, sigma=0.33):
     """
     Edge detection depending on image properties.
+    Color informations is disregarded, since most encountered image will be
+    jpegs with chroma subsampling.
     
     Args:
         img: Image on which to detect edges.
@@ -378,6 +380,7 @@ def statistic_canny(img, sigma=0.33):
         img: Edged image.
     """
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    #img = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)[:,:,0]
     img = cv2.GaussianBlur(img, (3,3), 0)
     m = np.median(img)
 
