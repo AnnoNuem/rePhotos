@@ -9,7 +9,7 @@ from image_morphing import morph
 
 def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15, 
         line_constraint_type=2, deform_energy_weights=np.array([1,0.0100, 0,0]),
-        n_samples_per_grid=1, scale_factor=4):
+        n_samples_per_grid=1, scale_factor=4, show_frame=False):
 
     """
     Wrapper for As-Affine-As-Possible Warping.
@@ -33,6 +33,8 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
         n_samples_per_grid = Number of line discretisation points per grid block.
         scale_factor: Scaling factor for first image and both line lists. 
                       Second image is not scaled since not used for computation.
+        show_frame: True: Draw frame arround cropped area but do not crop.
+                    False: Crop images.
 
     Returns:
         src_img_morphed: Warped and cropped source image.
@@ -86,22 +88,11 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
 
     # Crop images
     i_h.vprint("Compute crop...")
-    #c_idx = i_h.get_crop_idx(y_p, grid_shape, src_img_morphed.shape, x_max, y_max) 
-
     c_idx = i_h.get_crop_idx(src_img_morphed[:,:,3] + dst_img_cropped[:,:,3])
 
+    # Postprocess
     i_h.vprint("Postprocess...")
 
-    cv2.namedWindow('src', cv2.WINDOW_NORMAL)
-    cv2.imshow('src', src_img_morphed[:,:,3])
-    cv2.resizeWindow('src', 640, 480)
-
-    cv2.namedWindow('dst', cv2.WINDOW_NORMAL)
-    cv2.imshow('dst', dst_img_cropped[:,:,3])
-    cv2.resizeWindow('dst', 640, 480)
-
-    cv2.waitKey()
-    cv2.destroyAllWindows()
     src_img_morphed = src_img_morphed[:,:,0:-1]
     src_img_cropped = src_img_cropped[:,:,0:-1]
     dst_img_cropped = dst_img_cropped[:,:,0:-1]
@@ -109,14 +100,15 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
     # sharpen image
     src_img_morphed = i_h.unsharp_mask(src_img_morphed, 1, .7)
 
-#    return (np.uint8(src_img_morphed[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
-#            np.uint8(src_img[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
-#            np.uint8(dst_img[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]))
+    if show_frame:
+        i_h.draw_rectangle(src_img_morphed, (c_idx[0], c_idx[1]), (c_idx[2], c_idx[3]))
+        i_h.draw_rectangle(dst_img, (c_idx[0], c_idx[1]), (c_idx[2], c_idx[3]))
+        i_h.draw_rectangle(src_img, (c_idx[0], c_idx[1]), (c_idx[2], c_idx[3]))
 
-    i_h.draw_rectangle(src_img_morphed, (c_idx[0], c_idx[1]), (c_idx[2], c_idx[3]))
-    i_h.draw_rectangle(dst_img, (c_idx[0], c_idx[1]), (c_idx[2], c_idx[3]))
-    i_h.draw_rectangle(src_img, (c_idx[0], c_idx[1]), (c_idx[2], c_idx[3]))
-
-    return np.uint8(src_img_morphed), np.uint8(src_img_cropped),\
-           np.uint8(dst_img_cropped)
+        return np.uint8(src_img_morphed), np.uint8(src_img_cropped),\
+               np.uint8(dst_img_cropped)
+    else:
+        return (np.uint8(src_img_morphed[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
+                np.uint8(src_img_cropped[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
+                np.uint8(dst_img_cropped[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]))
 

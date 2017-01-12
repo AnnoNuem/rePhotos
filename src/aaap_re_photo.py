@@ -7,6 +7,7 @@ import sys
 import image_lines as i_l
 import image_io as i_io
 import image_helpers as i_h
+from time import sleep
 from image_aaap_main import aaap_morph
 from image_sac import getPointFromPoint
 from image_sac import getPointFromRectangle
@@ -23,27 +24,23 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, points, win_name, color))
     global drag_start, point_stage, number_of_points
 
     img_tmp = np.copy(img)
-    if point_stage and len(points) < 4:
-        if event == cv2.EVENT_LBUTTONUP:
+    if point_stage:
+        if event == cv2.EVENT_LBUTTONUP and len(points) < 4:
             points.append((x,y))
             number_of_points = number_of_points + 1
             i_h.draw_circle(img, (x,y), color)
             cv2.imshow(win_name, img)
-            if number_of_points == 8:
-                point_stage = False
-        elif event == cv2.EVENT_RBUTTONDOWN:
+        elif event == cv2.EVENT_RBUTTONDOWN and len(points) < 4:
             drag_start = (x,y)
-        elif event == cv2.EVENT_MOUSEMOVE and flags == cv2.EVENT_FLAG_RBUTTON:
+        elif event == cv2.EVENT_MOUSEMOVE and flags == cv2.EVENT_FLAG_RBUTTON and len(points) < 4:
             i_h.draw_rectangle(img_tmp, drag_start, (x,y), color)
             cv2.imshow(win_name, img_tmp)
-        elif event == cv2.EVENT_RBUTTONUP:
+        elif event == cv2.EVENT_RBUTTONUP and len(points) < 4:
             point = getPointFromRectangle(img, drag_start, (x,y))
             i_h.draw_circle(img, point, color)
             cv2.imshow(win_name, img)
             points.append(point)
             number_of_points = number_of_points + 1
-            if number_of_points == 8:
-                point_stage = False
         elif event == cv2.EVENT_MBUTTONUP and len(points) > 0:
             del points[-1]
             img[:] = img_orig[:]
@@ -69,9 +66,6 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, points, win_name, color))
             cv2.imshow(win_name, img)
 
         elif event == cv2.EVENT_RBUTTONUP:
-            #line = i_l.get_line(drag_start, (x,y), img_orig, i_l.PST)
-            #lines.append(line)
-            #i_h.draw_line(img,(line[0], line[1]), (line[2], line[3]), color, len(lines))
             drag_end = getPointFromPoint(img, (x, y))
             line = i_l.get_line(drag_start, drag_end, img_orig, i_l.STAT_CANNY)
             lines.append(line)
@@ -92,7 +86,7 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, points, win_name, color))
 
 
 def test():
-    global point_stage
+    global point_stage, number_of_points
 
     # Argparsing
     parser = argparse.ArgumentParser()
@@ -103,19 +97,23 @@ def test():
                         to line file", action="store_true")
     parser.add_argument("-p", "--point_file", help="read points from and save points\
                         to point file", action="store_true")
+    parser.add_argument("-sf", "--show_frame", help="do not crop the resulting\
+                        images but show a frame where images would be cropped",
+                        action="store_true")
+    parser.add_argument("-sui", "--show_user_input", help="Show user drawn points\
+                        and lines in result images", action="store_true")
     parser.add_argument("-v", "--verbose", help="increase output verbosity",
                         action="store_true")
     parser.add_argument("-w", "--write", help="write result images to files in\
                         resultsfolder", action="store_true")
     args = parser.parse_args()
 
+    # Init
     if args.verbose:
         i_h.set_verbose(True)
 
-    print("LMB: Draw Line\nMMB: Delete last line in active Window\nRMB: Drawing line with RMB finds nearest line\nSpace: Start morphing\nEsc: Quit program")
     src_img = cv2.imread(args.src_name)
     dst_img = cv2.imread(args.dst_name)
-
     if src_img is None:
         print("Image 1 not readable or not found")
         exit()
@@ -124,25 +122,20 @@ def test():
         exit()
     src_img_orig = np.copy(src_img)
     dst_img_orig = np.copy(dst_img)
-
     if args.line_file:
         line_file_name = args.src_name.rsplit('.', 1)[0] + "_" + line_file_name_end
         src_lines, dst_lines = i_io.read_lines(line_file_name)
-        i = 0
-        for line in src_lines:
-            i_h.draw_line(src_img, (line[0], line[1]), (line[2], line[3]), (255,255,0), i)
-            i += 1
-        i = 0
-        for line in dst_lines:
-            i_h.draw_line(dst_img, (line[0], line[1]), (line[2], line[3]), (0,0 ,255), i)
-            i += 1
     else:
         src_lines = []
         dst_lines = []
 
+    # Stage One: Drawing Points:
+    #
+    #
     if args.point_file:
         point_file_name = args.src_name.rsplit('.', 1)[0] + "_" + point_file_name_end
         src_points, dst_points = i_io.read_points(point_file_name)
+        number_of_points = len(src_points) + len(dst_points)
         for point in src_points:
             i_h.draw_circle(src_img, point, (255,255,0))
         for point in dst_points:
@@ -151,18 +144,59 @@ def test():
         src_points = []
         dst_points = []
 
+    print("First Stage: Draw four points for initial perspective transform.\
+           \nDrawing less than four points omits the first stage.\
+           \nLMB: Draw point.\
+           \nRMB: Draw rectangle. Best point in rectangle is computed.\
+           \nMMB: Delete last line in active window.\
+           \nSpace: Go to second stage.\
+           \nESC: Quit program.\n")
+
     cv2.namedWindow("src_img", cv2.WINDOW_NORMAL)
     cv2.namedWindow("dst_img", cv2.WINDOW_NORMAL)
-    cv2.setMouseCallback("src_img", onMouse, (src_img, src_img_orig, src_lines, src_points, 'src_img', (255,255,0)))
-    cv2.setMouseCallback("dst_img", onMouse, (dst_img, dst_img_orig, dst_lines, dst_points, 'dst_img', (0,0,255)))
+    cv2.setMouseCallback("src_img", onMouse, (src_img, src_img_orig, src_lines, 
+                         src_points, 'src_img', (255,255,0)))
+    cv2.setMouseCallback("dst_img", onMouse, (dst_img, dst_img_orig, dst_lines, 
+                         dst_points, 'dst_img', (0,0,255)))
     cv2.imshow("src_img", src_img)
     cv2.imshow("dst_img", dst_img)
     cv2.resizeWindow("src_img", 640, 1024)
     cv2.resizeWindow("dst_img", 640, 1024)
 
-    # wait till user has drawn all lines
+    # wait till user has drawn all points 
     key = 0
     while key != 32 and point_stage:
+        key = cv2.waitKey(0)
+        if key == 27:
+            cv2.destroyAllWindows()
+            exit()
+    
+    # Stage Two: Drawing Lines:
+    #
+    #
+    point_stage = False
+    print("Second Stage: Draw lines for fine grain aaap warping.\
+          \nDrawing no line omits the second stage.\
+          \nLMB: Draw Line\
+          \nMMB: Delete last line in active Window\
+          \nRMB: Drawing line with RMB finds nearest line\
+          \nSpace: Start morphing\nEsc: Quit program")
+
+    if args.line_file:
+        i = 0
+        for line in src_lines:
+            i_h.draw_line(src_img, (line[0], line[1]), (line[2], line[3]), (255,255,0), i)
+            i += 1
+        i = 0
+        for line in dst_lines:
+            i_h.draw_line(dst_img, (line[0], line[1]), (line[2], line[3]), (0,0 ,255), i)
+            i += 1
+        cv2.imshow("src_img", src_img)
+        cv2.imshow("dst_img", dst_img)
+
+    # wait till user has drawn all lines
+    key = 0
+    while key != 32 :
         key = cv2.waitKey(0)
         if key == 27:
             cv2.destroyAllWindows()
@@ -175,12 +209,23 @@ def test():
     if args.point_file:
         i_io.write_points(src_points, dst_points, point_file_name)
 
-    src_img = np.float32(src_img)
-    dst_img = np.float32(dst_img)
+    if args.show_user_input:
+     #   src_img = np.float32(src_img)
+     #   dst_img = np.float32(dst_img)
+        src_img = np.float16(src_img)
+        dst_img = np.float16(dst_img)
+    else:
+     #   src_img = np.float32(np.copy(src_img_orig))
+     #   dst_img = np.float32(np.copy(dst_img_orig))
+        src_img = np.float16(np.copy(src_img_orig))
+        dst_img = np.float16(np.copy(dst_img_orig))
 
+    # Image warping
+    #
+    #
     # scale images
     i_h.vprint("Scaling...")
-    scale_factor = 4
+    scale_factor = 1
     src_img = np.concatenate([src_img, np.ones((src_img.shape[0], src_img.shape[1],1))], axis=2)
     dst_img = np.concatenate([dst_img, np.ones((dst_img.shape[0], dst_img.shape[1],1))], axis=2)
 
@@ -188,62 +233,80 @@ def test():
         i_h.scale(src_img, dst_img, src_lines, dst_lines, src_points, dst_points, scale_factor)
 
     # perspective alignment
-    i_h.vprint("Perspective Alignment...")
+    if number_of_points == 8:
+        i_h.vprint("Perspective Alignment...")
 
-    src_img, dst_img, _, _, src_lines, dst_lines = perspective_align(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, alpha=0)
+        src_img, dst_img, _, _, src_lines, dst_lines = perspective_align(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, alpha=0.5)
 
-    #for line in np.int32(src_lines):
-    #    i_h.draw_line(src_img,(line[0], line[1]), (line[2], line[3]), (255,255,255))
-    #for line in np.int32(dst_lines):
-    #    i_h.draw_line(dst_img,(line[0], line[1]), (line[2], line[3]), (255,255,255))
+        cv2.namedWindow('src_transformed', cv2.WINDOW_NORMAL)
+        cv2.imshow('src_transformed', np.uint8(src_img))
+        cv2.resizeWindow('src_transformed', 640, 480)
 
-    cv2.namedWindow('src', cv2.WINDOW_NORMAL)
-    cv2.imshow('src', src_img[:,:,3])
-    cv2.resizeWindow('src', 640, 480)
+        cv2.namedWindow('dst_transformed', cv2.WINDOW_NORMAL)
+        cv2.imshow('dst_transformed', np.uint8(dst_img))
+        cv2.resizeWindow('dst_transformed', 640, 480)
 
-    cv2.namedWindow('dst', cv2.WINDOW_NORMAL)
-    cv2.imshow('dst', dst_img[:,:,3])
-    cv2.resizeWindow('dst', 640, 480)
+        cv2.namedWindow('overlay_transformed', cv2.WINDOW_NORMAL)
+        cv2.imshow('overlay_transformed', np.uint8(cv2.addWeighted(src_img, 0.5,
+                   dst_img, 0.5, 0)))
+        cv2.resizeWindow('overlay_transformed', 640, 480)
 
-    cv2.waitKey()
+        print("Perspective transform done.\
+              \nPress SPACE to continue to aaap warping. ESC to exit.")
+
+        key = 0
+        while key != 32 :
+            key = cv2.waitKey(0)
+            if key == 27:
+                cv2.destroyAllWindows()
+                exit()
+    else:
+        i_h.vprint("Not enough points for perspective transform. Skipping")
+    cv2.destroyAllWindows()
+
+    if len(src_lines) > 0:    
+        # morph
+        src_img_morphed, src_img_cropped, dst_img_cropped = aaap_morph(src_img, 
+            dst_img, src_lines, dst_lines, line_constraint_type=2, grid_size=10, 
+            scale_factor=scale_factor, show_frame=args.show_frame)
+
+        # compute overlay
+        overlay_morphed = cv2.addWeighted(dst_img_cropped, 0.5, src_img_morphed, 0.5, 0)
+        overlay_orig = cv2.addWeighted(dst_img_cropped, 0.5, src_img_cropped, 0.5, 0)
+        
+        # display
+        cv2.namedWindow('overlay', cv2.WINDOW_NORMAL)
+        cv2.imshow('overlay', overlay_morphed)
+        cv2.resizeWindow('overlay', 640, 480)
+        cv2.namedWindow('overlay_orig', cv2.WINDOW_NORMAL)
+        cv2.imshow('overlay_orig', overlay_orig)
+        cv2.resizeWindow('overlay_orig', 640, 480)
+        cv2.namedWindow('src_morphed', cv2.WINDOW_NORMAL)
+        cv2.imshow('src_morphed', src_img_morphed)
+        cv2.resizeWindow('src_morphed', 640, 480)
+        
+        # write2disk
+        if args.write:
+            if not os.path.exists('results'):
+                os.makedirs('results')
+            filenname_prefix = 'results/' + (args.src_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + \
+                '_' + (args.dst_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + '__'
+            cv2.imwrite(filenname_prefix + 'src.jpg', dst_img)
+            cv2.imwrite(filenname_prefix + 'dst.jpg', src_img)
+            cv2.imwrite(filenname_prefix + 'src_morphed.jpg', src_img_morphed)
+            cv2.imwrite(filenname_prefix + 'dst_cropped.jpg', dst_img_cropped)
+            cv2.imwrite(filenname_prefix + 'src_cropped.jpg', src_img_cropped)
+            cv2.imwrite(filenname_prefix + 'overlay_morphed.jpg', overlay_morphed)
+            #cv2.imwrite(filenname_prefix + 'overlay_orig.jpg', overlay_orig)
+    else:
+        print("No lines for aaap warping. Skipping")
     
-
-    # morph
-    src_img_morphed, src_img_cropped, dst_img_cropped = aaap_morph(src_img, dst_img, src_lines, dst_lines, line_constraint_type=2, grid_size=10, scale_factor=4)
-
-    # compute overlay
-    overlay_morphed = cv2.addWeighted(dst_img_cropped, 0.5, src_img_morphed, 0.5, 0)
-    overlay_orig = cv2.addWeighted(dst_img_cropped, 0.5, src_img_cropped, 0.5, 0)
-    
-    # display
-    cv2.namedWindow('overlay', cv2.WINDOW_NORMAL)
-    cv2.imshow('overlay', overlay_morphed)
-    cv2.resizeWindow('overlay', 640, 480)
-    cv2.namedWindow('overlay_orig', cv2.WINDOW_NORMAL)
-    cv2.imshow('overlay_orig', overlay_orig)
-    cv2.resizeWindow('overlay_orig', 640, 480)
-    cv2.namedWindow('src_morphed', cv2.WINDOW_NORMAL)
-    cv2.imshow('src_morphed', src_img_morphed)
-    cv2.resizeWindow('src_morphed', 640, 480)
-    
-    # write2disk
-    if args.write:
-        if not os.path.exists('results'):
-            os.makedirs('results')
-        filenname_prefix = 'results/' + (args.src_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + \
-            '_' + (args.dst_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + '__'
-        cv2.imwrite(filenname_prefix + 'src.jpg', dst_img)
-        cv2.imwrite(filenname_prefix + 'dst.jpg', src_img)
-        cv2.imwrite(filenname_prefix + 'src_morphed.jpg', src_img_morphed)
-        cv2.imwrite(filenname_prefix + 'dst_cropped.jpg', dst_img_cropped)
-        cv2.imwrite(filenname_prefix + 'src_cropped.jpg', src_img_cropped)
-        cv2.imwrite(filenname_prefix + 'overlay_morphed.jpg', overlay_morphed)
-        #cv2.imwrite(filenname_prefix + 'overlay_orig.jpg', overlay_orig)
-
+    print("Press ESC to quit program.")
     while cv2.waitKey(0) != 27:
         pass
 
     cv2.destroyAllWindows()
+    i_h.vprint("Done.")
     exit()
 
 
