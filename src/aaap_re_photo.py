@@ -32,7 +32,8 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, points, win_name, color))
             cv2.imshow(win_name, img)
         elif event == cv2.EVENT_RBUTTONDOWN and len(points) < 4:
             drag_start = (x,y)
-        elif event == cv2.EVENT_MOUSEMOVE and flags == cv2.EVENT_FLAG_RBUTTON and len(points) < 4:
+        elif event == cv2.EVENT_MOUSEMOVE and flags == cv2.EVENT_FLAG_RBUTTON\
+             and len(points) < 4:
             i_h.draw_rectangle(img_tmp, drag_start, (x,y), color)
             cv2.imshow(win_name, img_tmp)
         elif event == cv2.EVENT_RBUTTONUP and len(points) < 4:
@@ -52,29 +53,27 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, points, win_name, color))
     elif not point_stage:
         if event == cv2.EVENT_LBUTTONDOWN:
             drag_start = (x, y)
-
-        if event == cv2.EVENT_RBUTTONDOWN:
+        elif event == cv2.EVENT_RBUTTONDOWN:
             drag_start = getPointFromPoint(img, (x, y))
-
-        elif event == cv2.EVENT_MOUSEMOVE and (flags==cv2.EVENT_FLAG_LBUTTON or flags==cv2.EVENT_FLAG_RBUTTON):
+        elif event == cv2.EVENT_MOUSEMOVE and (flags==cv2.EVENT_FLAG_LBUTTON\
+             or flags==cv2.EVENT_FLAG_RBUTTON):
             i_h.draw_line(img_tmp, drag_start,(x,y), color, -1)
             cv2.imshow(win_name, img_tmp)
-              
         elif event == cv2.EVENT_LBUTTONUP:
             lines.append([drag_start[0], drag_start[1], x, y])
             i_h.draw_line(img, drag_start,(x,y), color, len(lines))
             cv2.imshow(win_name, img)
-
         elif event == cv2.EVENT_RBUTTONUP:
             drag_end = getPointFromPoint(img, (x, y))
             line = i_l.get_line(drag_start, drag_end, img_orig, i_l.STAT_CANNY)
             lines.append(line)
-            i_h.draw_line(img,(line[0], line[1]), (line[2], line[3]), (0,255,0), len(lines))
+            i_h.draw_line(img,(line[0], line[1]), (line[2], line[3]), (0,255,0), 
+                          len(lines))
             cv2.imshow(win_name, img)
-
         elif event == cv2.EVENT_MBUTTONUP and len(lines) > 0:
             del lines[-1]
-            # np.copy creates new array, local img points to new array, main img still points to old img with lines
+            # np.copy creates new array, local img points to new array, 
+            # main img still points to old img with lines
             img[:] = img_orig[:]
             i = 1
             for line in lines:
@@ -88,11 +87,13 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, points, win_name, color))
 def test():
     global point_stage, number_of_points
 
-    # Argparsing
+    # argparsing
     parser = argparse.ArgumentParser()
 
     parser.add_argument("src_name", help="source image")
     parser.add_argument("dst_name", help="destination image")
+    parser.add_argument("-dg", "--draw_grid", help="draw aaap warp grid on\
+                        result images", action="store_true")
     parser.add_argument("-l", "--line_file", help="read lines from and save lines\
                         to line file", action="store_true")
     parser.add_argument("-p", "--point_file", help="read points from and save points\
@@ -210,15 +211,11 @@ def test():
         i_io.write_points(src_points, dst_points, point_file_name)
 
     if args.show_user_input:
-     #   src_img = np.float32(src_img)
-     #   dst_img = np.float32(dst_img)
-        src_img = np.float16(src_img)
-        dst_img = np.float16(dst_img)
+        src_img = np.float32(src_img)
+        dst_img = np.float32(dst_img)
     else:
-     #   src_img = np.float32(np.copy(src_img_orig))
-     #   dst_img = np.float32(np.copy(dst_img_orig))
-        src_img = np.float16(np.copy(src_img_orig))
-        dst_img = np.float16(np.copy(dst_img_orig))
+        src_img = np.float32(np.copy(src_img_orig))
+        dst_img = np.float32(np.copy(dst_img_orig))
 
     # Image warping
     #
@@ -226,11 +223,21 @@ def test():
     # scale images
     i_h.vprint("Scaling...")
     scale_factor = 1
+    # add alpha channel for cropping
     src_img = np.concatenate([src_img, np.ones((src_img.shape[0], src_img.shape[1],1))], axis=2)
     dst_img = np.concatenate([dst_img, np.ones((dst_img.shape[0], dst_img.shape[1],1))], axis=2)
 
     src_img, dst_img, src_lines, dst_lines, src_points, dst_points, x_max, y_max = \
         i_h.scale(src_img, dst_img, src_lines, dst_lines, src_points, dst_points, scale_factor)
+
+    # write2disk
+    if args.write:
+        if not os.path.exists('results'):
+            os.makedirs('results')
+        filenname_prefix = 'resutls/' + (args.src_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + \
+            '_' + (args.dst_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + '__'
+        cv2.imwrite(filenname_prefix + 'src_original.jpg', src_img)
+        cv2.imwrite(filenname_prefix + 'dst_original.jpg', dst_img)
 
     # perspective alignment
     if number_of_points == 8:
@@ -247,9 +254,19 @@ def test():
         cv2.resizeWindow('dst_transformed', 640, 480)
 
         cv2.namedWindow('overlay_transformed', cv2.WINDOW_NORMAL)
-        cv2.imshow('overlay_transformed', np.uint8(cv2.addWeighted(src_img, 0.5,
-                   dst_img, 0.5, 0)))
+        transform_overlay = np.uint8(cv2.addWeighted(src_img, 0.5, dst_img, 0.5, 0))
+        cv2.imshow('overlay_transformed', transform_overlay)
         cv2.resizeWindow('overlay_transformed', 640, 480)
+
+        # write2disk
+        if args.write:
+            if not os.path.exists('results'):
+                os.makedirs('results')
+            filenname_prefix = 'results/' + (args.src_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + \
+                '_' + (args.dst_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + '__'
+            cv2.imwrite(filenname_prefix + 'src_perspective_transform.jpg', src_img)
+            cv2.imwrite(filenname_prefix + 'dst_perspective_transform.jpg', dst_img)
+            cv2.imwrite(filenname_prefix + 'overlay_perspective_transform.jpg', transform_overlay)
 
         print("Perspective transform done.\
               \nPress SPACE to continue to aaap warping. ESC to exit.")
@@ -264,7 +281,7 @@ def test():
         i_h.vprint("Not enough points for perspective transform. Skipping")
     cv2.destroyAllWindows()
 
-    # aaap warping
+    # aaap warping perspective transformed images
     if len(src_lines) > 0:    
         # add each point from perspective transform as two short orthagonal lines
         # to keep these points fixed during warping
@@ -278,7 +295,8 @@ def test():
         # morph
         src_img_morphed, src_img_cropped, dst_img_cropped = aaap_morph(src_img, 
             dst_img, src_lines, dst_lines, line_constraint_type=2, grid_size=10, 
-            scale_factor=scale_factor, show_frame=args.show_frame)
+            scale_factor=scale_factor, show_frame=args.show_frame, 
+            draw_grid_f=args.draw_grid)
 
         # compute overlay
         overlay_morphed = cv2.addWeighted(dst_img_cropped, 0.5, src_img_morphed, 0.5, 0)
@@ -299,15 +317,15 @@ def test():
         if args.write:
             if not os.path.exists('results'):
                 os.makedirs('results')
-            filenname_prefix = 'results/' + (args.src_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + \
-                '_' + (args.dst_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + '__'
-            cv2.imwrite(filenname_prefix + 'src.jpg', dst_img)
-            cv2.imwrite(filenname_prefix + 'dst.jpg', src_img)
+            if number_of_points == 8:
+                filenname_prefix = 'results/' + (args.src_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + \
+                    '_' + (args.dst_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + '_aaap_with_perspective__'
+            else:
+                filenname_prefix = 'results/' + (args.src_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + \
+                    '_' + (args.dst_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + '_aaap_without_perspective__'
             cv2.imwrite(filenname_prefix + 'src_morphed.jpg', src_img_morphed)
             cv2.imwrite(filenname_prefix + 'dst_cropped.jpg', dst_img_cropped)
-            cv2.imwrite(filenname_prefix + 'src_cropped.jpg', src_img_cropped)
-            cv2.imwrite(filenname_prefix + 'overlay_morphed.jpg', overlay_morphed)
-            #cv2.imwrite(filenname_prefix + 'overlay_orig.jpg', overlay_orig)
+            cv2.imwrite(filenname_prefix + 'overlay_aaap.jpg', overlay_morphed)
     else:
         print("No lines for aaap warping. Skipping")
     

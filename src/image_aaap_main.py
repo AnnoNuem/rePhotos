@@ -5,11 +5,11 @@ import image_helpers as i_h
 import image_aaap as i_aaap 
 from scipy import sparse
 from image_morphing import morph
-
+from image_draw_grid import draw_grid
 
 def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15, 
         line_constraint_type=2, deform_energy_weights=np.array([1,0.0100, 0,0]),
-        n_samples_per_grid=1, scale_factor=4, show_frame=False):
+        n_samples_per_grid=1, scale_factor=4, show_frame=False, draw_grid_f=False):
 
     """
     Wrapper for As-Affine-As-Possible Warping.
@@ -35,6 +35,7 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
                       Second image is not scaled since not used for computation.
         show_frame: True: Draw frame arround cropped area but do not crop.
                     False: Crop images.
+        draw_grid_f: True: Draw the aaap grid on the return images, False: Well...
 
     Returns:
         src_img_morphed: Warped and cropped source image.
@@ -93,22 +94,26 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
     # Postprocess
     i_h.vprint("Postprocess...")
 
-    src_img_morphed = src_img_morphed[:,:,0:-1]
-    src_img_cropped = src_img_cropped[:,:,0:-1]
-    dst_img_cropped = dst_img_cropped[:,:,0:-1]
-
-    # sharpen image
+    # Sharpen image
     src_img_morphed = i_h.unsharp_mask(src_img_morphed, 1, .7)
 
+    src_img_morphed = np.uint8(src_img_morphed[:,:,0:-1])
+    src_img_cropped = np.uint8(src_img_cropped[:,:,0:-1])
+    dst_img_cropped = np.uint8(dst_img_cropped[:,:,0:-1])
+
+    # Draw aaap warp grid
+    if draw_grid_f:
+        draw_grid(src_img_morphed, y_p/scale_factor, quads)
+        draw_grid(src_img_cropped, grid_points/scale_factor, quads)
+
+    
     if show_frame:
         i_h.draw_rectangle(src_img_morphed, (c_idx[0], c_idx[1]), (c_idx[2], c_idx[3]))
         i_h.draw_rectangle(dst_img, (c_idx[0], c_idx[1]), (c_idx[2], c_idx[3]))
         i_h.draw_rectangle(src_img, (c_idx[0], c_idx[1]), (c_idx[2], c_idx[3]))
-
-        return np.uint8(src_img_morphed), np.uint8(src_img_cropped),\
-               np.uint8(dst_img_cropped)
+        return src_img_morphed, src_img_cropped, dst_img_cropped
     else:
-        return (np.uint8(src_img_morphed[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
-                np.uint8(src_img_cropped[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]),
-                np.uint8(dst_img_cropped[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]]))
+        return (src_img_morphed[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]],
+                src_img_cropped[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]],
+                dst_img_cropped[c_idx[1]:c_idx[3],c_idx[0]:c_idx[2]])
 
