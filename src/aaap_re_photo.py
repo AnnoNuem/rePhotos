@@ -236,7 +236,7 @@ def test():
     #
     # scale images
     i_h.vprint("Scaling...")
-    scale_factor = 1
+    scale_factor = 4
     # add alpha channel for cropping
     src_img = np.concatenate([src_img, np.ones((src_img.shape[0], src_img.shape[1],1))], axis=2)
     dst_img = np.concatenate([dst_img, np.ones((dst_img.shape[0], dst_img.shape[1],1))], axis=2)
@@ -309,7 +309,7 @@ def test():
 
         # morph
         src_img_morphed, src_img_cropped, dst_img_cropped = aaap_morph(src_img, 
-            dst_img, src_lines, dst_lines, line_constraint_type=2, grid_size=10, 
+            dst_img, src_lines, dst_lines, line_constraint_type=2, grid_size=20, 
             scale_factor=scale_factor, show_frame=args.show_frame, 
             draw_grid_f=args.draw_grid)
 

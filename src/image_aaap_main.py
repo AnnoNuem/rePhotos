@@ -75,7 +75,7 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
     src_img_morphed = morph(src_img, grid_points, y_p, quads, grid_size, 
                             processes=4)
     
-    # Downscale images
+    # downscale images
     if scale_factor !=1:
         src_img_morphed = cv2.resize(src_img_morphed, (0,0), fx=1./scale_factor, 
                           fy=1./scale_factor, interpolation=cv2.INTER_AREA)
@@ -87,21 +87,21 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
         src_img_cropped = src_img
         dst_img_cropped = dst_img
 
-    # Crop images
+    # crop images
     i_h.vprint("Compute crop...")
     c_idx = i_h.get_crop_idx(src_img_morphed[:,:,3] + dst_img_cropped[:,:,3])
 
-    # Postprocess
+    # postprocess
     i_h.vprint("Postprocess...")
 
-    # Sharpen image
+    # sharpen image
     src_img_morphed = i_h.unsharp_mask(src_img_morphed, 1, .7)
 
     src_img_morphed = np.uint8(src_img_morphed[:,:,0:-1])
     src_img_cropped = np.uint8(src_img_cropped[:,:,0:-1])
     dst_img_cropped = np.uint8(dst_img_cropped[:,:,0:-1])
 
-    # Draw aaap warp grid
+    # draw aaap warp grid
     if draw_grid_f:
         draw_grid(src_img_morphed, y_p/scale_factor, quads)
         draw_grid(src_img_cropped, grid_points/scale_factor, quads)
