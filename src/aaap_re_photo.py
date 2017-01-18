@@ -244,6 +244,7 @@ def test():
     src_img, dst_img, src_lines, dst_lines, src_points, dst_points, x_max, y_max = \
         i_h.scale(src_img, dst_img, src_lines, dst_lines, src_points, dst_points, scale_factor)
 
+
     # write2disk
     if args.write:
         if not os.path.exists('results'):

@@ -237,7 +237,9 @@ def scale_image_lines_points(img, lines, points, scale_factor):
     scale_points = lambda ps, f: [[pc * f for pc in p] for p in ps]
 
     if scale_factor > 1:
-        method = cv2.INTER_CUBIC
+        # INTER_CUBIC is bugy with bw images
+        #method = cv2.INTER_CUBIC
+        method = cv2.INTER_LINEAR
     else:
         method = cv2.INTER_AREA
 
@@ -254,7 +256,6 @@ def do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale
     scale_factor):
     scale_img1 *= scale_factor
     scale_img2 *= scale_factor
-
     if scale_img1 != 1:
         img1, lines_img1, points_img1 = scale_image_lines_points(img1, lines_img1, points_img1, scale_img1)
 
