@@ -1,6 +1,7 @@
 from __future__ import print_function
 import argparse
 import os
+import math
 import cv2 
 import numpy as np
 import sys
@@ -60,8 +61,21 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, points, win_name, color))
             i_h.draw_line(img_tmp, drag_start,(x,y), color, -1)
             cv2.imshow(win_name, img_tmp)
         elif event == cv2.EVENT_LBUTTONUP:
-            lines.append([drag_start[0], drag_start[1], x, y])
-            i_h.draw_line(img, drag_start,(x,y), color, len(lines))
+            distance = math.sqrt((x-drag_start[0])**2 + (y-drag_start[1])**2)
+            if distance < 2:
+                lines.append([drag_start[0], drag_start[1]-1, drag_start[0], 
+                             drag_start[1]+1])
+                i_h.draw_line(img, (drag_start[0]-1, drag_start[1]),
+                              (drag_start[0]+1, drag_start[1]), color, 
+                              len(lines))
+                lines.append([drag_start[0]-1, drag_start[1], drag_start[0]+1, 
+                             drag_start[1]])
+                i_h.draw_line(img, (drag_start[0], drag_start[1]-1),
+                              (drag_start[0], drag_start[1]+1), color, 
+                              len(lines))
+            else:
+                lines.append([drag_start[0], drag_start[1], x, y])
+                i_h.draw_line(img, drag_start,(x,y), color, len(lines))
             cv2.imshow(win_name, img)
         elif event == cv2.EVENT_RBUTTONUP:
             drag_end = getPointFromPoint(img, (x, y))
