@@ -4,6 +4,7 @@ from image_helpers import statistic_canny
 from image_helpers import adaptive_thresh
 from image_helpers import line_intersect 
 from image_helpers import lce
+from image_helpers import draw_line
 
 # Patch Size Divisor: Area arround line in which similar line is searched
 psd = 70
@@ -104,7 +105,7 @@ def weight_lines(patch_p, lines, p1_o, p2_o):
             pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * a))
             pt1, pt2 = lim_line_length(pt1, pt2, p1_o, p2_o)
             cv2.line(line_img, (pt1[0], pt1[1]), (pt2[0], pt2[1]), 255, 1, 4)
-            weights[i] = np.einsum('ij,ij->', line_img, patch_p)
+            weights[i] = np.einsum('ij,ij->', line_img, patch_p, dtype=np.float32)
             line_segs[i] = (pt1, pt2)
             i += 1
 
@@ -167,6 +168,7 @@ def get_line(p1, p2, img, method):
     mask = mask[x_min: x_max, y_min: y_max]
     # Filter patch_p to only contain the patch area not the containing rectangle
     patch_p = patch_p * mask
+
 
     # Offset points
     offset = np.array([y_min, x_min])
