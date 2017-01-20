@@ -79,7 +79,7 @@ def onMouse(event, x, y, flags, (img, img_orig, lines, points, win_name, color))
             cv2.imshow(win_name, img)
         elif event == cv2.EVENT_RBUTTONUP:
             drag_end = getPointFromPoint(img, (x, y))
-            line = i_l.get_line(drag_start, drag_end, img_orig, i_l.STAT_CANNY)
+            line = i_l.get_line(drag_start, drag_end, img_orig)
             lines.append(line)
             i_h.draw_line(img,(line[0], line[1]), (line[2], line[3]), (0,255,0), 
                           len(lines))

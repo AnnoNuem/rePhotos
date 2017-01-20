@@ -367,29 +367,33 @@ def pst_wrapper(img):
     return np.uint8(pst_img* 255)
 '''
 
-
 def statistic_canny(img, sigma=0.33):
     """
-    Edge detection depending on image properties.
-    Color informations is disregarded, since most encountered image will be
-    jpegs with chroma subsampling.
+    Edge detection on color image depending on image properties.
     
     Args:
         img: Image on which to detect edges.
         sigma: Standard deviation.
 
     Returns:
-        img: Edged image.
+        img: Edge image.
     """
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    #img = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)[:,:,0]
-    img = cv2.GaussianBlur(img, (3,3), 0)
+
+    print(img.shape)
+    img = cv2.GaussianBlur(img, (5,5), 0)
+
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
     m = np.median(img)
 
     lower_bound = int(max(0, (1.0 - sigma) * m))
     upper_bound = int(min(255, (1.0 + sigma) * m))
 
-    return cv2.Canny(img, lower_bound, upper_bound, L2gradient=True)
+    h = cv2.Canny(img[:,:,0], lower_bound, upper_bound, L2gradient=True)
+    s = cv2.Canny(img[:,:,1], lower_bound, upper_bound, L2gradient=True)
+    v = cv2.Canny(img[:,:,2], lower_bound, upper_bound, L2gradient=True)
+    
+    return(np.maximum(h, np.maximum(s, v)))  
 
 
 def line_intersect(a1, a2, b1, b2) :

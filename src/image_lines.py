@@ -9,11 +9,6 @@ from image_helpers import draw_line
 # Patch Size Divisor: Area arround line in which similar line is searched
 psd = 70
 
-ADAPT_THRESH = 0
-STAT_CANNY = 1
-PST = 2
-
-
 def lim_line_length(p1_h, p2_h, p1_o, p2_o):
     """
     Limits length of line h to linesegment o.
@@ -113,16 +108,20 @@ def weight_lines(patch_p, lines, p1_o, p2_o):
         k = weights[:i].argmax()
         p1 = line_segs[k][0] 
         p2 = line_segs[k][1] 
+        w = weights[k]
     else:
         p1 = p1_o
         p2 = p2_o
+        w = 0
 
-    return p1, p2
+    return p1, p2, w
 
 
-def get_line(p1, p2, img, method):
+def get_line(p1, p2, img):
     """
-    Search in image for most similar line of a given line.
+    Search in image for neares most similar line of a given line.
+    Search in H, S, and V for line in area arround given line. Select line
+    with similiar rotation and many supporting edge pixel.
 
     Args:
         p1: Start point of user drawn line.
@@ -152,36 +151,44 @@ def get_line(p1, p2, img, method):
     y_max = int(min(img.shape[1], p.T[0,:].max()))
 
     patch = img[x_min: x_max, y_min: y_max]
-    #patch = np.uint8(lce(patch, amount=1) * 255)
-
-    # Edge detection
-    if method == ADAPT_THRESH:
-        patch_p  = adaptive_thresh(patch) 
-    elif method == STAT_CANNY:
-        patch_p  = statistic_canny(patch) 
-    elif method == PST:
-        patch_p  = pst_wrapper(patch) 
 
     # Generate mask of patch size
-    mask = np.zeros((img.shape[0], img.shape[1]), dtype=patch_p.dtype)
+    mask = np.zeros((img.shape[0], img.shape[1]), dtype=patch.dtype)
     cv2.fillPoly(mask, [p.astype(int)], (1))
     mask = mask[x_min: x_max, y_min: y_max]
-    # Filter patch_p to only contain the patch area not the containing rectangle
-    patch_p = patch_p * mask
-
 
     # Offset points
     offset = np.array([y_min, x_min])
     p1_o = p1 - offset
     p2_o = p2 - offset
 
-    # Line detection
-    lines = cv2.HoughLines(patch_p, 1, np.pi/180.0, 1, np.array([]), 0, 0)
+    patch = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV)
+    patch = cv2.GaussianBlur(patch, (5,5), 0)
 
-    # return given points if no lines found, else compute best line
-    if lines is not None:
-        p1, p2 = weight_lines(patch_p, lines, p1_o, p2_o)
-        p1 += offset
-        p2 += offset
+    best_lines = []
+    sigma = 0.33
+    magic_n = 100
+    for i in range(0,3):
+        ch = cv2.equalizeHist(patch[:,:,i])
+
+        # Edge dedection
+        m = np.median(ch)
+        lower_bound = int(max(0, (1.0 - sigma) * m)) + magic_n
+        upper_bound = int(min(255, (1.0 + sigma) * m)) + magic_n
+        ch = cv2.Canny(ch, lower_bound, upper_bound, L2gradient=True)
+
+        # Filter patch_p to only contain the patch area not the containing rectangle
+        ch *= mask
+        
+        # Line detection
+        lines = cv2.HoughLines(ch, 1, np.pi/180.0, 1, np.array([]), 0, 0)
+
+        if lines is not None:
+            best_lines.append(weight_lines(ch, lines, p1_o, p2_o))
+    
+    if best_lines is not None:
+        k = max(enumerate(best_lines), key=lambda x: x[1][2])[0]
+        p1 = best_lines[k][0] + offset
+        p2 = best_lines[k][1] + offset
     
     return [p1[0], p1[1], p2[0], p2[1]]
