@@ -97,6 +97,7 @@ def perspective_align(img_1,
             i += 1
         
     # Image 1
+    transform_matrix_1 = None
     if alpha != 0:
         y, x, _ = img_1.shape
         transform_matrix_1 = cv2.getPerspectiveTransform(\
@@ -108,6 +109,7 @@ def perspective_align(img_1,
         lines_img_1 = transform_lines(lines_img_1, transform_matrix_1)
 
     # Image 2
+    transform_matrix_2 = None
     if alpha != 1:
         y, x, _ = img_2.shape
         transform_matrix_2 = cv2.getPerspectiveTransform(\
@@ -118,4 +120,5 @@ def perspective_align(img_1,
         points_img_2 = transform_points(points_img_2, transform_matrix_2)
         lines_img_2 = transform_lines(lines_img_2, transform_matrix_2)
 
-    return img_1, img_2, points_img_1, points_img_2, lines_img_1, lines_img_2 
+    return img_1, img_2, points_img_1, points_img_2, lines_img_1, lines_img_2,\
+           transform_matrix_1, transform_matrix_2

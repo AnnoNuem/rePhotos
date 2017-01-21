@@ -150,7 +150,7 @@ def get_line(p1, p2, img):
     y_min = int(max(0, p.T[0,:].min()))
     y_max = int(min(img.shape[1], p.T[0,:].max()))
 
-    patch = img[x_min: x_max, y_min: y_max]
+    patch = np.uint8(img[x_min: x_max, y_min: y_max])
 
     # Generate mask of patch size
     mask = np.zeros((img.shape[0], img.shape[1]), dtype=patch.dtype)

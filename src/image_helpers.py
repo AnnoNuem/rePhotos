@@ -5,6 +5,8 @@ from image_pst import pst
 from ler.image_ler import max_size
 
 
+pint = lambda p: (int(p[0]), int(p[1]))
+
 vprint = lambda *a, **k: None
 def set_verbose(verbose):
     """
@@ -32,13 +34,13 @@ def draw_frame(img, x_min, x_max, y_min, y_max):
     cv2.line(img, (x_max, y_min), (x_min, y_min), color, thickness, lineType )
 
 
-def draw_line(img, start, end, color, l_number=-1):
+def draw_line(img, start, end, color=(255,255,255), l_number=-1):
     thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
     lineType = 8
-    cv2.line(img, start, end, color, thickness, lineType )
+    cv2.line(img, pint(start), pint(end), color, thickness, lineType )
     if l_number > 0:
         text_size = float(thickness)/2 
-        cv2.putText(img, str(l_number), end, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, text_size, (0,255,0), thickness)
+        cv2.putText(img, str(l_number), pint(end), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, text_size, (0,255,0), thickness)
 
 
 def draw_rectangle(img, start, end, color=(255,255,255)):
@@ -47,10 +49,10 @@ def draw_rectangle(img, start, end, color=(255,255,255)):
     cv2.rectangle(img, start, end, color, thickness, lineType )
 
 
-def draw_circle(img, center, color):
+def draw_circle(img, center, color=(255,255,255)):
     radius = int((img.shape[0] + img.shape[1]) / 400 ) + 1
     linetype = -1
-    cv2.circle(img, center, radius, color, linetype)
+    cv2.circle(img, (int(center[0]), int(center[1])), radius, color, linetype)
 
 
 def weighted_average_point(point1, point2, alpha):
@@ -109,132 +111,28 @@ def unsharp_mask(img, sigma=1, amount=0.8):
 
     return img
 
-#def get_crop_idx(y_p, grid_shape, img_shape, x_max, y_max, scale = 400):
+
 def get_crop_idx(crop_img, scale = 400):
     """
-    Computes crop indices based on deformed mesh 
+    Computes crop indices based on alpha channel.
+    Searches biggest white rectangle in alpha channel.
 
     Args:
-        y_p: Point coordinates of mesh.
-        grid_shape: Number of rows and columns in grid
-        img_shape: Size of image to be cropped
-        x_max: Maximum x value for right crop index
-        y_max: Maximum y value for left crop index
+        crop_img: to be cropped image with alpha channel
         scale: Downsample image by img size / scale to speed up
 
     Returns:
         idx: Cropindices [x_min, y_min, x_max, y_max]
     """
 
-    # Get outline points from grid
-    #left = y_p[0:grid_shape[0]]
-    #right = y_p[-grid_shape[0]:]
-    #bottom = y_p[grid_shape[0]-1::grid_shape[0]]
-    #top = y_p[::grid_shape[0]]
-
-    # Create crop image
-    #pp = np.int32(np.vstack([left, bottom, right[::-1], top[::-1]]))#.clip(min=0)
-    #pp[:,0] = pp[:,0].clip(max=x_max)
-    #pp[:,1] = pp[:,1].clip(max=y_max)
-    #crop_image = np.zeros((img_shape[0], img_shape[1]), np.uint8)
-    #cv2.fillPoly(crop_image, [pp], (1))
-    #cv2.imshow('afg', crop_image * 255)
-
     # Speed up by downsmpling the crop image costs accuracy of crop indices
-#    cv2.imshow('adf', crop_img)
     ac = int(np.sum(crop_img.shape)/scale)
     return  max_size(crop_img[::ac,::ac], 2) * ac + [ac, ac, -ac, -ac]
-    #return max_size(crop_image, 1)
-
-
-#def get_crop_indices(img):
-#    """
-#    Get crop indices to crop black border from image.
-#    Crops non linear borders.
-#    Starts with small rectangle in middle, grows till black pixels are reached
-#    at each site. This inefficient method has to be used since morphing
-#    does not necessarily produce straight edges.
-#
-#    Args: 
-#        img1: BGRA image. Alpha channel is used to determine crop indices.
-#
-#    Returns:
-#        x_min:
-#        x_max:
-#        y_min:
-#        y_max:
-#
-#    """        
-#    
-#    x_min= int(img.shape[1] / 2) - 1
-#    y_min= int(img.shape[0] / 2) - 1
-#    x_max= int(img.shape[1] / 2) + 1
-#    y_max= int(img.shape[0] / 2) + 1
-#    
-#    x_step_size = int((img.shape[1]/300) * 2)
-#    y_step_size = int((img.shape[0]/300) * 2) 
-#
-#    top_done = False
-#    left_done = False
-#    bottom_done = False
-#    right_done = False
-#
-#    while not top_done or not right_done or not bottom_done or not left_done:
-#        # check left  
-#        if not left_done and x_min - x_step_size > -1: 
-#            for y in range(y_min, y_max):
-#                if  img[y, x_min - x_step_size, 3] == 0:
-#                    left_done = True   
-#                    break
-#            if y == y_max -1 :
-#                left_done = False
-#                x_min -= x_step_size
-#        else:
-#            left_done = True
-#
-#        # check bottom
-#        if not bottom_done and y_max + y_step_size < img.shape[0] :
-#            for x in range(x_min, x_max):
-#                if img[y_max + y_step_size, x, 3] == 0:
-#                    bottom_done = True 
-#                    break
-#            if x == x_max - 1:
-#                bottom_done = False 
-#                y_max += y_step_size
-#        else:
-#            bottom_done = True
-#
-#        # check right
-#        if not right_done and x_max + x_step_size < img.shape[1] :
-#            for y in range(y_min, y_max):
-#                if img[y, x_max + x_step_size, 3] == 0:
-#                    right_done = True
-#                    break
-#            if y == y_max - 1:
-#                right_done = False
-#                x_max += x_step_size
-#        else:
-#            right_done = True
-#
-#        # check top  
-#        if not top_done and y_min - y_step_size > -1:
-#            for x in range(x_min, x_max):
-#                if img[y_min - y_step_size, x, 3] == 0:
-#                    top_done = True
-#                    break
-#            if x == x_max - 1:
-#                top_done = False
-#                y_min -= y_step_size
-#        else:
-#            top_done = True
-#
-#    return x_min, x_max, y_min, y_max
 
 
 def scale_image_lines_points(img, lines, points, scale_factor):
-
     scale_lines = lambda ls, f: [[v * f for v in l] for l in ls]   
-    scale_points = lambda ps, f: [[pc * f for pc in p] for p in ps]
+    scale_points = lambda ps, f: [tuple([pc * f for pc in p]) for p in ps]
 
     if scale_factor > 1:
         # INTER_CUBIC is bugy with bw images
@@ -263,7 +161,8 @@ def do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale
     if scale_img2 != 1:
         img2, lines_img2, points_img2  = scale_image_lines_points(img2, lines_img2, points_img2, scale_img2)
 
-    return img1, img2, lines_img1, lines_img2, points_img1, points_img2
+    return img1, img2, lines_img1, lines_img2, points_img1, points_img2,\
+           scale_img1, scale_img2
         
 
 def scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_factor=1):
@@ -295,13 +194,13 @@ def scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_fa
 
     # Images are of same size
     if x_size_img1 == x_size_img2 and y_size_img1 == y_size_img2:
-        img1, img2, lines_img1, lines_img2, points_img1, points_img2 = do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, 1, 1, scale_factor)
+        img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_factor_img1, scale_factor_img2 = do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, 1, 1, scale_factor)
         x_max = img1.shape[1]
         y_max = img1.shape[0]
 
     # Image 1 is bigger
     elif x_size_img1 >= x_size_img2 and y_size_img1 >= y_size_img2:
-        img1, img2, lines_img1, lines_img2, points_img1, points_img2 = do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, 1, 
+        img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_factor_img1, scale_factor_img2 = do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, 1, 
             min(x_scale_factor, y_scale_factor), scale_factor)
         temp_img = np.zeros_like(img1)
         temp_img[0:img2.shape[0], 0:img2.shape[1], 0:img2.shape[2]] = img2
@@ -311,7 +210,7 @@ def scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_fa
 
     # Image 1 is smaller
     elif x_size_img1 <= x_size_img2 and y_size_img1 <= y_size_img2:
-        img1, img2, lines_img1, lines_img2, points_img1, points_img2 = do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2,  
+        img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_factor_img1, scale_factor_img2 = do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2,  
             1/max(x_scale_factor, y_scale_factor), 1, scale_factor)
         temp_img = np.zeros_like(img2)
         temp_img[0:img1.shape[0], 0:img1.shape[1], 0:img1.shape[2]] = img1
@@ -322,7 +221,7 @@ def scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_fa
     # Images size relations are not the same i.e. x_scale < 1 and y_scale > 1 
     # or vice versa
     else:
-        img1, img2, lines_img1, lines_img2, points_img1, points_img2 = do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, 1, 1, scale_factor)
+        img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_factor_img1, scale_factor_img2 = do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, 1, 1, scale_factor)
         temp_img = np.zeros((max(y_size_img1, y_size_img2), 
             max(x_size_img1, x_size_img2), max(z_size_img1, z_size_img2)), 
             dtype=img1.dtype)
@@ -334,7 +233,7 @@ def scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_fa
         temp_img2[0:img2.shape[0], 0:img2.shape[1], 0:img2.shape[2]] = img2
         img2 = temp_img2
 
-    return img1, img2, lines_img1, lines_img2, points_img1, points_img2, x_max, y_max
+    return img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_factor_img1, scale_factor_img2, x_max, y_max
 
 
 def adaptive_thresh(img):
@@ -421,3 +320,22 @@ def line_intersect(a1, a2, b1, b2) :
         return b1
     num = np.dot(dap, dp)
     return (num / denom) * db + b1
+
+
+def show_image(img, name='img', x=1000, y=1000):
+    iy, ix, _ = img.shape
+    
+    x_scale = x/float(ix)
+    y_scale = y/float(iy)
+
+    if x_scale > y_scale:
+        img_d = cv2.resize(np.uint8(img[:,:,0:3]), (0,0), fx=y_scale, fy=y_scale)
+        scale = y_scale
+    else:
+        img_d = cv2.resize(np.uint8(img[:,:,0:3]), (0,0), fx=x_scale, fy=x_scale)
+        scale = x_scale
+    
+    cv2.namedWindow(name ,cv2.WINDOW_NORMAL)
+    cv2.imshow(name, img_d)
+    cv2.resizeWindow(name, x,y)
+    return img_d, scale

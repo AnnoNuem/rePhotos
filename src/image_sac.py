@@ -26,8 +26,10 @@ def getPointFromRectangle(img1, point1, point2):
     if abs(point1[0] - point2[0]) < MIN_RECT_SIZE or abs(point1[1] - point2[1]) < MIN_RECT_SIZE:
         return (int((point1[0]+point2[0])/2), int((point1[1]+point2[1])/2))
 
-    subimage = np.copy(img1[min(point1[1],point2[1]):max(point1[1],point2[1]), 
-                                          min(point1[0], point2[0]):max(point1[0],point2[0])])
+    subimage = np.copy(img1[int(min(point1[1],point2[1])):\
+                            int(max(point1[1],point2[1])), 
+                            int(min(point1[0], point2[0])):\
+                            int(max(point1[0],point2[0]))])
     subimageGray = cv2.cvtColor(subimage, cv2.COLOR_BGR2GRAY)
     subimageF = np.float32(subimageGray)
     subimageF = cv2.normalize(subimageF, subimageF, 0, 1, cv2.NORM_MINMAX)
