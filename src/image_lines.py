@@ -186,7 +186,7 @@ def get_line(p1, p2, img):
         if lines is not None:
             best_lines.append(weight_lines(ch, lines, p1_o, p2_o))
     
-    if best_lines is not None:
+    if len(best_lines) != 0:
         k = max(enumerate(best_lines), key=lambda x: x[1][2])[0]
         p1 = best_lines[k][0] + offset
         p2 = best_lines[k][1] + offset

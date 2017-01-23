@@ -24,7 +24,8 @@ ls = lambda l, sf: [v * sf for v in l]
 
 drag_start = (0,0)
 number_of_points = 0
-def onMouse_stage_one(event, x, y, flags, (img_d, img_d_clean, img_orig, scale, points, win_name, color)):
+def onMouse_stage_one(event, x, y, flags, (img_d, img_d_clean, img_orig, scale, 
+                      points, win_name, color)):
     global drag_start, number_of_points
 
     img_tmp = np.copy(img_d)
@@ -40,7 +41,8 @@ def onMouse_stage_one(event, x, y, flags, (img_d, img_d_clean, img_orig, scale, 
         i_h.draw_rectangle(img_tmp, drag_start, (x,y), color)
         cv2.imshow(win_name, img_tmp)
     elif event == cv2.EVENT_RBUTTONUP and len(points) < 4:
-        point = getPointFromRectangle(img_orig[:,:,0:3], (drag_start[0]/scale,drag_start[1]/scale), (x/scale,y/scale))
+        point = getPointFromRectangle(img_orig[:,:,0:3], (drag_start[0]/scale,
+                                      drag_start[1]/scale), (x/scale,y/scale))
         i_h.draw_circle(img_d, (point[0]*scale, point[1]*scale), color)
         cv2.imshow(win_name, img_d)
         points.append(point)
@@ -67,15 +69,20 @@ def onMouse_stage_two(event, x, y, flags, (img_d, img_d_clean, img_orig, scale, 
         i_h.draw_line(img_d_tmp, ps(drag_start, scale), (x,y), color, -1)
         cv2.imshow(win_name, img_d_tmp)
     elif event == cv2.EVENT_LBUTTONUP:
-        distance = math.sqrt((x*scale-drag_start[0])**2 + (y*scale-drag_start[1])**2)
+        distance = math.sqrt((x/scale-drag_start[0])**2 +
+                             (y/scale-drag_start[1])**2)
         # if short line, assume user wanted to add point. Add two short lines
-        if distance < 2:
+        if distance < 4:
             lines.append([drag_start[0], drag_start[1]-1, drag_start[0], 
                          drag_start[1]+1])
-            i_h.draw_line(img_d, ls(lines[-1], scale), color, len(lines))
+            line_s = ls(lines[-1], scale)
+            i_h.draw_line(img_d, (line_s[0], line_s[1]), (line_s[2], line_s[3]), 
+                          color, len(lines))
             lines.append([drag_start[0]-1, drag_start[1], drag_start[0]+1, 
                          drag_start[1]])
-            i_h.draw_line(img_d, ls(lines[-1], scale), color, len(lines))
+            line_s = ls(lines[-1], scale)
+            i_h.draw_line(img_d, (line_s[0], line_s[1]), (line_s[2], line_s[3]), 
+                          color, len(lines))
         else:
             lines.append([drag_start[0], drag_start[1], x/scale, y/scale])
             i_h.draw_line(img_d, ls(drag_start, scale),(x,y), color, len(lines))
@@ -85,8 +92,8 @@ def onMouse_stage_two(event, x, y, flags, (img_d, img_d_clean, img_orig, scale, 
         line = i_l.get_line(drag_start, drag_end, img_orig)
         lines.append(line)
         line_s = ls(line, scale)
-        i_h.draw_line(img_d,(line_s[0], line_s[1]), (line_s[2], line_s[3]), (0,255,0), 
-                      len(lines))
+        i_h.draw_line(img_d,(line_s[0], line_s[1]), (line_s[2], line_s[3]), 
+                      color, len(lines))
         cv2.imshow(win_name, img_d)
     elif event == cv2.EVENT_MBUTTONUP and len(lines) > 0:
         del lines[-1]
@@ -96,7 +103,8 @@ def onMouse_stage_two(event, x, y, flags, (img_d, img_d_clean, img_orig, scale, 
         i = 1
         for line in lines:
             line_s = ls(line, scale)
-            i_h.draw_line(img_d, (line_s[0], line_s[1]), (line_s[2], line_s[3]), color, i)
+            i_h.draw_line(img_d, (line_s[0], line_s[1]), (line_s[2], line_s[3]), 
+                          color, i)
             i+=1
         cv2.imshow(win_name, img_d)
 
@@ -107,8 +115,6 @@ def init():
 
     parser.add_argument("src_name", help="source image")
     parser.add_argument("dst_name", help="destination image")
-    parser.add_argument("-dg", "--draw_grid", help="draw aaap warp grid on\
-                        result images", action="store_true")
     parser.add_argument("-l", "--line_file", help="read lines from and save lines\
                         to line file", action="store_true")
     parser.add_argument("-p", "--point_file", help="read points from and save points\
@@ -119,6 +125,8 @@ def init():
     parser.add_argument("--scale_factor", help="Images are scaled with this\
                          factor for better quality or faster computation", 
                          default=1, type=int)
+    parser.add_argument("-sg", "--show_grid", help="draw aaap warp grid on\
+                        result images", action="store_true")
                          #TODO make float scale avaiable 
     parser.add_argument("-sui", "--show_user_input", help="Show user drawn points\
                         and lines in result images", action="store_true")
@@ -161,8 +169,9 @@ def init():
     if args.write:
         if not os.path.exists('results'):
             os.makedirs('results')
-        args.filenname_prefix = 'results/' + (args.src_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + \
-            '_' + (args.dst_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + '__'
+        args.filename_prefix = 'results/' +\
+            (args.src_name.rsplit('/',1)[-1]).rsplit('.',1)[0] +\
+            '_' + (args.dst_name.rsplit('/',1)[-1]).rsplit('.',1)[0] + '_'
 
     return src_img, dst_img, src_lines, dst_lines, src_points, dst_points, args
 
@@ -188,9 +197,11 @@ def stage_one(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, ar
     cv2.imshow('src_img', src_img_d)
     cv2.imshow('dst_img', dst_img_d)
 
-    cv2.setMouseCallback("src_img", onMouse_stage_one, (src_img_d, src_img_d_clean, src_img, src_scale_d, 
+    cv2.setMouseCallback("src_img", onMouse_stage_one, (src_img_d, 
+                         src_img_d_clean, src_img, src_scale_d, 
                          src_points, 'src_img', (255,255,0)))
-    cv2.setMouseCallback("dst_img", onMouse_stage_one, (dst_img_d, dst_img_d_clean, dst_img, dst_scale_d, 
+    cv2.setMouseCallback("dst_img", onMouse_stage_one, (dst_img_d, 
+                         dst_img_d_clean, dst_img, dst_scale_d, 
                          dst_points, 'dst_img', (0,0,255)))
 
     # wait till user has drawn all points 
@@ -203,6 +214,7 @@ def stage_one(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, ar
         
     cv2.destroyAllWindows()
 
+    # write points to file 
     if args.point_file:
         point_file_name = args.src_name.rsplit('.', 1)[0] + "_" + point_file_name_end
         # scale points to original file size and save
@@ -215,25 +227,49 @@ def stage_one(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, ar
         i_h.vprint("Perspective transform...")
     
         if args.show_user_input:
+            # workarround with copy since opencv python wrapper throws error on
+            # cv2.line(img[:,:,0:3]....
+            src_tmp = src_img[:,:,0:3].copy()
             for point in src_points:
-                i_h.draw_circle(src_img, point, (255,255,0))
+                i_h.draw_circle(src_tmp, point, (255,255,0))
+            src_img[:,:,0:3] = src_tmp
+            dst_tmp = dst_img[:,:,0:3].copy()
             for point in dst_points:
-                i_h.draw_circle(dst_img, point, (0,0,255))
+                i_h.draw_circle(dst_tmp, point, (0,0,255))
+            dst_img[:,:,0:3] = dst_tmp
         src_img, dst_img, src_points, dst_points, src_lines, dst_lines, \
             src_transform_matrix, dst_transform_matrix = perspective_align(
                 src_img, dst_img, src_points, dst_points, src_lines, dst_lines, 
                 alpha=0.5)
 
         transform_overlay = np.uint8(cv2.addWeighted(src_img, 0.5, dst_img, 0.5, 0))
-        _ = i_h.show_image(src_img, name='src_transformed')
-        _ = i_h.show_image(dst_img, name='dst_transformed')
-        _ = i_h.show_image(transform_overlay, name='transform_overlay')
+        i_h.show_image(src_img, name='src_transformed')
+        i_h.show_image(dst_img, name='dst_transformed')
+        i_h.show_image(transform_overlay, name='transform_overlay')
 
         # write2disk
         if args.write:
-            cv2.imwrite(filenname_prefix + 'src_perspective_transform.jpg', src_img)
-            cv2.imwrite(filenname_prefix + 'dst_perspective_transform.jpg', dst_img)
-            cv2.imwrite(filenname_prefix + 'overlay_perspective_transform.jpg', transform_overlay)
+            if args.scale_factor == 1:
+                cv2.imwrite(args.filename_prefix + 'src_perspective_transform.jpg', 
+                            src_img[:,:,0:3])
+                cv2.imwrite(args.filename_prefix + 'dst_perspective_transform.jpg', 
+                            dst_img[:,:,0:3])
+                cv2.imwrite(args.filename_prefix + 'overlay_perspective_transform.jpg', 
+                            transform_overlay[:,:,0:3])
+            else:
+                if 1/args.src_scale > 1:
+                    method = cv2.INTER_LINEAR
+                else:
+                    method = cv2.INTER_AREA
+                cv2.imwrite(args.filename_prefix + 'src_perspective_transform.jpg', 
+                            cv2.resize(src_img[:,:,0:3], (0,0), fx=1/float(args.src_scale), 
+                            fy= 1/float(args.src_scale), interpolation=method))
+                cv2.imwrite(args.filename_prefix + 'dst_perspective_transform.jpg', 
+                            cv2.resize(dst_img[:,:,0:3], (0,0), fx=1/float(args.dst_scale), 
+                            fy= 1/float(args.dst_scale), interpolation=method))
+                cv2.imwrite(args.filename_prefix + 'overlay_perspective_transform.jpg', 
+                            cv2.resize(transform_overlay[:,:,0:3], (0,0), fx=1/float(args.src_scale), 
+                            fy= 1/float(args.src_scale), interpolation=method))
 
         print("Perspective transform done.\
               \nPress SPACE to continue to aaap warping. ESC to exit.\n")
@@ -271,19 +307,23 @@ def stage_two(src_img, dst_img, src_points, dst_points, src_lines, dst_lines,
     i = 0
     for line in src_lines:
         line_s = ls(line, src_scale_d)
-        i_h.draw_line(src_img_d, (line_s[0], line_s[1]), (line_s[2], line_s[3]), (255,255,0), i)
+        i_h.draw_line(src_img_d, (line_s[0], line_s[1]), (line_s[2], line_s[3]), 
+                      (255,255,0), i)
         i += 1
     i = 0
     for line in dst_lines:
         line_s = ls(line, dst_scale_d)
-        i_h.draw_line(dst_img_d, (line_s[0], line_s[1]), (line_s[2], line_s[3]), (0,0 ,255), i)
+        i_h.draw_line(dst_img_d, (line_s[0], line_s[1]), (line_s[2], line_s[3]), 
+                      (0,0 ,255), i)
         i += 1
     i_h.show_image(src_img_d, name="src_img_transformed")
     i_h.show_image(dst_img_d, name="dst_img_transformed")
 
-    cv2.setMouseCallback("src_img_transformed", onMouse_stage_two, (src_img_d, src_img_d_clean, src_img, src_scale_d, 
+    cv2.setMouseCallback("src_img_transformed", onMouse_stage_two, (src_img_d, 
+                         src_img_d_clean, src_img, src_scale_d, 
                          src_lines, 'src_img_transformed', (255,255,0)))
-    cv2.setMouseCallback("dst_img_transformed", onMouse_stage_two, (dst_img_d, dst_img_d_clean, dst_img, dst_scale_d, 
+    cv2.setMouseCallback("dst_img_transformed", onMouse_stage_two, (dst_img_d, 
+                         dst_img_d_clean, dst_img, dst_scale_d, 
                          dst_lines, 'dst_img_transformed', (0,0,255)))
 
     # wait till user has drawn all lines
@@ -314,10 +354,16 @@ def stage_two(src_img, dst_img, src_points, dst_points, src_lines, dst_lines,
     # aaap warping perspective transformed images
     if len(src_lines) > 0:    
         if args.show_user_input:
+            # workarround with copy since opencv python wrapper throws error on
+            # cv2.line(img[:,:,0:3]....
+            src_tmp = src_img[:,:,0:3].copy()
             for line in src_lines:
-                i_h.draw_line(src_img, (line[0], line[1]), (line[2], line[3]), (255,255,0))
+                i_h.draw_line(src_tmp, (line[0], line[1]), (line[2], line[3]), (255,255,0))
+            src_img[:,:,0:3] = src_tmp
+            dst_tmp = dst_img[:,:,0:3].copy()
             for line in dst_lines:
-                i_h.draw_line(dst_img, (line[0], line[1]), (line[2], line[3]), (255,255,0))
+                i_h.draw_line(dst_img[:,:,0:3].copy(), (line[0], line[1]), (line[2], line[3]), (0,0,255))
+            dst_img[:,:,0:3] = dst_tmp
         # add each point from perspective transform as two short orthagonal lines
         # to keep these points fixed during warping
         for point in src_points:
@@ -331,7 +377,7 @@ def stage_two(src_img, dst_img, src_points, dst_points, src_lines, dst_lines,
         src_img_morphed, src_img_cropped, dst_img_cropped = aaap_morph(src_img, 
             dst_img, src_lines, dst_lines, line_constraint_type=2, grid_size=20, 
             scale_factor=args.scale_factor, show_frame=args.show_frame, 
-            draw_grid_f=args.draw_grid)
+            draw_grid_f=args.show_grid)
 
         # compute overlay
         overlay_morphed = cv2.addWeighted(dst_img_cropped, 0.5, src_img_morphed, 0.5, 0)
@@ -345,13 +391,13 @@ def stage_two(src_img, dst_img, src_points, dst_points, src_lines, dst_lines,
         # write2disk
         if args.write:
             if len(src_points) + len(dst_points) == 8:
-                filenname_prefix = args.filenname_prefix + '_aaap_with_perspective__'
+                filename_prefix = args.filename_prefix + '_aaap_with_perspective__'
             else:
-                filenname_prefix = args.filenname_prefix + '_aaap_without_perspective__'
-            cv2.imwrite(filenname_prefix + 'src_morphed.jpg', src_img_morphed)
-            cv2.imwrite(filenname_prefix + 'src_cropped.jpg', src_img_morphed)
-            cv2.imwrite(filenname_prefix + 'dst_cropped.jpg', dst_img_cropped)
-            cv2.imwrite(filenname_prefix + 'overlay_aaap.jpg', overlay_morphed)
+                filename_prefix = args.filename_prefix + '_aaap_without_perspective__'
+            cv2.imwrite(filename_prefix + 'src_morphed.jpg', src_img_morphed)
+            cv2.imwrite(filename_prefix + 'src_cropped.jpg', src_img_cropped)
+            cv2.imwrite(filename_prefix + 'dst_cropped.jpg', dst_img_cropped)
+            cv2.imwrite(filename_prefix + 'overlay_aaap.jpg', overlay_morphed)
     else:
         print("No lines for aaap warping. Skipping")
 
@@ -365,32 +411,27 @@ def main():
     src_img = np.float32(src_img)
     dst_img = np.float32(dst_img)
 
-    
-    #for line in src_lines:
-    #    i_h.draw_line(src_img, tuple(line[0:2]), tuple(line[2:4]), (255,255,255))
-    #    
-    #i_h.show_image(src_img, 'adsfg')
-    #
-    #cv2.waitKey(0)
-
     # Scale images
     i_h.vprint("Scaling...")
     # Add alpha channel for cropping
-    src_img = np.concatenate([src_img, np.ones((src_img.shape[0], src_img.shape[1],1), dtype=np.float32)], axis=2)
-    dst_img = np.concatenate([dst_img, np.ones((dst_img.shape[0], dst_img.shape[1],1), dtype=np.float32)], axis=2)
+    src_img = np.concatenate([src_img, np.ones((src_img.shape[0], 
+                              src_img.shape[1],1), dtype=np.float32)], axis=2)
+    dst_img = np.concatenate([dst_img, np.ones((dst_img.shape[0],
+                              dst_img.shape[1],1), dtype=np.float32)], axis=2)
 
-    src_img, dst_img, src_lines, dst_lines, src_points, dst_points, args.src_scale, args.dst_scale, x_max, y_max = \
-        i_h.scale(src_img, dst_img, src_lines, dst_lines, src_points, dst_points, args.scale_factor)
+    src_img, dst_img, src_lines, dst_lines, src_points, dst_points,\
+        args.src_scale, args.dst_scale, x_max, y_max = i_h.scale(src_img, dst_img, 
+            src_lines, dst_lines, src_points, dst_points, args.scale_factor)
 
     src_img_orig = np.copy(src_img)
     dst_img_orig = np.copy(dst_img)
 
-    # Stage One: Drawing Points:
+    # Stage one: Drawing points and perspective transform
     src_img, dst_img, src_points, dst_points, src_lines, dst_lines,\
         src_transform_matrix, dst_transform_matrix = stage_one(src_img, dst_img, 
             src_points, dst_points, src_lines, dst_lines, args)
     
-    # Stage Two: Drawing Lines:
+    # Stage two: Drawing lines and aaap morphing
     stage_two(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, 
         src_transform_matrix, dst_transform_matrix, args)
     

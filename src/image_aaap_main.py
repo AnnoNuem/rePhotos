@@ -9,7 +9,7 @@ from image_draw_grid import draw_grid
 
 def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15, 
         line_constraint_type=2, deform_energy_weights=np.array([1,0.0100, 0,0]),
-        n_samples_per_grid=1, scale_factor=4, show_frame=False, draw_grid_f=False):
+        n_samples_per_grid=1, scale_factor=1, show_frame=False, draw_grid_f=False):
 
     """
     Wrapper for As-Affine-As-Possible Warping.
@@ -89,7 +89,7 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
 
     # crop images
     i_h.vprint("Compute crop...")
-    c_idx = i_h.get_crop_idx(src_img_morphed[:,:,3] + dst_img_cropped[:,:,3])
+    c_idx = i_h.get_crop_idx(np.uint8(src_img_morphed[:,:,3] + dst_img_cropped[:,:,3]))
 
     # postprocess
     i_h.vprint("Postprocess...")

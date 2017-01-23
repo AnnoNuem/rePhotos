@@ -222,8 +222,8 @@ def scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_fa
     # or vice versa
     else:
         img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_factor_img1, scale_factor_img2 = do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, 1, 1, scale_factor)
-        temp_img = np.zeros((max(y_size_img1, y_size_img2), 
-            max(x_size_img1, x_size_img2), max(z_size_img1, z_size_img2)), 
+        temp_img = np.zeros((max(img1.shape[0], img2.shape[0]), 
+            max(img1.shape[1], img2.shape[1]), max(img1.shape[2], img2.shape[2])), 
             dtype=img1.dtype)
         temp_img2 = np.copy(temp_img)
         x_max = min(img1.shape[1], img2.shape[1])
@@ -278,7 +278,6 @@ def statistic_canny(img, sigma=0.33):
         img: Edge image.
     """
 
-    print(img.shape)
     img = cv2.GaussianBlur(img, (5,5), 0)
 
     img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
