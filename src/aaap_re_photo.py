@@ -56,18 +56,23 @@ def onMouse_stage_one(event, x, y, flags, (img_d, img_d_clean, img_orig, scale,
         cv2.imshow(win_name, img_d)
 
 
-def onMouse_stage_two(event, x, y, flags, (img_d, img_d_clean, img_orig, scale, lines, win_name, color)):
+def onMouse_stage_two(event, x, y, flags, 
+        (img_d, img_d_clean, img_orig, scale, lines, win_name, color,
+         img2_d, img2_d_clean, img2_orig, scale2, lines2, win_name2, color2)):
     global drag_start, point_stage, number_of_points
 
     img_d_tmp = np.copy(img_d)
     if event == cv2.EVENT_LBUTTONDOWN:
         drag_start = ps((x, y), 1/scale)
+
     elif event == cv2.EVENT_RBUTTONDOWN:
         drag_start = getPointFromPoint(img_orig[:,:,0:3], ps((x,y), 1/scale))
+
     elif event == cv2.EVENT_MOUSEMOVE and (flags==cv2.EVENT_FLAG_LBUTTON\
          or flags==cv2.EVENT_FLAG_RBUTTON):
         i_h.draw_line(img_d_tmp, ps(drag_start, scale), (x,y), color, -1)
         cv2.imshow(win_name, img_d_tmp)
+
     elif event == cv2.EVENT_LBUTTONUP:
         distance = math.sqrt((x/scale-drag_start[0])**2 +
                              (y/scale-drag_start[1])**2)
@@ -87,6 +92,7 @@ def onMouse_stage_two(event, x, y, flags, (img_d, img_d_clean, img_orig, scale, 
             lines.append([drag_start[0], drag_start[1], x/scale, y/scale])
             i_h.draw_line(img_d, ls(drag_start, scale),(x,y), color, len(lines))
         cv2.imshow(win_name, img_d)
+
     elif event == cv2.EVENT_RBUTTONUP:
         drag_end = getPointFromPoint(img_orig[:,:,0:3], (x/scale, y/scale))
         line = i_l.get_line(drag_start, drag_end, img_orig)
@@ -95,6 +101,15 @@ def onMouse_stage_two(event, x, y, flags, (img_d, img_d_clean, img_orig, scale, 
         i_h.draw_line(img_d,(line_s[0], line_s[1]), (line_s[2], line_s[3]), 
                       color, len(lines))
         cv2.imshow(win_name, img_d)
+
+        #TODO get coresponding line
+        line2 = i_l.get_corresponding_line(img_orig, img2_orig, line)
+        lines2.append(line2)
+        line2_s = ls(line2, scale2)
+        i_h.draw_line(img2_d, (line2_s[0], line2_s[1]), (line2_s[2], line2_s[3]),
+                      color2, len(lines2))
+        cv2.imshow(win_name2, img2_d)
+
     elif event == cv2.EVENT_MBUTTONUP and len(lines) > 0:
         del lines[-1]
         # np.copy creates new array, local img points to new array, 
@@ -319,12 +334,16 @@ def stage_two(src_img, dst_img, src_points, dst_points, src_lines, dst_lines,
     i_h.show_image(src_img_d, name="src_img_transformed")
     i_h.show_image(dst_img_d, name="dst_img_transformed")
 
-    cv2.setMouseCallback("src_img_transformed", onMouse_stage_two, (src_img_d, 
-                         src_img_d_clean, src_img, src_scale_d, 
-                         src_lines, 'src_img_transformed', (255,255,0)))
-    cv2.setMouseCallback("dst_img_transformed", onMouse_stage_two, (dst_img_d, 
-                         dst_img_d_clean, dst_img, dst_scale_d, 
-                         dst_lines, 'dst_img_transformed', (0,0,255)))
+    cv2.setMouseCallback("src_img_transformed", onMouse_stage_two, 
+                         (src_img_d, src_img_d_clean, src_img, src_scale_d, 
+                          src_lines, 'src_img_transformed', (255,255,0),
+                          dst_img_d, dst_img_d_clean, dst_img, dst_scale_d, 
+                          dst_lines, 'dst_img_transformed', (0,0,255)))
+    cv2.setMouseCallback("dst_img_transformed", onMouse_stage_two, 
+                         (dst_img_d, dst_img_d_clean, dst_img, dst_scale_d, 
+                          dst_lines, 'dst_img_transformed', (0,0,255),
+                          src_img_d, src_img_d_clean, src_img, src_scale_d, 
+                          src_lines, 'src_img_transformed', (255,255,0)))
 
     # wait till user has drawn all lines
     key = 0
