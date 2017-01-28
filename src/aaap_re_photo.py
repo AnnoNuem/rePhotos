@@ -15,6 +15,7 @@ from image_sac import getPointFromPoint
 from image_sac import getPointFromRectangle
 from image_perspective_alignment import perspective_align
 from image_perspective_alignment import transform_lines
+import fast_match.fast_match_wrapper as f_m
 
 line_file_name_end = "line_file.txt"
 point_file_name_end = "point_file.txt"
@@ -58,7 +59,7 @@ def onMouse_stage_one(event, x, y, flags, (img_d, img_d_clean, img_orig, scale,
 
 def onMouse_stage_two(event, x, y, flags, 
         (img_d, img_d_clean, img_orig, scale, lines, win_name, color,
-         img2_d, img2_d_clean, img2_orig, scale2, lines2, win_name2, color2)):
+         img2_d, img2_d_clean, img2_orig, scale2, lines2, win_name2, color2, eng)):
     global drag_start, point_stage, number_of_points
 
     img_d_tmp = np.copy(img_d)
@@ -103,7 +104,7 @@ def onMouse_stage_two(event, x, y, flags,
         cv2.imshow(win_name, img_d)
 
         #TODO get coresponding line
-        line2 = i_l.get_corresponding_line(img_orig, img2_orig, line)
+        line2 = i_l.get_corresponding_line(img_orig, img2_orig, line, eng)
         lines2.append(line2)
         line2_s = ls(line2, scale2)
         i_h.draw_line(img2_d, (line2_s[0], line2_s[1]), (line2_s[2], line2_s[3]),
@@ -306,7 +307,7 @@ def stage_one(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, ar
     
 
 def stage_two(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, 
-              src_transform_matrix, dst_transform_matrix, args):
+              src_transform_matrix, dst_transform_matrix, args, eng):
     print("Second Stage: Draw lines for fine grain aaap warping.\
           \nDrawing no line omits the second stage.\
           \nLMB: Draw Line\
@@ -338,12 +339,12 @@ def stage_two(src_img, dst_img, src_points, dst_points, src_lines, dst_lines,
                          (src_img_d, src_img_d_clean, src_img, src_scale_d, 
                           src_lines, 'src_img_transformed', (255,255,0),
                           dst_img_d, dst_img_d_clean, dst_img, dst_scale_d, 
-                          dst_lines, 'dst_img_transformed', (0,0,255)))
+                          dst_lines, 'dst_img_transformed', (0,0,255), eng))
     cv2.setMouseCallback("dst_img_transformed", onMouse_stage_two, 
                          (dst_img_d, dst_img_d_clean, dst_img, dst_scale_d, 
                           dst_lines, 'dst_img_transformed', (0,0,255),
                           src_img_d, src_img_d_clean, src_img, src_scale_d, 
-                          src_lines, 'src_img_transformed', (255,255,0)))
+                          src_lines, 'src_img_transformed', (255,255,0), eng))
 
     # wait till user has drawn all lines
     key = 0
@@ -430,6 +431,8 @@ def main():
     src_img = np.float32(src_img)
     dst_img = np.float32(dst_img)
 
+    eng = f_m.init_matlab()
+    
     # Scale images
     i_h.vprint("Scaling...")
     # Add alpha channel for cropping
@@ -452,7 +455,7 @@ def main():
     
     # Stage two: Drawing lines and aaap morphing
     stage_two(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, 
-        src_transform_matrix, dst_transform_matrix, args)
+        src_transform_matrix, dst_transform_matrix, args, eng)
     
     # End
     print("Press ESC to quit program.")
@@ -460,6 +463,7 @@ def main():
         pass
 
     cv2.destroyAllWindows()
+    f_m.close_matlab(eng)
     i_h.vprint("Done.")
     exit()
 

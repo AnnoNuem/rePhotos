@@ -6,7 +6,8 @@ from image_helpers import line_intersect
 from image_helpers import lce
 from image_helpers import draw_line
 import find_obj as f_o
-
+import fast_match.fast_match_wrapper as f_m
+from numpy.linalg import inv
 
 def lim_line_length(p1_h, p2_h, p1_o, p2_o):
     """
@@ -203,7 +204,7 @@ def get_line(p1, p2, img, psd=70):
     return [p1[0], p1[1], p2[0], p2[1]]
 
 
-def get_corresponding_line(img1, img2, line1):
+def get_corresponding_line(img1, img2, line1, eng):
     
     template, t_mask, t_offset = get_patch(img1[:,:,0:3], (line1[0], line1[1]), 
                                            (line1[2], line1[3]), psd=30)
@@ -211,74 +212,91 @@ def get_corresponding_line(img1, img2, line1):
     image, i_mask, i_offset = get_patch(img2[:,:,0:3], (line1[0], line1[1]),
                                         (line1[2], line1[3]), psd=10)
 
-
-#    template = template * np.reshape(t_mask, (t_mask.shape[0], t_mask.shape[1], 1))
-#    image = image * np.reshape(i_mask, (i_mask.shape[0], i_mask.shape[1], 1))
-
-    template = cv2.cvtColor(template, cv2.COLOR_BGR2HSV)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    
-    
-    #result = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
-    #result = np.abs(result)**3                                           
-    #val, result = cv2.threshold(result, 0.01, 0, cv2.THRESH_TOZERO)      
-    #result8 = cv2.normalize(result,None,0,255,cv2.NORM_MINMAX,cv2.CV_8U) 
-    #cv2.imshow("result", result8)   
-    #cv2.imshow("template", np.uint8(template))
-    #cv2.imshow("image", np.uint8(image))
-
-    feature_name = 'surf-flann'
-
-
-    detector, matcher = f_o.init_feature(feature_name)
-
-
-    if detector is None:
-        print('unknown feature:', feature_name)
-        sys.exit(1)
-
-    print('using', feature_name)
-
-
-    #image = cv2.GaussianBlur(cv2.equalizeHist(np.uint8(image[:,:,2])), (5,5),0)
-    #template = cv2.GaussianBlur(cv2.equalizeHist(np.uint8(template[:,:,2])), (5,5), 0)
-    #image = cv2.GaussianBlur((np.uint8(image[:,:,2])), (5,5),0)
-    #template = cv2.GaussianBlur((np.uint8(template[:,:,2])), (5,5), 0)
-    #image = np.uint8(image[:,:,1])
-    #image = cv2.equalizeHist(image)
-    #template = np.uint8(template[:,:,1])
-    #cv2.imshow('asdr', template)
-    image = cv2.normalize(image[:,:,2], None,0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
-    template = cv2.normalize(template[:,:,2], None,0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
-
-
-    s = 200
+    s = 300
     sf = s / float(np.amax(image.shape))
     image = cv2.resize(image, (0,0), fx=sf, fy=sf) 
     template = cv2.resize(template, (0,0), fx=sf, fy=sf) 
+
+    template = cv2.cvtColor(template, cv2.COLOR_BGR2HSV)[:,:,2]
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)[:,:,2]
+    template = cv2.equalizeHist(np.uint8(template))
+    image = cv2.equalizeHist(np.uint8(image))
     
-    cv2.imwrite(str(line1[0])+'t.ppm', template)
-    cv2.imwrite(str(line1[0])+'i.jpg', image)
+    trans_mat = f_m.get_template_location(image, template, eng)
 
-    kp1, desc1 = detector.detectAndCompute(template, None)
-    kp2, desc2 = detector.detectAndCompute(image, None)
-    
-    print('img1 - %d features, img2 - %d features' % (len(kp1), len(kp2)))
+    print(trans_mat)
+    line_t = np.float32(line1).reshape(1,-2,2)
+    print(line1)
+    line2 = cv2.perspectiveTransform(line_t, inv(trans_mat)).reshape(4).tolist()
+    print(line2)
 
-    def match_and_draw(win):
-        print('matching...')
-        raw_matches = matcher.knnMatch(desc1, trainDescriptors = desc2, k = 2) #2
-        p1, p2, kp_pairs = f_o.filter_matches(kp1, kp2, raw_matches, ratio = 1.4)
-        if len(p1) >= 4:
-            H, status = cv2.findHomography(p1, p2, cv2.RANSAC, 5.0)
-            print('%d / %d  inliers/matched' % (np.sum(status), len(status)))
-        else:
-            H, status = None, None
-            print('%d matches found, not enough for homography estimation' % len(p1))
+##    template = template * np.reshape(t_mask, (t_mask.shape[0], t_mask.shape[1], 1))
+##    image = image * np.reshape(i_mask, (i_mask.shape[0], i_mask.shape[1], 1))
+#
+#    template = cv2.cvtColor(template, cv2.COLOR_BGR2HSV)
+#    image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+#    
+#    
+#    #result = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
+#    #result = np.abs(result)**3                                           
+#    #val, result = cv2.threshold(result, 0.01, 0, cv2.THRESH_TOZERO)      
+#    #result8 = cv2.normalize(result,None,0,255,cv2.NORM_MINMAX,cv2.CV_8U) 
+#    #cv2.imshow("result", result8)   
+#    #cv2.imshow("template", np.uint8(template))
+#    #cv2.imshow("image", np.uint8(image))
+#
+#    feature_name = 'surf-flann'
+#
+#
+#    detector, matcher = f_o.init_feature(feature_name)
+#
+#
+#    if detector is None:
+#        print('unknown feature:', feature_name)
+#        sys.exit(1)
+#
+#    print('using', feature_name)
+#
+#
+#    #image = cv2.GaussianBlur(cv2.equalizeHist(np.uint8(image[:,:,2])), (5,5),0)
+#    #template = cv2.GaussianBlur(cv2.equalizeHist(np.uint8(template[:,:,2])), (5,5), 0)
+#    #image = cv2.GaussianBlur((np.uint8(image[:,:,2])), (5,5),0)
+#    #template = cv2.GaussianBlur((np.uint8(template[:,:,2])), (5,5), 0)
+#    #image = np.uint8(image[:,:,1])
+#    #image = cv2.equalizeHist(image)
+#    #template = np.uint8(template[:,:,1])
+#    #cv2.imshow('asdr', template)
+#    image = cv2.normalize(image[:,:,2], None,0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+#    template = cv2.normalize(template[:,:,2], None,0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+#
+#
+#    s = 200
+#    sf = s / float(np.amax(image.shape))
+#    image = cv2.resize(image, (0,0), fx=sf, fy=sf) 
+#    template = cv2.resize(template, (0,0), fx=sf, fy=sf) 
+#    
+#    cv2.imwrite(str(line1[0])+'t.ppm', template)
+#    cv2.imwrite(str(line1[0])+'i.jpg', image)
+#
+#    kp1, desc1 = detector.detectAndCompute(template, None)
+#    kp2, desc2 = detector.detectAndCompute(image, None)
+#    
+#    print('img1 - %d features, img2 - %d features' % (len(kp1), len(kp2)))
+#
+#    def match_and_draw(win):
+#        print('matching...')
+#        raw_matches = matcher.knnMatch(desc1, trainDescriptors = desc2, k = 2) #2
+#        p1, p2, kp_pairs = f_o.filter_matches(kp1, kp2, raw_matches, ratio = 1.4)
+#        if len(p1) >= 4:
+#            H, status = cv2.findHomography(p1, p2, cv2.RANSAC, 5.0)
+#            print('%d / %d  inliers/matched' % (np.sum(status), len(status)))
+#        else:
+#            H, status = None, None
+#            print('%d matches found, not enough for homography estimation' % len(p1))
+#
+#        vis = f_o.explore_match(win, template, image, kp_pairs, status, H)
+#
+#    match_and_draw('find_obj')
+#    cv2.waitKey()
 
-        vis = f_o.explore_match(win, template, image, kp_pairs, status, H)
-
-    match_and_draw('find_obj')
-    cv2.waitKey()
-
-    return line1
+    return line2
