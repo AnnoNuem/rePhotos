@@ -1,0 +1,2 @@
+   row    col  scale angDeg  simil rowPyr colPyr scaleP floorP
+    56     29    0.6  270.0  0.949     56     29    0.6      0
