@@ -137,7 +137,7 @@ def scale_image_lines_points(img, lines, points, scale_factor):
     if scale_factor > 1:
         # INTER_CUBIC is bugy with bw images
         #method = cv2.INTER_CUBIC
-        method = cv2.INTER_LINEAR
+        method= cv2.INTER_LINEAR
     else:
         method = cv2.INTER_AREA
 
@@ -338,3 +338,10 @@ def show_image(img, name='img', x=1000, y=1000):
     cv2.imshow(name, img_d)
     cv2.resizeWindow(name, x,y)
     return img_d, scale
+
+
+def get_center_of_line(line):
+    x_center = int((line[0] + line[2])/2)
+    y_center = int((line[1] + line[3])/2)
+
+    return (x_center, y_center)

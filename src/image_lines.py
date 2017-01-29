@@ -7,7 +7,7 @@ from image_helpers import line_intersect
 from image_helpers import lce
 from image_helpers import draw_line
 from image_helpers import draw_circle
-import find_obj as f_o
+from image_helpers import get_center_of_line
 import subprocess
 
 def lim_line_length(p1_h, p2_h, p1_o, p2_o):
@@ -224,15 +224,41 @@ def get_corresponding_line(img1, img2, line1):
     image = cv2.normalize(image[:,:,2], None,0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
     template = cv2.normalize(template[:,:,2], None,0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
 
+    image = cv2.equalizeHist(image)
+    template = cv2.equalizeHist(template)
+
+#    sigma = 0.33
+#    magic_n = 100
+#    # Edge dedection
+#    m = np.median(image)
+#    lower_bound = int(max(0, (1.0 - sigma) * m)) + magic_n
+#    upper_bound = int(min(255, (1.0 + sigma) * m)) + magic_n
+#    image = cv2.Canny(image, lower_bound, upper_bound, L2gradient=True)
+#
+#    # Filter patch_p to only contain the patch area not the containing rectangle
+#    image = image * np.uint8(i_mask)
+#
+#    # Edge dedection
+#    m = np.median(template)
+#    lower_bound = int(max(0, (1.0 - sigma) * m)) + magic_n
+#    upper_bound = int(min(255, (1.0 + sigma) * m)) + magic_n
+#    template = cv2.Canny(template, lower_bound, upper_bound, L2gradient=True)
+#
+#    # Filter patch_p to only contain the patch area not the containing rectangle
+#    template = template * np.uint8(t_mask)
+
+
     s = 200
     sf = s / float(np.amax(image.shape))
     image = cv2.resize(image, (0,0), fx=sf, fy=sf) 
     template = cv2.resize(template, (0,0), fx=sf, fy=sf) 
 
+    cv2.imshow('asdf', image)
+    cv2.imshow('sadf', template)
     cv2.imwrite("ciratefi/template.pgm", template)
     cv2.imwrite("ciratefi/image.pgm", image)
     
-    subprocess.call(["wine", "cirategs.exe", "ciratecs-1instance.cfg",
+    subprocess.call(["wine", "cirategs.exe", "cirategs-1instance.cfg",
         "image.pgm", "template.pgm", "result.ppm"], cwd="ciratefi/")
 
     result = cv2.imread("ciratefi/result.ppm")
@@ -247,8 +273,24 @@ def get_corresponding_line(img1, img2, line1):
     
     offset =  np.array([int(col) - image.shape[1]/2 , int(row) - image.shape[0]/2]) * 1/sf 
     offset = np.int_(offset)
+    # translate
     line2 = line1 + np.tile(offset, 2)
-    
+    # rotate
+    line2_center = get_center_of_line(line2)
+    rot_mat= cv2.getRotationMatrix2D(line2_center, np.float_(rot), 1)[0:2,0:2]
+    print(rot)
+    print(rot_mat)
+   
+    print(line2)
+    line2 -= np.tile(line2_center, 2)
+    p_1 = rot_mat.dot([line2[0], line2[1]])
+    p_2 = rot_mat.dot([line2[2], line2[3]])
+    line2 = np.hstack((p_1, p_2))
+    line2 += np.tile(line2_center, 2)
+    print(line2)
+
+
+
 
 
     cv2.imshow("bla", result)
