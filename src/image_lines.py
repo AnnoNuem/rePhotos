@@ -255,46 +255,46 @@ def get_corresponding_line(img1, img2, line1):
 
     cv2.imshow('asdf', image)
     cv2.imshow('sadf', template)
-    cv2.imwrite("ciratefi/template.pgm", template)
-    cv2.imwrite("ciratefi/image.pgm", image)
+    cv2.imwrite("forapro/template.pgm", template)
+    cv2.imwrite("forapro/image.pgm", image)
     
-    subprocess.call(["wine", "cirategs.exe", "cirategs-1instance.cfg",
-        "image.pgm", "template.pgm", "result.ppm"], cwd="ciratefi/")
+    subprocess.call(["wine", "forapro.exe", "svhfi1", "image.pgm", "template.pgm", "result.ppm", "4", "4", "0.1", "1.6", "4", "10", "0.7", "1.4", "8", "31", "11"], cwd="forapro/")
 
-    result = cv2.imread("ciratefi/result.ppm")
-    with open("ciratefi/p.txt") as f:
-        c = csv.reader(f, delimiter=' ', skipinitialspace=True)
-        lines = [l for l in c]
-
-    row = lines[1][0]
-    col = lines[1][1]
-    scale = lines[1][2]
-    rot = lines[1][3]
-    
-    offset =  np.array([int(col) - image.shape[1]/2 , int(row) - image.shape[0]/2]) * 1/sf 
-    offset = np.int_(offset)
-    # translate
-    line2 = line1 + np.tile(offset, 2)
-    # rotate
-    line2_center = get_center_of_line(line2)
-    rot_mat= cv2.getRotationMatrix2D(line2_center, np.float_(rot), 1)[0:2,0:2]
-    print(rot)
-    print(rot_mat)
-   
-    print(line2)
-    line2 -= np.tile(line2_center, 2)
-    p_1 = rot_mat.dot([line2[0], line2[1]])
-    p_2 = rot_mat.dot([line2[2], line2[3]])
-    line2 = np.hstack((p_1, p_2))
-    line2 += np.tile(line2_center, 2)
-    print(line2)
-
-
-
-
-
+    result = cv2.imread("forapro/result.ppm")
+    subprocess.call(["rm", "forapro/*.tga", "forapro/*.pgm", "forapro/*.ppm"])
     cv2.imshow("bla", result)
     cv2.waitKey(0)
+#    with open("forapro/p.txt") as f:
+#        c = csv.reader(f, delimiter=' ', skipinitialspace=True)
+#        lines = [l for l in c]
+#
+#    row = lines[1][0]
+#    col = lines[1][1]
+#    scale = lines[1][2]
+#    rot = lines[1][3]
+#    
+#    offset =  np.array([int(col) - image.shape[1]/2 , int(row) - image.shape[0]/2]) * 1/sf 
+#    offset = np.int_(offset)
+#    # translate
+#    line2 = line1 + np.tile(offset, 2)
+#    # rotate
+#    line2_center = get_center_of_line(line2)
+#    rot_mat= cv2.getRotationMatrix2D(line2_center, np.float_(rot), 1)[0:2,0:2]
+#    print(rot)
+#    print(rot_mat)
+#   
+#    print(line2)
+#    line2 -= np.tile(line2_center, 2)
+#    p_1 = rot_mat.dot([line2[0], line2[1]])
+#    p_2 = rot_mat.dot([line2[2], line2[3]])
+#    line2 = np.hstack((p_1, p_2))
+#    line2 += np.tile(line2_center, 2)
+#    print(line2)
+
+
+
+
+
 
 
     
@@ -360,4 +360,4 @@ def get_corresponding_line(img1, img2, line1):
 #    match_and_draw('find_obj')
 #    cv2.waitKey()
 
-    return line2
+    return line1
