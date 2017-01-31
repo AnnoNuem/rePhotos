@@ -1,11 +1,11 @@
 import numpy as np
+from numpy import linalg as la
 import cv2
 from image_helpers import statistic_canny
 from image_helpers import adaptive_thresh
 from image_helpers import line_intersect 
 from image_helpers import lce
 from image_helpers import draw_line
-import find_obj as f_o
 
 
 def lim_line_length(p1_h, p2_h, p1_o, p2_o):
@@ -58,7 +58,7 @@ def get_theta(p1, p2):
         return np.arctan(m) + np.pi/2
 
 
-def weight_lines(patch_p, lines, p1_o, p2_o):
+def weight_lines(patch_p, lines, p1_o, p2_o, number_of_lines=10, return_best_line=True):
     """
     Weights hough lines by similarity to edges.
     Generates line segments with length according to user drawn lines and 
@@ -77,14 +77,14 @@ def weight_lines(patch_p, lines, p1_o, p2_o):
         p2: Endpoint of best matching line.
     """
     #iterate over max ten best lines
-    nl = min(10, lines.shape[0])
+    nl = min(number_of_lines, lines.shape[0])
     line_img = np.empty(patch_p.shape, dtype=np.uint8)
     weights = np.empty((nl), dtype=np.float32)
     line_segs = np.empty((nl), dtype=object)
     i, j = 0, 0
     theta_o = get_theta(p1_o, p2_o)    
 
-    while  j < lines.shape[0] and i < 10 :
+    while  j < lines.shape[0] and i < number_of_lines :
         rho = lines[j][0][0]
         theta = lines[j][0][1]
         j += 1
@@ -99,21 +99,23 @@ def weight_lines(patch_p, lines, p1_o, p2_o):
             pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * a))
             pt1, pt2 = lim_line_length(pt1, pt2, p1_o, p2_o)
             cv2.line(line_img, (pt1[0], pt1[1]), (pt2[0], pt2[1]), 255, 1, 4)
+            #p = np.copy(patch_p)
+            #draw_line(p, tuple(pt1), tuple(pt2))
+            #cv2.imshow('asdf', p)
+            #cv2.waitKey(0)
             weights[i] = np.einsum('ij,ij->', line_img, patch_p, dtype=np.float32)
             line_segs[i] = (pt1, pt2)
             i += 1
 
-    if i > 0:
-        k = weights[:i].argmax()
-        p1 = line_segs[k][0] 
-        p2 = line_segs[k][1] 
-        w = weights[k]
+    if return_best_line:
+        if i > 0:
+            k = weights[:i].argmax()
+            return line_segs[k][0], line_segs[k][1], weights[k]
+        else:
+            return p1_o, p2_o, 0
     else:
-        p1 = p1_o
-        p2 = p2_o
-        w = 0
-
-    return p1, p2, w
+        
+        return line_segs, weights
 
 
 def get_patch(img, p1, p2, psd=70):
@@ -147,6 +149,23 @@ def get_patch(img, p1, p2, psd=70):
     return patch, mask, offset
 
 
+def line_detect(img, mask=None, sigma=0.33, magic_n=100):
+#    img = cv2.equalizeHist(img)
+
+    # Edge dedection
+    m = np.median(img)
+    lower_bound = int(max(0, (1.0 - sigma) * m)) + magic_n
+    upper_bound = int(min(255, (1.0 + sigma) * m)) + magic_n
+    img = cv2.Canny(img, lower_bound, upper_bound, L2gradient=True)
+
+    # Filter patch_p to only contain the patch area not the containing rectangle
+    if mask is not None:
+        img = img * np.uint8(mask)
+    
+    # Line detection
+    return cv2.HoughLines(img, 1, np.pi/180.0, 1, np.array([]), 0, 0)
+
+
 def get_line(p1, p2, img, psd=70):
     """
     Search in image for neares most similar line of a given line.
@@ -175,25 +194,10 @@ def get_line(p1, p2, img, psd=70):
     patch = cv2.GaussianBlur(patch, (5,5), 0)
 
     best_lines = []
-    sigma = 0.33
-    magic_n = 100
     for i in range(0,3):
-        ch = cv2.equalizeHist(patch[:,:,i])
-
-        # Edge dedection
-        m = np.median(ch)
-        lower_bound = int(max(0, (1.0 - sigma) * m)) + magic_n
-        upper_bound = int(min(255, (1.0 + sigma) * m)) + magic_n
-        ch = cv2.Canny(ch, lower_bound, upper_bound, L2gradient=True)
-
-        # Filter patch_p to only contain the patch area not the containing rectangle
-        ch = ch * np.uint8(mask)
-        
-        # Line detection
-        lines = cv2.HoughLines(ch, 1, np.pi/180.0, 1, np.array([]), 0, 0)
-
+        lines = line_detect(patch[:,:,i], mask)
         if lines is not None:
-            best_lines.append(weight_lines(ch, lines, p1_o, p2_o))
+            best_lines.append(weight_lines(patch[:,:,i], lines, p1_o, p2_o))
     
     if len(best_lines) != 0:
         k = max(enumerate(best_lines), key=lambda x: x[1][2])[0]
@@ -202,83 +206,152 @@ def get_line(p1, p2, img, psd=70):
     
     return [p1[0], p1[1], p2[0], p2[1]]
 
+center_of_line = lambda p1, p2: np.array((np.float_((p1[0] + p2[0]))/2, np.float_((p1[1] + p2[1]))/2))
+def get_transformed_patch(patch, p11, p12, p21, p22):
+    c1 = center_of_line(p11, p12)
+    c2 = center_of_line(p21, p22)
 
-def get_corresponding_line(img1, img2, line1):
     
-    template, t_mask, t_offset = get_patch(img1[:,:,0:3], (line1[0], line1[1]), 
-                                           (line1[2], line1[3]), psd=30)
+    p = np.copy(patch)
+    draw_line(p, p21, p22)
+    delta = c1 - c2
 
-    image, i_mask, i_offset = get_patch(img2[:,:,0:3], (line1[0], line1[1]),
-                                        (line1[2], line1[3]), psd=10)
+    p11_d = np.float_(p11) - c1
+    p21_d = np.float_(p21) - c2
+    p11_d = p11_d/la.norm(p11_d)
+    p21_d = p21_d/la.norm(p21_d)
+    alpha = np.arccos(p11_d.dot(p21_d)) * 180 / np.pi
+
+    tm = cv2.getRotationMatrix2D(tuple(c2), alpha, 1)
+    tm[:,2] += delta
+
+    return cv2.warpAffine(patch, tm, (patch.shape[1], patch.shape[0]))
 
 
-#    template = template * np.reshape(t_mask, (t_mask.shape[0], t_mask.shape[1], 1))
-#    image = image * np.reshape(i_mask, (i_mask.shape[0], i_mask.shape[1], 1))
-
-    template = cv2.cvtColor(template, cv2.COLOR_BGR2HSV)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+def get_corresponding_line(img1, img2, line1, psd=20):
     
+    p11 = (line1[0], line1[1])
+    p12 = (line1[2], line1[3])
+    patch, mask, offset = get_patch(img1, p11, p12, psd)
+    patch2, mask2, offset2 = get_patch(img2, p11, p12, psd)
+    p11 = p11 - offset
+    p12 = p12 - offset
+
+
+    patch2 = cv2.cvtColor(np.uint8(patch2), cv2.COLOR_BGR2HSV)
+    patch2 = cv2.GaussianBlur(patch2, (5,5), 0)
     
-    #result = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
-    #result = np.abs(result)**3                                           
-    #val, result = cv2.threshold(result, 0.01, 0, cv2.THRESH_TOZERO)      
-    #result8 = cv2.normalize(result,None,0,255,cv2.NORM_MINMAX,cv2.CV_8U) 
-    #cv2.imshow("result", result8)   
-    #cv2.imshow("template", np.uint8(template))
-    #cv2.imshow("image", np.uint8(image))
+    best_lines = []
+    weights = []
+    for i in range(0,3):
+        lines = line_detect(patch2[:,:,i])
+        if lines is not None:
+            lines_, weights_ = weight_lines(patch2[:,:,i], lines, p11, p12, 10, return_best_line=False)
+            best_lines.append(lines_)
+            weights.append(weights_)
 
-    feature_name = 'surf-flann'
+    best_lines = np.array(best_lines).flatten()
+    weights = np.array(weights).flatten()
+
+    max_lines_to_check = 40 
+    weights_t = np.empty((max_lines_to_check), dtype=np.float_)
+    if weights is not None:
+        #TODO np.flip comes with numpy version 1.13
+        best_lines = best_lines[np.argsort(weights)[::-1]]
+        for i in range(0, min(max_lines_to_check, len(weights))):
+            patch2_ = get_transformed_patch(patch2[:,:,2], p11, p12, tuple(best_lines[i][0]), tuple(best_lines[i][1]))
+            patch_ = np.copy(patch[:,:,2])
+            patch_[patch2_ == 0] = 0
+            weights_t[i] = la.norm(np.float32((cv2.resize(patch2_, (0,0), fx=0.1, fy=0.1)) - cv2.resize(patch_, (0,0), fx=0.1, fy=0.1))**2)
+            print weights[i]
+            cv2.imshow('bla', cv2.addWeighted(cv2.resize(patch2_, (0,0), fx=0.1, fy=0.1), 0.5, np.uint8(cv2.resize(patch_, (0,0), fx=0.1, fy=0.1)), 0.5, 0))
+            cv2.imshow('bla', cv2.addWeighted(patch2_, 0.5, np.uint8(patch_), 0.5, 0))
+            cv2.waitKey(0)
+
+    min_i = np.argmin(weights_t)
+    return np.array(best_lines[i]).flatten() + np.tile(offset2, 2)
+        
 
 
-    detector, matcher = f_o.init_feature(feature_name)
 
 
-    if detector is None:
-        print('unknown feature:', feature_name)
-        sys.exit(1)
-
-    print('using', feature_name)
 
 
-    #image = cv2.GaussianBlur(cv2.equalizeHist(np.uint8(image[:,:,2])), (5,5),0)
-    #template = cv2.GaussianBlur(cv2.equalizeHist(np.uint8(template[:,:,2])), (5,5), 0)
-    #image = cv2.GaussianBlur((np.uint8(image[:,:,2])), (5,5),0)
-    #template = cv2.GaussianBlur((np.uint8(template[:,:,2])), (5,5), 0)
-    #image = np.uint8(image[:,:,1])
-    #image = cv2.equalizeHist(image)
-    #template = np.uint8(template[:,:,1])
-    #cv2.imshow('asdr', template)
-    image = cv2.normalize(image[:,:,2], None,0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
-    template = cv2.normalize(template[:,:,2], None,0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
 
-
-    s = 200
-    sf = s / float(np.amax(image.shape))
-    image = cv2.resize(image, (0,0), fx=sf, fy=sf) 
-    template = cv2.resize(template, (0,0), fx=sf, fy=sf) 
-    
-    cv2.imwrite(str(line1[0])+'t.ppm', template)
-    cv2.imwrite(str(line1[0])+'i.jpg', image)
-
-    kp1, desc1 = detector.detectAndCompute(template, None)
-    kp2, desc2 = detector.detectAndCompute(image, None)
-    
-    print('img1 - %d features, img2 - %d features' % (len(kp1), len(kp2)))
-
-    def match_and_draw(win):
-        print('matching...')
-        raw_matches = matcher.knnMatch(desc1, trainDescriptors = desc2, k = 2) #2
-        p1, p2, kp_pairs = f_o.filter_matches(kp1, kp2, raw_matches, ratio = 1.4)
-        if len(p1) >= 4:
-            H, status = cv2.findHomography(p1, p2, cv2.RANSAC, 5.0)
-            print('%d / %d  inliers/matched' % (np.sum(status), len(status)))
-        else:
-            H, status = None, None
-            print('%d matches found, not enough for homography estimation' % len(p1))
-
-        vis = f_o.explore_match(win, template, image, kp_pairs, status, H)
-
-    match_and_draw('find_obj')
-    cv2.waitKey()
+    #    template, t_mask, t_offset = get_patch(img1[:,:,0:3], (line1[0], line1[1]), 
+    #                                           (line1[2], line1[3]), psd=30)
+    #
+    #    image, i_mask, i_offset = get_patch(img2[:,:,0:3], (line1[0], line1[1]),
+    #                                        (line1[2], line1[3]), psd=10)
+    #
+    #
+    ##    template = template * np.reshape(t_mask, (t_mask.shape[0], t_mask.shape[1], 1))
+    ##    image = image * np.reshape(i_mask, (i_mask.shape[0], i_mask.shape[1], 1))
+    #
+    #    template = cv2.cvtColor(template, cv2.COLOR_BGR2HSV)
+    #    image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    #    
+    #    
+    #    #result = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
+    #    #result = np.abs(result)**3                                           
+    #    #val, result = cv2.threshold(result, 0.01, 0, cv2.THRESH_TOZERO)      
+    #    #result8 = cv2.normalize(result,None,0,255,cv2.NORM_MINMAX,cv2.CV_8U) 
+    #    #cv2.imshow("result", result8)   
+    #    #cv2.imshow("template", np.uint8(template))
+    #    #cv2.imshow("image", np.uint8(image))
+    #
+    #    feature_name = 'surf-flann'
+    #
+    #
+    #    detector, matcher = f_o.init_feature(feature_name)
+    #
+    #
+    #    if detector is None:
+    #        print('unknown feature:', feature_name)
+    #        sys.exit(1)
+    #
+    #    print('using', feature_name)
+    #
+    #
+    #    #image = cv2.GaussianBlur(cv2.equalizeHist(np.uint8(image[:,:,2])), (5,5),0)
+    #    #template = cv2.GaussianBlur(cv2.equalizeHist(np.uint8(template[:,:,2])), (5,5), 0)
+    #    #image = cv2.GaussianBlur((np.uint8(image[:,:,2])), (5,5),0)
+    #    #template = cv2.GaussianBlur((np.uint8(template[:,:,2])), (5,5), 0)
+    #    #image = np.uint8(image[:,:,1])
+    #    #image = cv2.equalizeHist(image)
+    #    #template = np.uint8(template[:,:,1])
+    #    #cv2.imshow('asdr', template)
+    #    image = cv2.normalize(image[:,:,2], None,0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+    #    template = cv2.normalize(template[:,:,2], None,0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+    #
+    #
+    #    s = 200
+    #    sf = s / float(np.amax(image.shape))
+    #    image = cv2.resize(image, (0,0), fx=sf, fy=sf) 
+    #    template = cv2.resize(template, (0,0), fx=sf, fy=sf) 
+    #    
+    #    cv2.imwrite(str(line1[0])+'t.ppm', template)
+    #    cv2.imwrite(str(line1[0])+'i.jpg', image)
+    #
+#    kp1, desc1 = detector.detectAndCompute(template, None)
+#    kp2, desc2 = detector.detectAndCompute(image, None)
+#    
+#    print('img1 - %d features, img2 - %d features' % (len(kp1), len(kp2)))
+#
+#    def match_and_draw(win):
+#        print('matching...')
+#        raw_matches = matcher.knnMatch(desc1, trainDescriptors = desc2, k = 2) #2
+#        p1, p2, kp_pairs = f_o.filter_matches(kp1, kp2, raw_matches, ratio = 1.4)
+#        if len(p1) >= 4:
+#            H, status = cv2.findHomography(p1, p2, cv2.RANSAC, 5.0)
+#            print('%d / %d  inliers/matched' % (np.sum(status), len(status)))
+#        else:
+#            H, status = None, None
+#            print('%d matches found, not enough for homography estimation' % len(p1))
+#
+#        vis = f_o.explore_match(win, template, image, kp_pairs, status, H)
+#
+#    match_and_draw('find_obj')
+#    cv2.waitKey()
 
     return line1
