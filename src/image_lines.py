@@ -99,10 +99,6 @@ def weight_lines(patch_p, lines, p1_o, p2_o, number_of_lines=10, return_best_lin
             pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * a))
             pt1, pt2 = lim_line_length(pt1, pt2, p1_o, p2_o)
             cv2.line(line_img, (pt1[0], pt1[1]), (pt2[0], pt2[1]), 255, 1, 4)
-            #p = np.copy(patch_p)
-            #draw_line(p, tuple(pt1), tuple(pt2))
-            #cv2.imshow('asdf', p)
-            #cv2.waitKey(0)
             weights[i] = np.einsum('ij,ij->', line_img, patch_p, dtype=np.float32)
             line_segs[i] = (pt1, pt2)
             i += 1
@@ -208,150 +204,128 @@ def get_line(p1, p2, img, psd=70):
 
 center_of_line = lambda p1, p2: np.array((np.float_((p1[0] + p2[0]))/2, np.float_((p1[1] + p2[1]))/2))
 def get_transformed_patch(patch, p11, p12, p21, p22):
-    c1 = center_of_line(p11, p12)
-    c2 = center_of_line(p21, p22)
+    delta = center_of_line(p11, p12) - center_of_line(p21, p22)
 
+    #draw_line(patch, p21, p22)
+    t = get_theta(p21, p22) * 180 / np.pi - 90 
+    size = np.int_(np.sqrt(patch.shape[0]**2 + patch.shape[1]**2))
+    patch_ = np.zeros((size,size,patch.shape[2]), dtype=np.float32)
+    patch_[(size-patch.shape[0])/2: (size-patch.shape[0])/2 + patch.shape[0],
+           (size-patch.shape[1])/2: (size-patch.shape[1])/2 + patch.shape[1],
+           :] = patch
+
+    rm = cv2.getRotationMatrix2D((size/2, size/2), t, 1)
+    tm = np.array([[1,0,delta[0]],[0,1,delta[1]]], dtype=np.float32)
+    patch = cv2.warpAffine(patch_, tm, (size, size))
+    patch = cv2.warpAffine(patch, rm, (size, size))
+
+    return patch
+
+
+def get_corresponding_line(img1, img2, line1, psd=20, max_lines_to_check = 30):
     
-    p = np.copy(patch)
-    draw_line(p, p21, p22)
-    delta = c1 - c2
+    # dst = imge in which line is already found
+    # src = image in which coresponding line is searched
 
-    p11_d = np.float_(p11) - c1
-    p21_d = np.float_(p21) - c2
-    p11_d = p11_d/la.norm(p11_d)
-    p21_d = p21_d/la.norm(p21_d)
-    alpha = np.arccos(p11_d.dot(p21_d)) * 180 / np.pi
-
-    tm = cv2.getRotationMatrix2D(tuple(c2), alpha, 1)
-    tm[:,2] += delta
-
-    return cv2.warpAffine(patch, tm, (patch.shape[1], patch.shape[0]))
-
-
-def get_corresponding_line(img1, img2, line1, psd=20):
-    
     p11 = (line1[0], line1[1])
     p12 = (line1[2], line1[3])
     patch, mask, offset = get_patch(img1, p11, p12, psd)
     patch2, mask2, offset2 = get_patch(img2, p11, p12, psd)
+    patch = cv2.cvtColor(patch[:,:,0:3], cv2.COLOR_BGR2HSV)
+    patch2 = cv2.cvtColor(patch2[:,:,0:3], cv2.COLOR_BGR2HSV)
     p11 = p11 - offset
     p12 = p12 - offset
 
-
-    patch2 = cv2.cvtColor(np.uint8(patch2), cv2.COLOR_BGR2HSV)
-    patch2 = cv2.GaussianBlur(patch2, (5,5), 0)
+    # Make dst patch horizontal
+    #draw_line(patch, p11, p12)
+    t = get_theta(p11, p12) * 180 / np.pi - 90 
+    size = np.int_(np.sqrt(patch.shape[0]**2 + patch.shape[1]**2))
+    patch_ = np.zeros((size,size,patch.shape[2]), dtype=np.float32)
+    patch_[(size-patch.shape[0])/2 : (size-patch.shape[0])/2 + patch.shape[0],
+           (size-patch.shape[1])/2 : (size-patch.shape[1])/2 + patch.shape[1],
+           :] = patch
+    rm = cv2.getRotationMatrix2D((size/2, size/2), t, 1)
+    patch = cv2.warpAffine(patch_, rm, (size, size))
     
+    # Detect lines in HSV src image
+    patch2_t = cv2.GaussianBlur(np.uint8(patch2), (5,5), 0)
     best_lines = []
     weights = []
     for i in range(0,3):
-        lines = line_detect(patch2[:,:,i])
+        lines = line_detect(patch2_t[:,:,i])
         if lines is not None:
-            lines_, weights_ = weight_lines(patch2[:,:,i], lines, p11, p12, 10, return_best_line=False)
+            lines_, weights_ = weight_lines(patch2_t[:,:,i], lines, p11, p12, 10, return_best_line=False)
             best_lines.append(lines_)
             weights.append(weights_)
 
-    best_lines = np.array(best_lines).flatten()
-    weights = np.array(weights).flatten()
+    # Compare lines in src image witch line in dst image  
+    if len(weights) > 0:
+        weights = np.array(weights).flatten()
+        best_lines = np.array(best_lines).flatten()[np.argsort(weights)[::-1]]
 
-    max_lines_to_check = 40 
-    weights_t = np.empty((max_lines_to_check), dtype=np.float_)
-    if weights is not None:
+        weights_t = np.empty((max_lines_to_check), dtype=np.float_)
+
         #TODO np.flip comes with numpy version 1.13
-        best_lines = best_lines[np.argsort(weights)[::-1]]
         for i in range(0, min(max_lines_to_check, len(weights))):
-            patch2_ = get_transformed_patch(patch2[:,:,2], p11, p12, tuple(best_lines[i][0]), tuple(best_lines[i][1]))
-            patch_ = np.copy(patch[:,:,2])
-            patch_[patch2_ == 0] = 0
-            weights_t[i] = la.norm(np.float32((cv2.resize(patch2_, (0,0), fx=0.1, fy=0.1)) - cv2.resize(patch_, (0,0), fx=0.1, fy=0.1))**2)
-            print weights[i]
-            cv2.imshow('bla', cv2.addWeighted(cv2.resize(patch2_, (0,0), fx=0.1, fy=0.1), 0.5, np.uint8(cv2.resize(patch_, (0,0), fx=0.1, fy=0.1)), 0.5, 0))
-            cv2.imshow('bla', cv2.addWeighted(patch2_, 0.5, np.uint8(patch_), 0.5, 0))
+            patch2_t = get_transformed_patch(np.copy(patch2), p11, p12, tuple(best_lines[i][0]), tuple(best_lines[i][1]))[:,:,2]
+            patch_t = np.copy(patch[:,:,2])
+            patch2_t[patch_t==0] = 0
+            patch_t[patch2_t==0] = 0
+            patch2_t = cv2.equalizeHist(np.uint8(patch2_t))
+            patch_t = cv2.equalizeHist(np.uint8(patch_t))
+            patch2_t = cv2.GaussianBlur(patch2_t, (11,11), 0)
+            patch_t = cv2.GaussianBlur(patch_t, (11,11), 0)
+            
+            #_, patch2_s = cv2.threshold(patch2_t, patch2_t.mean(dtype=np.float64), 255, cv2.THRESH_BINARY)
+            #_, patch_s = cv2.threshold(patch_t, patch_t.mean(dtype=np.float64), 255, cv2.THRESH_BINARY)
+            overlap = np.count_nonzero(patch_t)
+#            _, patch2_s = cv2.threshold(np.uint8(patch2_t), 112, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+#            _, patch_s = cv2.threshold(np.uint8(patch_t), 112, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            patch2_s = cv2.adaptiveThreshold(np.uint8(patch2_t), 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 31, 0)
+            patch_s = cv2.adaptiveThreshold(np.uint8(patch_t), 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 31, 0)
+            
+
+
+            weights_t[i] = np.sum(abs(patch2_s - patch_s), dtype=np.int64)/overlap
+            print overlap
+
+
+           # cv2.imshow('sadfaeqw', np.uint8(patch_s ))
+           # cv2.imshow('sadfaeqw2', np.uint8(patch2_s ))
+           # cv2.waitKey(0)
+            
+            """
+            #  summed orthagonnal image patch for matching
+            patch2_s = np.sum(patch2_t, axis=1)/(np.count_nonzero(patch2_t, axis=1))
+            patch_s = np.sum(patch_t, axis=1)/(np.count_nonzero(patch_t, axis=1))
+            weights_t[i] = la.norm((patch2_s - patch_s)**2)
+            patch_s = patch_s.reshape(-1,1)
+            patch_ss = np.broadcast_to(patch_s, (len(patch_s),40))
+            patch2_s = patch2_s.reshape(-1,1)
+            patch2_ss = np.broadcast_to(patch2_s, (len(patch2_s),40))
+            cv2.imshow('sadfaeqw', np.uint8(patch_ss * 255))
+            cv2.imshow('sadfaeqw2', np.uint8(patch2_ss * 255))
             cv2.waitKey(0)
+            """
+            #weights_t[i] = la.norm(cv2.resize(patch2_t, (0,0), fx=0.1, fy=0.1) - cv2.resize(patch, (0,0), fx=0.1, fy=0.1)**2)
+            print weights[i]
+            #dpimage = np.zeros(patch.shape, patch.dtype)
+            #dpimage[:,:,0] = patch_s
+            #dpimage[:,:,1] = patch2_s
+            #dpimage[:,:,2] = patch2_s
+            #cv2.imshow('sdsf', np.uint8(dpimage))
+#            cv2.imshow('bla', cv2.addWeighted(np.uint8(patch2_t[:,:,2]), 0.5, np.uint8(patch[:,:,2]), 0.5, 0))
+#            cv2.waitKey(0)
 
-    min_i = np.argmin(weights_t)
-    return np.array(best_lines[i]).flatten() + np.tile(offset2, 2)
+        min_i = np.argmin(weights_t)
+        return line1
+        return np.array(best_lines[i]).flatten() + np.tile(offset2, 2)
         
+    else:
+        return None
 
 
 
 
 
 
-
-    #    template, t_mask, t_offset = get_patch(img1[:,:,0:3], (line1[0], line1[1]), 
-    #                                           (line1[2], line1[3]), psd=30)
-    #
-    #    image, i_mask, i_offset = get_patch(img2[:,:,0:3], (line1[0], line1[1]),
-    #                                        (line1[2], line1[3]), psd=10)
-    #
-    #
-    ##    template = template * np.reshape(t_mask, (t_mask.shape[0], t_mask.shape[1], 1))
-    ##    image = image * np.reshape(i_mask, (i_mask.shape[0], i_mask.shape[1], 1))
-    #
-    #    template = cv2.cvtColor(template, cv2.COLOR_BGR2HSV)
-    #    image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    #    
-    #    
-    #    #result = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
-    #    #result = np.abs(result)**3                                           
-    #    #val, result = cv2.threshold(result, 0.01, 0, cv2.THRESH_TOZERO)      
-    #    #result8 = cv2.normalize(result,None,0,255,cv2.NORM_MINMAX,cv2.CV_8U) 
-    #    #cv2.imshow("result", result8)   
-    #    #cv2.imshow("template", np.uint8(template))
-    #    #cv2.imshow("image", np.uint8(image))
-    #
-    #    feature_name = 'surf-flann'
-    #
-    #
-    #    detector, matcher = f_o.init_feature(feature_name)
-    #
-    #
-    #    if detector is None:
-    #        print('unknown feature:', feature_name)
-    #        sys.exit(1)
-    #
-    #    print('using', feature_name)
-    #
-    #
-    #    #image = cv2.GaussianBlur(cv2.equalizeHist(np.uint8(image[:,:,2])), (5,5),0)
-    #    #template = cv2.GaussianBlur(cv2.equalizeHist(np.uint8(template[:,:,2])), (5,5), 0)
-    #    #image = cv2.GaussianBlur((np.uint8(image[:,:,2])), (5,5),0)
-    #    #template = cv2.GaussianBlur((np.uint8(template[:,:,2])), (5,5), 0)
-    #    #image = np.uint8(image[:,:,1])
-    #    #image = cv2.equalizeHist(image)
-    #    #template = np.uint8(template[:,:,1])
-    #    #cv2.imshow('asdr', template)
-    #    image = cv2.normalize(image[:,:,2], None,0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
-    #    template = cv2.normalize(template[:,:,2], None,0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
-    #
-    #
-    #    s = 200
-    #    sf = s / float(np.amax(image.shape))
-    #    image = cv2.resize(image, (0,0), fx=sf, fy=sf) 
-    #    template = cv2.resize(template, (0,0), fx=sf, fy=sf) 
-    #    
-    #    cv2.imwrite(str(line1[0])+'t.ppm', template)
-    #    cv2.imwrite(str(line1[0])+'i.jpg', image)
-    #
-#    kp1, desc1 = detector.detectAndCompute(template, None)
-#    kp2, desc2 = detector.detectAndCompute(image, None)
-#    
-#    print('img1 - %d features, img2 - %d features' % (len(kp1), len(kp2)))
-#
-#    def match_and_draw(win):
-#        print('matching...')
-#        raw_matches = matcher.knnMatch(desc1, trainDescriptors = desc2, k = 2) #2
-#        p1, p2, kp_pairs = f_o.filter_matches(kp1, kp2, raw_matches, ratio = 1.4)
-#        if len(p1) >= 4:
-#            H, status = cv2.findHomography(p1, p2, cv2.RANSAC, 5.0)
-#            print('%d / %d  inliers/matched' % (np.sum(status), len(status)))
-#        else:
-#            H, status = None, None
-#            print('%d matches found, not enough for homography estimation' % len(p1))
-#
-#        vis = f_o.explore_match(win, template, image, kp_pairs, status, H)
-#
-#    match_and_draw('find_obj')
-#    cv2.waitKey()
-
-    return line1
