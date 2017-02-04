@@ -117,8 +117,10 @@ def weight_lines(patch_p, lines, p1_o, p2_o, max_delta=0.05,
         else:
             return p1_o, p2_o, 0
     else:
-        
-        return line_segs, weights
+        if i > 0:
+            return line_segs[:i], weights[:i]
+        else:
+            return None, None
 
 
 def get_patch(img, p1, p2, psd=70):
@@ -143,31 +145,29 @@ def get_patch(img, p1, p2, psd=70):
     # Get length and slope of line
     length = np.sqrt((p1[1] - p2[1]) * (p1[1] - p2[1]) + (p1[0] - p2[0]) * 
         (p1[0] - p2[0])) 
-    v = np.array([(p2[1] - p1[1])/length, (p2[0] - p1[0])/length])
+    v = np.array([(p2[1] - p1[1])/length, (p2[0] - p1[0])/length], np.float32)
 
     # Compute rectangle with line in the middle and same rotation as line
     # and bounding box arround it
-    #TODO check for correct generation if p1 bigger p2
-    s = (img.shape[0] + img.shape[1])/ (2 * psd)
+    s = (img.shape[0] + img.shape[1])/ np.float32(2 * psd)
     m1 = p1 + s * (v * [ 1, -1] - v[::-1]) 
     m2 = p1 + s * (v * [ -1, 1] - v[::-1]) 
     m3 = p2 + s * (v * [ -1, 1] + v[::-1])
     m4 = p2 + s * (v * [ 1, -1] + v[::-1])
-    p = np.array([m1, m2, m3, m4], dtype=np.uint32)
-    x_min = int(max(0, p.T[1,:].min()))
-    x_max = int(min(img.shape[0], p.T[1,:].max()))
-    y_min = int(max(0, p.T[0,:].min()))
-    y_max = int(min(img.shape[1], p.T[0,:].max()))
+    p = np.array([m1, m2, m3, m4], dtype=np.float32).T
+    x_min = int(max(0, p[1,:].min()))
+    x_max = int(min(img.shape[0], p[1,:].max()))
+    y_min = int(max(0, p[0,:].min()))
+    y_max = int(min(img.shape[1], p[0,:].max()))
 
     patch = img[x_min: x_max, y_min: y_max]
 
     # Generate mask of patch size
     mask = np.zeros((img.shape[0], img.shape[1]), dtype=patch.dtype)
-    cv2.fillPoly(mask, [p.astype(int)], (1))
+    cv2.fillPoly(mask, [p.T.astype(int)], (1))
     mask = mask[x_min: x_max, y_min: y_max]
     
     offset = np.array([y_min, x_min])
-
     return patch, mask, offset
 
 
@@ -281,6 +281,7 @@ def get_corresponding_line(img1, img2, line1, psd=20, max_lines_to_check=60,
     correspondence of found lines by template matching. Transform template in 
     img2 such that found line in img2 and given line in img1 allign. Compute 
     sum of squared differences and weight templates/lines.
+
     Args:
         img1: Destination image in which line is already found.
         img2: Source image in which the corresponding line is searched.
@@ -314,13 +315,16 @@ def get_corresponding_line(img1, img2, line1, psd=20, max_lines_to_check=60,
         if lines is not None:
             lines_, weights_ = weight_lines(patch2_t[:,:,i], lines, p11, p12, 
                                             .1, 20, return_best_line=False)
-            best_lines.append(lines_)
-            weights.append(weights_)
+
+            if lines_ is not None:
+                best_lines.append(lines_)
+                weights.append(weights_)
+
+    weights = np.array(weights).flatten()
+    best_lines = np.array(best_lines).flatten()[np.argsort(weights)[::-1]]
 
     # Compare lines in src image witch line in dst image  
     if len(weights) > 0:
-        weights = np.array(weights).flatten()
-        best_lines = np.array(best_lines).flatten()[np.argsort(weights)[::-1]]
 
         weights_t = np.zeros((max_lines_to_check, 3), dtype=np.float32)
 
@@ -328,8 +332,6 @@ def get_corresponding_line(img1, img2, line1, psd=20, max_lines_to_check=60,
         sf = template_size/np.float32((patch.shape[0] + patch.shape[1])/2)
         patch2 = np.uint8(cv2.resize(patch2, (0,0), fx=sf, fy=sf))
         patch = np.uint8(cv2.resize(patch, (0,0), fx=sf, fy=sf))
-        print patch2.shape
-        print patch.shape
         p11_s = (p11[0]*sf, p11[1]*sf)
         p12_s = (p12[0]*sf, p12[1]*sf)
         best_lines_s = [tuple(point * sf for point in line) for line in\
@@ -359,17 +361,17 @@ def get_corresponding_line(img1, img2, line1, psd=20, max_lines_to_check=60,
                 weights_t[i][j] = np.sum((patch2_t[:,:,j][index] -\
                                   patch[:,:,j][index])**2, dtype=np.float64)/\
                                   np.count_nonzero(index)
-                print weights_t[i][j]
+#                print weights_t[i][j]
 
             
-            cv2.imshow('sadfaeqw', np.uint8(patch[:,:,2] ))
-            cv2.imshow('sadfaeqw2', np.uint8(patch2_t[:,:,2] ))
-            dpimage = np.zeros((patch.shape[0], patch.shape[1], 3), patch.dtype)
-            dpimage[:,:,0] = patch[:,:,2]
-            dpimage[:,:,1] = patch2_t[:,:,2]
-            dpimage[:,:,2] = patch2_t[:,:,2]
-            cv2.imshow('sdsf', np.uint8(dpimage))
-            cv2.waitKey(0)
+#            cv2.imshow('sadfaeqw', np.uint8(patch[:,:,2] ))
+#            cv2.imshow('sadfaeqw2', np.uint8(patch2_t[:,:,2] ))
+#            dpimage = np.zeros((patch.shape[0], patch.shape[1], 3), patch.dtype)
+#            dpimage[:,:,0] = patch[:,:,2]
+#            dpimage[:,:,1] = patch2_t[:,:,2]
+#            dpimage[:,:,2] = patch2_t[:,:,2]
+#            cv2.imshow('sdsf', np.uint8(dpimage))
+#            cv2.waitKey(0)
 
         min_i = np.argmin(weights_t[0:i+1,2]) % (i+1)
         return np.array(best_lines[min_i]).flatten() + np.tile(offset2, 2)

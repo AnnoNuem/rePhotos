@@ -102,13 +102,14 @@ def onMouse_stage_two(event, x, y, flags,
                       color, len(lines))
         cv2.imshow(win_name, img_d)
 
-        #TODO get coresponding line
+        # get coresponding line
         line2 = i_l.get_corresponding_line(img_orig, img2_orig, line)
-        lines2.append(line2)
-        line2_s = ls(line2, scale2)
-        i_h.draw_line(img2_d, (line2_s[0], line2_s[1]), (line2_s[2], line2_s[3]),
-                      color2, len(lines2))
-        cv2.imshow(win_name2, img2_d)
+        if line2 is not None:
+            lines2.append(line2)
+            line2_s = ls(line2, scale2)
+            i_h.draw_line(img2_d, (line2_s[0], line2_s[1]), (line2_s[2], line2_s[3]),
+                          color2, len(lines2))
+            cv2.imshow(win_name2, img2_d)
 
     elif event == cv2.EVENT_MBUTTONUP and len(lines) > 0:
         del lines[-1]
