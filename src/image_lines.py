@@ -122,6 +122,24 @@ def weight_lines(patch_p, lines, p1_o, p2_o, max_delta=0.05,
 
 
 def get_patch(img, p1, p2, psd=70):
+    """
+    Return image patch arround a given line.
+    Return horizontal patch, a rectangular mask with same slope as the line and
+    offset between min point of patch and image
+
+    Args:
+        img: Image from which the patch is generated.
+        p1: First point of the given line.
+        p2: Second point of the given line.
+        psd: Patchsizedivisor. Size of patch is determined by image size divided
+             by psd.
+
+    Returns:
+        patch: Horizontal patch
+        mask: Zero matrix of size patch with one rectangle determining the 
+              actual patch arround the line.
+        offset: Offset between min point of patch and min point of image.
+    """
     # Get length and slope of line
     length = np.sqrt((p1[1] - p2[1]) * (p1[1] - p2[1]) + (p1[0] - p2[0]) * 
         (p1[0] - p2[0])) 
@@ -129,6 +147,7 @@ def get_patch(img, p1, p2, psd=70):
 
     # Compute rectangle with line in the middle and same rotation as line
     # and bounding box arround it
+    #TODO check for correct generation if p1 bigger p2
     s = (img.shape[0] + img.shape[1])/ (2 * psd)
     m1 = p1 + s * (v * [ 1, -1] - v[::-1]) 
     m2 = p1 + s * (v * [ -1, 1] - v[::-1]) 
@@ -153,8 +172,19 @@ def get_patch(img, p1, p2, psd=70):
 
 
 def line_detect(img, mask=None, sigma=0.33, magic_n=100):
-#    img = cv2.equalizeHist(img)
+    """
+    Line detection on given image via Canny and Hough.
 
+    Args:
+        img: Image in which to detect lines.
+        mask: Matrix of image size. Detection of lines only where mask is 
+              nonzero.
+        sigma: Sigma for adpative Canny edge detection.
+        magic_n: Offset for adaptive Canny edge detection.
+
+    Returns:
+        lines: Detected lines in rho, theta form.
+     """
     # Edge dedection
     m = np.median(img)
     lower_bound = int(max(0, (1.0 - sigma) * m)) + magic_n
@@ -163,7 +193,7 @@ def line_detect(img, mask=None, sigma=0.33, magic_n=100):
 
     # Filter patch_p to only contain the patch area not the containing rectangle
     if mask is not None:
-        img = img * np.uint8(mask)
+        img[mask==0] = 0
     
     # Line detection
     return cv2.HoughLines(img, 1, np.pi/180.0, 1, np.array([]), 0, 0)
@@ -209,16 +239,27 @@ def get_line(p1, p2, img, psd=70):
     
     return [p1[0], p1[1], p2[0], p2[1]]
 
-center_of_line = lambda p1, p2: np.array((np.float_((p1[0] + p2[0]))/2, np.float_((p1[1] + p2[1]))/2))
+
 def get_transformed_patch(patch, p11, p12, p21, p22):
+    """
+    Rotates and translates given patch such that second line is mapped to first.
+    
+    Args:
+        patch: Patch to be translated and rotated.
+        p11: First point of first line.
+        p12: Second point of first line.
+        p21: First point of second line.
+        p22: Second point of second line.
+
+    Returns:
+        patch: Transformed patch.
+    """
+    center_of_line = lambda p1, p2: np.array((np.float_((p1[0] + p2[0]))/2, 
+                                              np.float_((p1[1] + p2[1]))/2))
     delta = center_of_line(p11, p12) - center_of_line(p21, p22)
 
-    #draw_line(patch, p21, p22)
     t = get_theta(p21, p22) * 180 / np.pi - 90 
     size = np.int_(np.sqrt(patch.shape[0]**2 + patch.shape[1]**2))
-    #patch_ = np.zeros((size,size), dtype=np.float32)
-    #patch_[(size-patch.shape[0])/2: (size-patch.shape[0])/2 + patch.shape[0],
-    #       (size-patch.shape[1])/2: (size-patch.shape[1])/2 + patch.shape[1]] = patch
     patch_ = np.zeros((size,size,patch.shape[2]), dtype=np.float32)
     patch_[(size-patch.shape[0])/2: (size-patch.shape[0])/2 + patch.shape[0],
            (size-patch.shape[1])/2: (size-patch.shape[1])/2 + patch.shape[1],
@@ -234,9 +275,26 @@ def get_transformed_patch(patch, p11, p12, p21, p22):
 
 def get_corresponding_line(img1, img2, line1, psd=20, max_lines_to_check=60,
                            template_size=200):
-    
-    # dst = imge in which line is already found
-    # src = image in which coresponding line is searched
+    """
+    Return a corresponding line in a second image given a line in a first image.
+    Find max_lines_to_check lines in patch arround line1 in img2. Compare 
+    correspondence of found lines by template matching. Transform template in 
+    img2 such that found line in img2 and given line in img1 allign. Compute 
+    sum of squared differences and weight templates/lines.
+    Args:
+        img1: Destination image in which line is already found.
+        img2: Source image in which the corresponding line is searched.
+        line1: Line in img1 for which a corresponding line needs to be found.
+        psd: Patchsizedivisor: Determines size of patch in which corresponding
+             line is searched.
+        max_lines_to_check: Number of lines which correspondence to given line
+                            is evaluated.
+        template_size: Size of template with which correspondence of line is 
+                       determined.
+
+    Returns:
+        line: The correspoding line.
+    """
 
     p11 = (line1[0], line1[1])
     p12 = (line1[2], line1[3])
@@ -247,7 +305,6 @@ def get_corresponding_line(img1, img2, line1, psd=20, max_lines_to_check=60,
     p11 = p11 - offset
     p12 = p12 - offset
 
-    
     # Detect lines in HSV src image
     patch2_t = cv2.GaussianBlur(np.uint8(patch2), (5,5), 0)
     best_lines = []
@@ -267,15 +324,16 @@ def get_corresponding_line(img1, img2, line1, psd=20, max_lines_to_check=60,
 
         weights_t = np.zeros((max_lines_to_check, 3), dtype=np.float32)
 
-        # Preprocess patches
-        sf = template_size/np.float32(patch.shape[0])
+        # Scale patches, lines and points
+        sf = template_size/np.float32((patch.shape[0] + patch.shape[1])/2)
         patch2 = np.uint8(cv2.resize(patch2, (0,0), fx=sf, fy=sf))
         patch = np.uint8(cv2.resize(patch, (0,0), fx=sf, fy=sf))
         print patch2.shape
         print patch.shape
         p11_s = (p11[0]*sf, p11[1]*sf)
         p12_s = (p12[0]*sf, p12[1]*sf)
-        best_lines_s = [tuple(point * sf for point in line) for line in best_lines]
+        best_lines_s = [tuple(point * sf for point in line) for line in\
+                                                                best_lines]
 
         # Make dst patch horizontal
         t = get_theta(p11_s, p12_s) * 180 / np.pi - 90 
@@ -291,14 +349,16 @@ def get_corresponding_line(img1, img2, line1, psd=20, max_lines_to_check=60,
         #patch = patch[:,:,2]
 
         for i in range(0, min(max_lines_to_check, len(weights))):
-            patch2_t = get_transformed_patch(np.copy(patch2), p11_s, p12_s, tuple(best_lines_s[i][0]), tuple(best_lines_s[i][1]))
+            patch2_t = get_transformed_patch(np.copy(patch2), p11_s, p12_s,\
+                       tuple(best_lines_s[i][0]), tuple(best_lines_s[i][1]))
 
             # Take only pixels which are non zero in both patches into account
             index = (patch2_t[:,:,2]!=0) * (patch[:,:,2]!=0)
             
             for j in range(2,3):
-                weights_t[i][j] = np.sum((patch2_t[:,:,j][index] - patch[:,:,j][index])**2, dtype=np.float64)/\
-                               np.count_nonzero(index)
+                weights_t[i][j] = np.sum((patch2_t[:,:,j][index] -\
+                                  patch[:,:,j][index])**2, dtype=np.float64)/\
+                                  np.count_nonzero(index)
                 print weights_t[i][j]
 
             
@@ -316,8 +376,6 @@ def get_corresponding_line(img1, img2, line1, psd=20, max_lines_to_check=60,
         
     else:
         return None
-
-
 
 
 
