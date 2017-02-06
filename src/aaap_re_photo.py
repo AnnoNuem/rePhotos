@@ -296,18 +296,20 @@ def stage_one(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, ar
             if key == 27:
                 cv2.destroyAllWindows()
                 exit()
+        stage_one_success = True
     else:
         i_h.vprint("Not enough points for perspective transform. Skipping.\n")
         src_transform_matrix = None
         dst_transform_matrix = None 
+        stage_one_success = False
 
     cv2.destroyAllWindows()
     return src_img, dst_img, src_points, dst_points, src_lines, dst_lines,\
-           src_transform_matrix, dst_transform_matrix
+           src_transform_matrix, dst_transform_matrix, stage_one_success
     
 
 def stage_two(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, 
-              src_transform_matrix, dst_transform_matrix, args):
+              src_transform_matrix, dst_transform_matrix, stage_one_success, args):
     print("Second Stage: Draw lines for fine grain aaap warping.\
           \nDrawing no line omits the second stage.\
           \nLMB: Draw Line\
@@ -386,12 +388,14 @@ def stage_two(src_img, dst_img, src_points, dst_points, src_lines, dst_lines,
             dst_img[:,:,0:3] = dst_tmp
         # add each point from perspective transform as two short orthagonal lines
         # to keep these points fixed during warping
-        for point in src_points:
-            src_lines.append([point[0], point[1], point[0]+1, point[1]])
-            src_lines.append([point[0], point[1], point[0], point[1]+1])
-        for point in dst_points:
-            dst_lines.append([point[0], point[1], point[0]+1, point[1]])
-            dst_lines.append([point[0], point[1], point[0], point[1]+1])
+        print(stage_one_success)
+        if stage_one_success:
+            for point in src_points:
+                src_lines.append([point[0], point[1], point[0]+1, point[1]])
+                src_lines.append([point[0], point[1], point[0], point[1]+1])
+            for point in dst_points:
+                dst_lines.append([point[0], point[1], point[0]+1, point[1]])
+                dst_lines.append([point[0], point[1], point[0], point[1]+1])
 
         # aaap morph
         src_img_morphed, src_img_cropped, dst_img_cropped = aaap_morph(src_img, 
@@ -448,12 +452,13 @@ def main():
 
     # Stage one: Drawing points and perspective transform
     src_img, dst_img, src_points, dst_points, src_lines, dst_lines,\
-        src_transform_matrix, dst_transform_matrix = stage_one(src_img, dst_img, 
-            src_points, dst_points, src_lines, dst_lines, args)
+        src_transform_matrix, dst_transform_matrix, stage_one_success =\
+            stage_one(src_img, dst_img, src_points, dst_points, src_lines, 
+                      dst_lines, args)
     
     # Stage two: Drawing lines and aaap morphing
     stage_two(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, 
-        src_transform_matrix, dst_transform_matrix, args)
+        src_transform_matrix, dst_transform_matrix, stage_one_success, args)
     
     # End
     print("Press ESC to quit program.")
