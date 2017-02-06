@@ -388,7 +388,6 @@ def stage_two(src_img, dst_img, src_points, dst_points, src_lines, dst_lines,
             dst_img[:,:,0:3] = dst_tmp
         # add each point from perspective transform as two short orthagonal lines
         # to keep these points fixed during warping
-        print(stage_one_success)
         if stage_one_success:
             for point in src_points:
                 src_lines.append([point[0], point[1], point[0]+1, point[1]])
