@@ -64,11 +64,13 @@ def getPointFromRectangle(img1, point1, point2):
 def getCorespondingPoint(img1, img2, point):
     """Search for coresponding point on second image given a point in first image using template matching."""
 
-    assert 0 <= point[1] < img1.shape[0], "Point outside image 1. Have both images the same size?"
-    assert 0 <= point[0] < img1.shape[1], "Point outside image 1. Have both images the same size?"
-    assert 0 <= point[1] < img2.shape[0], "Point outside image 2. Have both images the same size?"
-    assert 0 <= point[0] < img2.shape[1], "Point outside image 2. Have both images the same size?"
+    if not (0 <= point[1] < img1.shape[0]) or\
+       not (0 <= point[0] < img1.shape[1]) or\
+       not (0 <= point[1] < img2.shape[0]) or\
+       not (0 <= point[0] < img2.shape[1]):
+       return None
 
+    point = np.array(point, dtype=np.int_)
     # diameter of the meaningfull keypoint neighborhood 
     templateSize = int((img1.shape[0] + img1.shape[1]) * 0.5  * TEMPLATE_SIZE_SCALE)
 

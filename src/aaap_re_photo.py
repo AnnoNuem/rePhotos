@@ -13,6 +13,7 @@ from numpy.linalg import inv
 from image_aaap_main import aaap_morph
 from image_sac import getPointFromPoint
 from image_sac import getPointFromRectangle
+from image_sac import getCorespondingPoint
 from image_perspective_alignment import perspective_align
 from image_perspective_alignment import transform_lines
 
@@ -24,8 +25,9 @@ ls = lambda l, sf: [v * sf for v in l]
 
 drag_start = (0,0)
 number_of_points = 0
-def onMouse_stage_one(event, x, y, flags, (img_d, img_d_clean, img_orig, scale, 
-                      points, win_name, color)):
+def onMouse_stage_one(event, x, y, flags,
+    (img_d, img_d_clean, img_orig, scale, points, win_name, color,
+     img2_d, img2_d_clean, img2_orig, scale2, points2, win_name2, color2)):
     global drag_start, number_of_points
 
     img_tmp = np.copy(img_d)
@@ -41,12 +43,19 @@ def onMouse_stage_one(event, x, y, flags, (img_d, img_d_clean, img_orig, scale,
         i_h.draw_rectangle(img_tmp, drag_start, (x,y), color)
         cv2.imshow(win_name, img_tmp)
     elif event == cv2.EVENT_RBUTTONUP and len(points) < 4:
-        point = getPointFromRectangle(img_orig[:,:,0:3], (drag_start[0]/scale,
-                                      drag_start[1]/scale), (x/scale,y/scale))
+        point = getPointFromRectangle(img_orig[:,:,0:3], (drag_start[0]/scale, 
+                        drag_start[1]/scale), (x/scale,y/scale))
         i_h.draw_circle(img_d, (point[0]*scale, point[1]*scale), color)
         cv2.imshow(win_name, img_d)
         points.append(point)
         number_of_points = number_of_points + 1
+
+        point2 = getCorespondingPoint(img_orig[:,:,0:3], img2_orig[:,:,0:3], point)
+        if point2 is not None:
+            i_h.draw_circle(img2_d, (point2[0]*scale2, point2[1]*scale2), color2)
+            cv2.imshow(win_name2, img2_d)
+            points2.append(point2)
+            number_of_points = number_of_points + 1
     elif event == cv2.EVENT_MBUTTONUP and len(points) > 0:
         del points[-1]
         img_d[:] = img_d_clean[:]
@@ -213,12 +222,16 @@ def stage_one(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, ar
     cv2.imshow('src_img', src_img_d)
     cv2.imshow('dst_img', dst_img_d)
 
-    cv2.setMouseCallback("src_img", onMouse_stage_one, (src_img_d, 
-                         src_img_d_clean, src_img, src_scale_d, 
-                         src_points, 'src_img', (255,255,0)))
-    cv2.setMouseCallback("dst_img", onMouse_stage_one, (dst_img_d, 
-                         dst_img_d_clean, dst_img, dst_scale_d, 
-                         dst_points, 'dst_img', (0,0,255)))
+    cv2.setMouseCallback("src_img", onMouse_stage_one, 
+                         (src_img_d, src_img_d_clean, src_img, src_scale_d, 
+                          src_points, 'src_img', (255,255,0),
+                          dst_img_d, dst_img_d_clean, dst_img, dst_scale_d, 
+                          dst_points, 'dst_img', (0,0,255)))
+    cv2.setMouseCallback("dst_img", onMouse_stage_one, 
+                         (dst_img_d, dst_img_d_clean, dst_img, dst_scale_d, 
+                          dst_points, 'dst_img', (0,0,255),
+                          src_img_d, src_img_d_clean, src_img, src_scale_d, 
+                          src_points, 'src_img', (255,255,0)))
 
     # wait till user has drawn all points 
     key = 0
