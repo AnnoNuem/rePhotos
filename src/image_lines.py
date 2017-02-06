@@ -94,17 +94,14 @@ def weight_lines(patch_p, lines, p1_o, p2_o, max_delta=0.05, number_of_lines=10)
                        [0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00],
                        [0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00]],
                        dtype=np.float32)
-    #define else floating point errors
-    kernel_half = 5
+    #define by hand, else floating point errors
+    kernel_half = 4
+
     theta = np.pi - get_theta(p1_o, p2_o)
     m = cv2.getRotationMatrix2D((kernel_half, kernel_half), theta * 180 / np.pi -90, 1)
     kernel = cv2.warpAffine(kernel, m, kernel.shape)
     _patchf = cv2.filter2D(patch_p, cv2.CV_32F, kernel)
-    _patchf[_patchf<1530] = 0
-
-#    cv2.imshow('p', patch_p)
-#    cv2.imshow('patch', np.uint8(cv2.normalize(_patchf, _patchf, 0, 255, cv2.NORM_MINMAX)))
-#    cv2.waitKey(0)
+    _patchf[_patchf<1530] = 0 #6*255
 
     nl = min(number_of_lines, lines.shape[0])
     line_img = np.empty(patch_p.shape, dtype=np.uint8)
@@ -122,15 +119,9 @@ def weight_lines(patch_p, lines, p1_o, p2_o, max_delta=0.05, number_of_lines=10)
         pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * a))
         pt1, pt2 = lim_line_length(pt1, pt2, p1_o, p2_o)
 
-#        _img = patch_p.copy()
-#        draw_line(_img, pt1, pt2)
-#        cv2.imshow('line', _img)
-#        cv2.waitKey(0)
-
         cv2.line(line_img, (pt1[0], pt1[1]), (pt2[0], pt2[1]), 255, 1, 4)
         weights[i] = np.einsum('ij,ij->', line_img, _patchf, dtype=np.float32)
         line_segs[i] = (pt1, pt2)
-
 
     return line_segs, weights
 
@@ -196,7 +187,7 @@ def line_detect(img, mask=None, sigma=0.33, magic_n=10, min_theta=0,
         magic_n: Offset for adaptive Canny edge detection.
 
     Returns:
-        lines: Detected lines in rho, theta form.
+        lines: Detected lines in Hesse normal form.
      """
 
     # Edge dedection
@@ -218,7 +209,7 @@ def line_detect(img, mask=None, sigma=0.33, magic_n=10, min_theta=0,
 
 def get_line(p1, p2, img, psd=70):
     """
-    Search in image for neares most similar line of a given line.
+    Search in image for nearest most similar line of a given line.
     Search in H, S, and V for line in area arround given line. Select line
     with similiar rotation and many supporting edge pixels.
 
@@ -284,8 +275,20 @@ def get_transformed_patch(patch, p11, p12, p21, p22):
 def get_weighted_lines(img, mask, p1_o, p2_o, range_theta=1/12.*np.pi):
     _img = cv2.GaussianBlur(cv2.cvtColor(np.uint8(img), cv2.COLOR_BGR2HSV), 
                             (3,3), 0)
+    """
+    Returns sortet list of lines in proximity of a given line.
 
-    # slope of given line and limits for hough theta
+    Args:
+    img: Image in which lines are searched.
+    mask: Mask applied to image to limit search area.
+    p1_o: First point of original line.
+    p2_o: Second point of original line.
+    range_theta: Limits how far new lines are rotated from original line. 
+
+    Returns:
+    best_lines: Array of lines in descending order.
+    """
+    # slope of given line to limit for hough theta
     theta_width_half = range_theta/2 
     theta = get_theta(p1_o, p2_o)
     min_theta = theta - theta_width_half
@@ -366,9 +369,6 @@ def get_corresponding_line(img1, img2, line1, psd=15, max_lines_to_check=60,
         rm = cv2.getRotationMatrix2D((size/2, size/2), t, 1)
         patch = cv2.warpAffine(patch_, rm, (size, size))
 
-        #patch2 = patch2[:,:,2]
-        #patch = patch[:,:,2]
-
         for i in range(0, min(max_lines_to_check, len(best_lines))):
             patch2_t = get_transformed_patch(np.copy(patch2), p11_s, p12_s,\
                        tuple(best_lines_s[i][0]), tuple(best_lines_s[i][1]))
@@ -380,37 +380,11 @@ def get_corresponding_line(img1, img2, line1, psd=15, max_lines_to_check=60,
                 weights_t[i][j] = np.sum((patch2_t[:,:,j][index] -\
                                   patch[:,:,j][index])**2, dtype=np.float64)/\
                                   np.count_nonzero(index)
-#                print weights_t[i][j]
-
-            
-#            cv2.imshow('sadfaeqw', np.uint8(patch[:,:,2] ))
-#            cv2.imshow('sadfaeqw2', np.uint8(patch2_t[:,:,2] ))
-#            dpimage = np.zeros((patch.shape[0], patch.shape[1], 3), patch.dtype)
-#            dpimage[:,:,0] = patch[:,:,2]
-#            dpimage[:,:,1] = patch2_t[:,:,2]
-#            dpimage[:,:,2] = patch2_t[:,:,2]
-#            cv2.imshow('sdsf', np.uint8(dpimage))
-#            cv2.waitKey(0)
-
         min_i = np.argmin(weights_t[0:i+1,2]) % (i+1)
         return np.array(best_lines[min_i]).flatten() + np.tile(offset2, 2)
-        
     else:
         return None
 
 
 
 
-"""
-#  summed orthagonnal image patch for matching
-patch2_s = np.sum(patch2_t, axis=1)/(np.count_nonzero(patch2_t, axis=1))
-patch_s = np.sum(patch_t, axis=1)/(np.count_nonzero(patch_t, axis=1))
-weights_t[i] = la.norm((patch2_s - patch_s)**2)
-patch_s = patch_s.reshape(-1,1)
-patch_ss = np.broadcast_to(patch_s, (len(patch_s),40))
-patch2_s = patch2_s.reshape(-1,1)
-patch2_ss = np.broadcast_to(patch2_s, (len(patch2_s),40))
-cv2.imshow('sadfaeqw', np.uint8(patch_ss * 255))
-cv2.imshow('sadfaeqw2', np.uint8(patch2_ss * 255))
-cv2.waitKey(0)
-"""
