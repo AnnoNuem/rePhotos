@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from image_helpers import lce
 from image_helpers import draw_circle
+from image_gabor import get_gabor
 
 # scale factor for subimage size on which template matching is done
 SUBIMAGE_SIZE_SCALE = 0.3 #0.159  
@@ -69,12 +70,14 @@ def get_and_pre_patch(img, point, size_half):
     delta_x_max = x2 - point[0]
     delta_y_min = point[1] - y1
     delta_y_max = y2 - point[1]
-    subimage = cv2.cvtColor(np.float32(img[y1:y2, x1:x2]), cv2.COLOR_BGR2HSV)[...,2].copy()
+    subimage = cv2.cvtColor(np.float32(img[y1:y2, x1:x2]), cv2.COLOR_BGR2HSV).copy()
+    #subimage = cv2.cvtColor(np.float32(img[y1:y2, x1:x2]), cv2.COLOR_BGR2HSV)[...,2].copy()
 #    subimage = cv2.normalize(subimage, subimage, 0, 255 , cv2.NORM_MINMAX)
 #    lutable = np.uint8(np.arange(8).repeat(32)*36.4286)
 #    subimage = np.float32(cv2.LUT(np.uint8(subimage), lutable))
     subimage = cv2.normalize(subimage, subimage, 0.0, 1.0 , cv2.NORM_MINMAX)
-    return cv2.GaussianBlur(subimage, (5,5), 0), np.array((x1, y1)), np.array([delta_x_min, delta_x_max, delta_y_min, delta_y_max], dtype=np.float32)   
+    #return cv2.GaussianBlur(subimage, (5,5), 0), np.array((x1, y1)), np.array([delta_x_min, delta_x_max, delta_y_min, delta_y_max], dtype=np.float32)   
+    return subimage, np.array((x1, y1)), np.array([delta_x_min, delta_x_max, delta_y_min, delta_y_max], dtype=np.float32)   
 
 def getCorespondingPoint(img1, img2, point, template_size_s=101):
     """Search for coresponding point on second image given a point in first image using template matching."""
@@ -102,20 +105,36 @@ def getCorespondingPoint(img1, img2, point, template_size_s=101):
     subimageF2, offset, _ = get_and_pre_patch(img2, point, subimageSizeHalf)
 
     # get possible corners
-    corners = cv2.goodFeaturesToTrack(subimageF2, 2000, qualityLevel=0.01, minDistance=10)
+    corners = cv2.goodFeaturesToTrack(np.uint8(subimageF2[...,2]*255), 2000, qualityLevel=0.01, minDistance=10)
 
     # Scale patches, lines and points
     sf = template_size_s/np.float32(np.max(subimageF1.shape[0:2]))
-    subimageF1 = cv2.GaussianBlur(cv2.resize(subimageF1, (0,0), fx=sf, fy=sf), (5,5), 0)
-    subimageF2 = cv2.GaussianBlur(cv2.resize(subimageF2, (0,0), fx=sf, fy=sf), (5,5), 0)
+    #subimageF1 = cv2.GaussianBlur(cv2.resize(subimageF1, (0,0), fx=sf, fy=sf), (5,5), 0)
+    #subimageF1 = cv2.GaussianBlur(cv2.resize(subimageF1, (0,0), fx=sf, fy=sf), (5,5), 0)
+    subimageF2 = cv2.resize(subimageF2, (0,0), fx=sf, fy=sf)
+    subimageF1 = cv2.resize(subimageF1, (0,0), fx=sf, fy=sf)
     corners_s = [corner[0] * sf for corner in corners]
     deltas = np.int_(deltas * sf)
 
     templateSizeHalf_s = int(templateSizeHalf * sf)  
-    weights = np.full((corners.shape[0]), np.inf, dtype=np.float32)
+    weights = np.zeros((corners.shape[0]), dtype=np.float32)
+    #weights = np.full((corners.shape[0]), np.inf, dtype=np.float32)
     patch = np.empty(subimageF1.shape)
     i = 0
     min_w = np.inf
+    max_w = 0
+
+    #cv2.imshow('i2', np.uint8(subimageF2*255))
+    #cv2.imshow('i1', np.uint8(subimageF1*255))
+    subimageF2 = cv2.normalize(get_gabor(subimageF2)[...,2], subimageF2, 0, 1, cv2.NORM_MINMAX)
+    subimageF1 = cv2.normalize(get_gabor(subimageF1)[...,2], subimageF1, 0, 1, cv2.NORM_MINMAX)
+
+    dif_img = np.ones_like(subimageF1)
+
+#    cv2.imshow('f2', np.uint8(subimageF2*255))
+#    cv2.imshow('f1', np.uint8(subimageF1*255))
+#    cv2.waitKey()
+
     for corner in corners_s:
         xmin = int(corner[0]) - deltas[0]
         xmax = int(corner[0]) + deltas[1] + 1
@@ -124,12 +143,23 @@ def getCorespondingPoint(img1, img2, point, template_size_s=101):
 
         if xmin >= 0 and ymin >= 0 and xmax <= subimageF2.shape[1] and\
                                        ymax <= subimageF2.shape[0]:
-            weights[i] = np.sum((subimageF2[ymin:ymax, xmin:xmax] -\
-                                 subimageF1)**2, dtype=np.float32)                              
+            # sqdiff_normed minimum is best
+            #weights[i] = np.sum((subimageF2[ymin:ymax, xmin:xmax] - subimageF1)**2, dtype=np.float32)/\
+            #   np.sqrt(np.sum(subimageF2[ymin:ymax,xmin:xmax]**2, dtype=np.float32) * np.sum(subimageF1**2, dtype=np.float32))
 
-#            if weights[i] < min_w:
+            #crosscorelation_normed maximum is best
+            weights[i] = np.sum((subimageF2[ymin:ymax, xmin:xmax] * subimageF1), dtype=np.float32)/\
+                np.sqrt(np.sum(subimageF2[ymin:ymax,xmin:xmax]**2, dtype=np.float32) * np.sum(subimageF1**2, dtype=np.float32))
+
+            # hamming distance
+#            dif_img[(subimageF2[ymin:ymax, xmin:xmax]-subimageF1)**2<.01] = 0
+#            cv2.imshow('di', np.uint8(dif_img*255))
+#            weights[i] = np.sum(dif_img, dtype=np.float32)
+#            dif_img[:] = 1
+
+#            if weights[i]  > max_w:
 #                print weights[i]
-#                min_w = weights[i]
+#                max_w = weights[i]
 #                cv2.imshow('patch',  np.uint8(subimageF1*255))
 #                draw_circle(subimageF2, tuple(np.int_(corner)), (1))
 #                cv2.imshow('patch2',  np.uint8(subimageF2[ymin:ymax, xmin:xmax]*255))
@@ -153,7 +183,7 @@ def getCorespondingPoint(img1, img2, point, template_size_s=101):
 #        print weights[i]
         i+=1
 
-    corner = corners[np.argmin(weights),0]
+    corner = corners[np.argmax(weights),0]
 #    draw_circle(subimageF2, tuple(np.int_(corners_s[np.argmin(weights)])), (1))
 #    cv2.imshow('corners', np.uint8(cv2.normalize(subimageF2, subimageF2, 0, 255, cv2.NORM_MINMAX)))
 
