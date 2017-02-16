@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 '''
+Adapation of:
 gabor_threads.py
 =========
 
@@ -51,6 +52,15 @@ def process_threaded(img, filters, threadn = 8):
 
 
 def get_gabor(img):
+    """
+    Returns gabor filtered image of a given image.
+
+    Args: 
+        img: Image to be filtered.
+
+    Returns:
+        img: The filtered image.
+    """
     filters = build_filters()
     return process_threaded(img, filters)
 

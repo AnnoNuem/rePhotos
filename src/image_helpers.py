@@ -1,7 +1,7 @@
 from __future__ import print_function
 import numpy as np
 import cv2
-from image_pst import pst
+#from image_pst import pst
 from ler.image_ler import max_size
 
 
@@ -25,6 +25,17 @@ def set_verbose(verbose):
 
 
 def draw_frame(img, x_min, x_max, y_min, y_max):
+    """
+    Draws a frame on a given image.
+    Used to display cropping lines
+
+    Args:
+        img: Image on which frame is drawn
+        x_min: X coordinate of smaller point of rectangle
+        y_min: Y coordinate of smaller point of rectangle
+        x_max: X coordinate of bigger point of rectangle
+        y_max: Y coordinate of bigger point of rectangle
+    """
     thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
     lineType = 8
     color = (255,255,255)
@@ -35,6 +46,16 @@ def draw_frame(img, x_min, x_max, y_min, y_max):
 
 
 def draw_line(img, start, end, color=(255,255,255), l_number=-1):
+    """
+    Draws line and line number on given image.
+    
+    Args:
+        img: Image to be drawn on.
+        start: Startpoint of line.
+        end: Endpoint of line.
+        color: Color of the line. If no color given line is white.
+        l_number: Linenumber. If no number given only line is drawn.
+    """
     thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
     lineType = 8
     cv2.line(img, pint(start), pint(end), color, thickness, lineType )
@@ -44,12 +65,29 @@ def draw_line(img, start, end, color=(255,255,255), l_number=-1):
 
 
 def draw_rectangle(img, start, end, color=(255,255,255)):
+    """
+    Draws rectangle on given image.
+    
+    Args:
+        img: Image to be drawn on.
+        start: Startpoint of rectangle.
+        end: Endpoint of rectangle.
+        color: Color of the line. If no color given line is white.
+    """
     thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
     lineType = 8
     cv2.rectangle(img, start, end, color, thickness, lineType )
 
 
 def draw_circle(img, center, color=(255,255,255)):
+    """
+    Draws circle on given image.
+    
+    Args:
+        img: Image to be drawn on.
+        center: Center of circle
+        color: Color of the line. If no color given line is white.
+    """
     radius = int((img.shape[0] + img.shape[1]) / 400 ) + 1
     linetype = -1
     cv2.circle(img, (int(center[0]), int(center[1])), radius, color, linetype)
@@ -58,6 +96,13 @@ def draw_circle(img, center, color=(255,255,255)):
 def weighted_average_point(point1, point2, alpha):
     """
     Return the average point between two points weighted by alpha.
+    
+    Args:
+        point1: First point multiplied by 1- alpha.
+        point2: Second point multiplied by alpha.
+
+    Returns:
+        point: Weighted point
     """
     x = int((1 - alpha) * point1[0] + alpha * point2[0])
     y = int((1 - alpha) * point1[1] + alpha * point2[1])
@@ -67,6 +112,16 @@ def weighted_average_point(point1, point2, alpha):
 def lce(img, kernel = 11 , amount = 0.5):
     """
     Local Contrast Enhancement by unsharp mask.
+    From the value channel of the image in hsv color space a gaussian blured
+    version is subtracted.
+
+    Args:
+        img: BGR-Image which is enhanced
+        kernel: Size of the gaussian kernel.
+        amount: Strength of the contrast enhancment.
+
+    Returns:
+        img_bgr: Contrast enhanced np.float32 BGR-Image, values between 0, 255.
     """
     
     assert kernel % 2 == 1, "kernel size has to be odd."
@@ -131,6 +186,20 @@ def get_crop_idx(crop_img, scale = 400):
 
 
 def scale_image_lines_points(img, lines, points, scale_factor):
+    """
+    Scales an image, points and lines in this image by a given scale factor.
+
+    Args:
+        img: To be scaled image.
+        lines: To be scaled lines.
+        points: To be scaled points.
+        scale_factor: Factor by which image, lines and points are scaled.
+
+    Returns:
+        img: Scaled image.
+        lines: Scaled lines.
+        points: Scaled points.
+    """
     scale_lines = lambda ls, f: [[v * f for v in l] for l in ls]   
     scale_points = lambda ps, f: [tuple([pc * f for pc in p]) for p in ps]
 
@@ -150,8 +219,33 @@ def scale_image_lines_points(img, lines, points, scale_factor):
     return img, lines, points
     
 
-def do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_img1, scale_img2, 
-    scale_factor):
+def do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2,\
+    scale_img1, scale_img2, scale_factor):
+    """
+    Scales an image, line and point pair.
+    Uses a scale factor per image and one global factor.
+
+    Args:
+        img1: First image to be scaled.
+        img2: Second image to be scaled.
+        lines_img1: First list of lines to be scaled.
+        lines_img2: Second list of lines to be scaled.
+        points_img1: First list of points to be scaled.
+        points_img2: Second list of points to be scaled.
+        scale_img1: Scale factor for first image/lines/points.
+        scale_img2: Scale factor for second image/lines/points.
+        scale_factor: global scale factor.
+
+    Returns:
+        img1: Scaled first image.
+        img2: Scaled second image.
+        lines_img1: Scaled first list of lines.
+        lines_img2: Scaled second list of lines.
+        points_img1: Scaled first list of points.
+        points_img2: Scaled second list of points.
+        scale_img1: Scale factor of first image times global scale factor.
+        scale_img2: Scale factor of second image times global scale factor.
+    """
     scale_img1 *= scale_factor
     scale_img2 *= scale_factor
     
@@ -165,22 +259,32 @@ def do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale
            scale_img1, scale_img2
         
 
-def scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_factor=1):
+def scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2,\
+    scale_factor=1):
     """
-    Upscales the smaller image and coresponding lines of two given images.
+    Upscales the smaller image and coresponding lines/points of two given images.
+    If scale factor is given all entities are scaled by this factor.
     Aspect ratio is preserved, blank space is filled with zeros.
     Args:
         img1: Image 1.
         img2: Image 2.
         lines_img_1: Lines in image 1.
         lines_img_2: Lines in image 2.
-        scale_factor: Scaling factor for first image and both line lists. 
+        points_img_1: Points in image 1.
+        points_img_2: Points in image 2.
+        scale_factor: Scaling factor for image/line/point pair. 
 
     Returns:
         img1: If img1 is bigger returns img1 else scaled img1.
         img2: If img2 is bigger returns img2 else scaled img2.
         lines_img_1: Lines in image 1, scaled if img1 is scaled.
         lines_img_2: Lines in image 2, scaled if img2 is scaled.
+        points_img_1: Points in image 1, scaled if img1 is scaled.
+        points_img_2: Points in image 2, scaled if img2 is scaled.
+        scale_factor_img1: Scale factor by which first image/lines/points were
+            scaled.
+        scale_factor_img1: Scale factor by which second image/lines/points were
+            scaled.
         x_max: After x_max one image is padded with zeros in x direction.
         y_max: After y_max one image is padded with zeros in y direction.
 
@@ -194,13 +298,17 @@ def scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_fa
 
     # Images are of same size
     if x_size_img1 == x_size_img2 and y_size_img1 == y_size_img2:
-        img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_factor_img1, scale_factor_img2 = do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, 1, 1, scale_factor)
+        img1, img2, lines_img1, lines_img2, points_img1, points_img2,\
+            scale_factor_img1, scale_factor_img2 = do_scale(img1, img2,
+            lines_img1, lines_img2, points_img1, points_img2, 1, 1, scale_factor)
         x_max = img1.shape[1]
         y_max = img1.shape[0]
 
     # Image 1 is bigger
     elif x_size_img1 >= x_size_img2 and y_size_img1 >= y_size_img2:
-        img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_factor_img1, scale_factor_img2 = do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, 1, 
+        img1, img2, lines_img1, lines_img2, points_img1, points_img2,\
+            scale_factor_img1, scale_factor_img2 = do_scale(img1, img2, 
+            lines_img1, lines_img2, points_img1, points_img2, 1, 
             min(x_scale_factor, y_scale_factor), scale_factor)
         temp_img = np.zeros_like(img1)
         temp_img[0:img2.shape[0], 0:img2.shape[1], 0:img2.shape[2]] = img2
@@ -210,7 +318,9 @@ def scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_fa
 
     # Image 1 is smaller
     elif x_size_img1 <= x_size_img2 and y_size_img1 <= y_size_img2:
-        img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_factor_img1, scale_factor_img2 = do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2,  
+        img1, img2, lines_img1, lines_img2, points_img1, points_img2,\
+            scale_factor_img1, scale_factor_img2 = do_scale(img1, img2, 
+            lines_img1, lines_img2, points_img1, points_img2,  
             1/max(x_scale_factor, y_scale_factor), 1, scale_factor)
         temp_img = np.zeros_like(img2)
         temp_img[0:img1.shape[0], 0:img1.shape[1], 0:img1.shape[2]] = img1
@@ -221,7 +331,9 @@ def scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_fa
     # Images size relations are not the same i.e. x_scale < 1 and y_scale > 1 
     # or vice versa
     else:
-        img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_factor_img1, scale_factor_img2 = do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, 1, 1, scale_factor)
+        img1, img2, lines_img1, lines_img2, points_img1, points_img2,\
+            scale_factor_img1, scale_factor_img2 = do_scale(img1, img2, 
+            lines_img1, lines_img2, points_img1, points_img2, 1, 1, scale_factor)
         temp_img = np.zeros((max(img1.shape[0], img2.shape[0]), 
             max(img1.shape[1], img2.shape[1]), max(img1.shape[2], img2.shape[2])), 
             dtype=img1.dtype)
@@ -233,10 +345,20 @@ def scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_fa
         temp_img2[0:img2.shape[0], 0:img2.shape[1], 0:img2.shape[2]] = img2
         img2 = temp_img2
 
-    return img1, img2, lines_img1, lines_img2, points_img1, points_img2, scale_factor_img1, scale_factor_img2, x_max, y_max
+    return img1, img2, lines_img1, lines_img2, points_img1, points_img2,\
+        scale_factor_img1, scale_factor_img2, x_max, y_max
 
 
 def adaptive_thresh(img):
+    """
+    Thresholds given image adaptive.
+
+    Args:
+        img: Image to be thresholded.
+
+    Returns:
+        img: Thresholded grey image.
+    """
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     img = cv2.GaussianBlur(img, (3,3), 0)
     
@@ -322,6 +444,16 @@ def line_intersect(a1, a2, b1, b2) :
 
 
 def show_image(img, name='img', x=1000, y=1000):
+    """
+    Resizes image and displays it in window with given name.
+    Constraints both sides of image by given length constraints.
+
+    Args:
+        img: Image to be displayed.
+        name: Name of openCV window in which image is displayed.
+        x: Max size of image in x direction.
+        y: Max size of image in y direction.
+    """
     iy, ix, _ = img.shape
     
     x_scale = x/float(ix)

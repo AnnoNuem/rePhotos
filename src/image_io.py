@@ -1,7 +1,20 @@
 import json
+"""
+Writes and saves point and line lists.
+"""
 
 
 def read_lines(filename):
+    """
+    Reads lines from files.
+
+    Args:
+        filename: Name of file.
+
+    Returns:
+        src_lines: List of lines in src image.
+        dst_lines: List of lines in dst image.
+    """
     try:
         f = open(filename, "r")
     except IOError:
@@ -15,6 +28,14 @@ def read_lines(filename):
 
 
 def write_lines(src_lines, dst_lines, filename):
+    """
+    Writes linelists to file.
+
+    Args:
+        src_lines: List of lines in src image.
+        dst_lines: List of lines in dst image.
+        filename: Name of file.
+    """
     try:
         f = open(filename, "w")
     except IOError:
@@ -25,6 +46,16 @@ def write_lines(src_lines, dst_lines, filename):
 
 
 def read_points(filename):
+    """
+    Reads points from files.
+
+    Args:
+        filename: Name of file.
+
+    Returns:
+        src_points: List of points in src image.
+        dst_points: List of points in dst image.
+    """
     try:
         f = open(filename, "r")
     except IOError:
@@ -40,6 +71,14 @@ def read_points(filename):
 
 
 def write_points(src_points, dst_points, filename):
+    """
+    Writes pointlists to file.
+
+    Args:
+        src_points: List of points in src image.
+        dst_points: List of points in dst image.
+        filename: Name of file.
+    """
     try:
         f = open(filename, "w")
     except IOError:

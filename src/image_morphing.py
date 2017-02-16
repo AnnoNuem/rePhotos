@@ -4,7 +4,19 @@ import multiprocessing as mp
 import ctypes
 
 def morph_process(src_img, s_x_min, shared_dst, dst_shape, points_new, points_old, quads):
+    """
+    Multiprocessing process to morph image stripes.
 
+    Args:
+        src_img: Stripe of the original image which is to be morphed.
+        s_x_min: Offset of image stripe. Used to determine where to add stripe
+            in shared_dst.
+        shared_dst: Shared destination image in which morphed image is saved.
+        dst_shape: Size of the destination image.
+        points_new: Corner locations of the quad grid in the destination image.
+        points_old: Corner locations of the quad grid in the source image.
+        quads: Indices of corners of the quads constituiting the mesh.
+    """
     x_max = dst_shape[1] - 1 
     y_max = dst_shape[0] - 1
 
@@ -56,12 +68,16 @@ def morph_process(src_img, s_x_min, shared_dst, dst_shape, points_new, points_ol
 
 
 def to_numpy_array(mp_arr):
+    """
+    Create numpy array from multiprocessing array.
+    """
     return np.frombuffer(mp_arr.get_obj())
 
 
 def morph(src_img, points_old, points_new, quads, grid_size, processes=1):
     """
     Returns morphed image given points of old and new grid and quadindices. 
+    Sourceimage is divided in stripes which are morphed parallel.
 
     Args:
         src_img: The image which will be morphed.
@@ -90,6 +106,7 @@ def morph(src_img, points_old, points_new, quads, grid_size, processes=1):
     chunk_size = quads.shape[0]/processes 
     for i in xrange(processes):
         # Send slices of src image to each process.
+        # Assume that src mesh is a ordered rectangular mesh
         # Assume that quads are ordered in quad list.
         # Assume that points are ordered in quad
         x_min = (points_old[(quads[chunk_size *i])[0]])[0]
@@ -110,11 +127,7 @@ def morph(src_img, points_old, points_new, quads, grid_size, processes=1):
     for j in jobs:
         j.join()
 
-#    morph_process(src_img, 0, shared_dst, dst_shape, points_new, points_old, quads)
-        
     img_morph = (np.reshape(to_numpy_array(shared_dst), dst_shape))\
                 [grid_size:-grid_size, grid_size:-grid_size]
-
-    #img_morph = cv2.morphologyEx(img_morph, cv2.MORPH_CLOSE, (5,5))
     
     return(img_morph)

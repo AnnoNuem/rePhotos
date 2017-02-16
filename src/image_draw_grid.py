@@ -2,6 +2,14 @@ import cv2
 import numpy as np
 
 def draw_grid(img, grid_points, quad_indices):
+    """
+    Draws line grid on given image.
+
+    Args:
+        img: Image on which to draw.
+        grid_points: List of cornerpoints of the grid.
+        quad_indices: List of indices of quads.
+    """
     
     thickness = int((img.shape[0] + img.shape[1]) / 2500  ) + 1
     color = (255,255,255)
@@ -17,8 +25,7 @@ def draw_grid(img, grid_points, quad_indices):
                c_p(grid_points[quad[2]]), 
                c_p(grid_points[quad[3]])]
 
-
-        #print(quad)
+        # Only one horizontal and vertical line is drawn to reduce time. 
         cv2.line(img, quad[0], quad[1], color, thickness, 16)
         cv2.line(img, quad[0], quad[3], color, thickness, 16)
     
