@@ -1,0 +1,87 @@
+\indexentry{aaap\_re\_photo (module)|hyperpage}{1}
+\indexentry{init() (in module aaap\_re\_photo)|hyperpage}{1}
+\indexentry{ls() (in module aaap\_re\_photo)|hyperpage}{1}
+\indexentry{main() (in module aaap\_re\_photo)|hyperpage}{1}
+\indexentry{onMouse\_stage\_one() (in module aaap\_re\_photo)|hyperpage}{1}
+\indexentry{onMouse\_stage\_two() (in module aaap\_re\_photo)|hyperpage}{2}
+\indexentry{ps() (in module aaap\_re\_photo)|hyperpage}{3}
+\indexentry{stage\_one() (in module aaap\_re\_photo)|hyperpage}{3}
+\indexentry{stage\_two() (in module aaap\_re\_photo)|hyperpage}{3}
+\indexentry{image\_aaap (module)|hyperpage}{5}
+\indexentry{bilinear\_point\_in\_quad\_mesh() (in module image\_aaap)|hyperpage}{5}
+\indexentry{build\_regular\_mesh() (in module image\_aaap)|hyperpage}{5}
+\indexentry{construct\_mesh\_energy() (in module image\_aaap)|hyperpage}{5}
+\indexentry{deform\_aaap() (in module image\_aaap)|hyperpage}{6}
+\indexentry{sample\_lines() (in module image\_aaap)|hyperpage}{6}
+\indexentry{image\_aaap\_main (module)|hyperpage}{7}
+\indexentry{aaap\_morph() (in module image\_aaap\_main)|hyperpage}{7}
+\indexentry{image\_draw\_grid (module)|hyperpage}{9}
+\indexentry{draw\_grid() (in module image\_draw\_grid)|hyperpage}{9}
+\indexentry{image\_gabor (module)|hyperpage}{11}
+\indexentry{build\_filters() (in module image\_gabor)|hyperpage}{11}
+\indexentry{get\_gabor() (in module image\_gabor)|hyperpage}{11}
+\indexentry{process() (in module image\_gabor)|hyperpage}{11}
+\indexentry{process\_threaded() (in module image\_gabor)|hyperpage}{11}
+\indexentry{image\_helpers (module)|hyperpage}{13}
+\indexentry{adaptive\_thresh() (in module image\_helpers)|hyperpage}{13}
+\indexentry{do\_scale() (in module image\_helpers)|hyperpage}{13}
+\indexentry{draw\_circle() (in module image\_helpers)|hyperpage}{13}
+\indexentry{draw\_frame() (in module image\_helpers)|hyperpage}{14}
+\indexentry{draw\_line() (in module image\_helpers)|hyperpage}{14}
+\indexentry{draw\_rectangle() (in module image\_helpers)|hyperpage}{14}
+\indexentry{get\_crop\_idx() (in module image\_helpers)|hyperpage}{14}
+\indexentry{lce() (in module image\_helpers)|hyperpage}{15}
+\indexentry{line\_intersect() (in module image\_helpers)|hyperpage}{15}
+\indexentry{pint() (in module image\_helpers)|hyperpage}{15}
+\indexentry{scale() (in module image\_helpers)|hyperpage}{15}
+\indexentry{scale\_image\_lines\_points() (in module image\_helpers)|hyperpage}{16}
+\indexentry{set\_verbose() (in module image\_helpers)|hyperpage}{16}
+\indexentry{show\_image() (in module image\_helpers)|hyperpage}{16}
+\indexentry{statistic\_canny() (in module image\_helpers)|hyperpage}{16}
+\indexentry{unsharp\_mask() (in module image\_helpers)|hyperpage}{16}
+\indexentry{vprint() (in module image\_helpers)|hyperpage}{17}
+\indexentry{weighted\_average\_point() (in module image\_helpers)|hyperpage}{17}
+\indexentry{image\_io (module)|hyperpage}{19}
+\indexentry{read\_lines() (in module image\_io)|hyperpage}{19}
+\indexentry{read\_points() (in module image\_io)|hyperpage}{19}
+\indexentry{write\_lines() (in module image\_io)|hyperpage}{19}
+\indexentry{write\_points() (in module image\_io)|hyperpage}{19}
+\indexentry{image\_lines (module)|hyperpage}{21}
+\indexentry{center\_of\_line() (in module image\_lines)|hyperpage}{21}
+\indexentry{get\_corresponding\_line() (in module image\_lines)|hyperpage}{21}
+\indexentry{get\_line() (in module image\_lines)|hyperpage}{21}
+\indexentry{get\_patch() (in module image\_lines)|hyperpage}{21}
+\indexentry{get\_theta() (in module image\_lines)|hyperpage}{22}
+\indexentry{get\_transformed\_patch() (in module image\_lines)|hyperpage}{22}
+\indexentry{get\_weighted\_lines() (in module image\_lines)|hyperpage}{22}
+\indexentry{lim\_line\_length() (in module image\_lines)|hyperpage}{23}
+\indexentry{line\_detect() (in module image\_lines)|hyperpage}{23}
+\indexentry{weight\_lines() (in module image\_lines)|hyperpage}{23}
+\indexentry{image\_morphing (module)|hyperpage}{25}
+\indexentry{morph() (in module image\_morphing)|hyperpage}{25}
+\indexentry{morph\_process() (in module image\_morphing)|hyperpage}{25}
+\indexentry{to\_numpy\_array() (in module image\_morphing)|hyperpage}{25}
+\indexentry{image\_perspective\_alignment (module)|hyperpage}{27}
+\indexentry{perspective\_align() (in module image\_perspective\_alignment)|hyperpage}{27}
+\indexentry{transform\_lines() (in module image\_perspective\_alignment)|hyperpage}{27}
+\indexentry{transform\_points() (in module image\_perspective\_alignment)|hyperpage}{28}
+\indexentry{image\_sac (module)|hyperpage}{29}
+\indexentry{getCorespondingPoint() (in module image\_sac)|hyperpage}{29}
+\indexentry{getPFromRectangleACorespondingP() (in module image\_sac)|hyperpage}{29}
+\indexentry{getPointFromPoint() (in module image\_sac)|hyperpage}{29}
+\indexentry{getPointFromRectangle() (in module image\_sac)|hyperpage}{29}
+\indexentry{get\_and\_pre\_patch() (in module image\_sac)|hyperpage}{30}
+\indexentry{ler.image\_ler (module)|hyperpage}{31}
+\indexentry{Info (class in ler.image\_ler)|hyperpage}{31}
+\indexentry{height (ler.image\_ler.Info attribute)|hyperpage}{31}
+\indexentry{start (ler.image\_ler.Info attribute)|hyperpage}{31}
+\indexentry{TestCase (class in ler.image\_ler)|hyperpage}{31}
+\indexentry{test() (ler.image\_ler.TestCase method)|hyperpage}{31}
+\indexentry{area() (in module ler.image\_ler)|hyperpage}{31}
+\indexentry{max\_rectangle\_size() (in module ler.image\_ler)|hyperpage}{31}
+\indexentry{max\_size() (in module ler.image\_ler)|hyperpage}{32}
+\indexentry{ler (module)|hyperpage}{32}
+\indexentry{spqr.image\_spqr (module)|hyperpage}{33}
+\indexentry{main() (in module spqr.image\_spqr)|hyperpage}{33}
+\indexentry{qr\_solve() (in module spqr.image\_spqr)|hyperpage}{33}
+\indexentry{spqr (module)|hyperpage}{33}

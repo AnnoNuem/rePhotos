@@ -1,0 +1,186 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>image_perspective_alignment module &#8212; rePhotosImageAlignment 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-image_perspective_alignment">
+<span id="image-perspective-alignment-module"></span><h1>image_perspective_alignment module<a class="headerlink" href="#module-image_perspective_alignment" title="Permalink to this headline">¶</a></h1>
+<p>Functions to transform images, list of lines and list of points to match
+another image with a perspective transform matrix. The later is computed from
+two lists of points, which should be matched.</p>
+<dl class="function">
+<dt id="image_perspective_alignment.perspective_align">
+<code class="descclassname">image_perspective_alignment.</code><code class="descname">perspective_align</code><span class="sig-paren">(</span><em>img_1</em>, <em>img_2</em>, <em>points_img_1</em>, <em>points_img_2</em>, <em>lines_img_1</em>, <em>lines_img_2</em>, <em>alpha=None</em><span class="sig-paren">)</span><a class="headerlink" href="#image_perspective_alignment.perspective_align" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aligns the two images with the best matching perspective transform given
+the two point lists. Points and lines in their list are transformed as well.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>img_1</strong> (<em>ndarray</em>) &#8211; Image 1</li>
+<li><strong>img_2</strong> (<em>ndarray</em>) &#8211; Image 2</li>
+<li><strong>points_img_1</strong> (<em>list</em>) &#8211; marked points in image 1</li>
+<li><strong>points_img_2</strong> (<em>list</em>) &#8211; coresponding points in image 2</li>
+<li><strong>lines_img_1</strong> (<em>list</em>) &#8211; marked lines in image 1</li>
+<li><strong>lines_img_2</strong> (<em>list</em>) &#8211; coresponding lins in image 2</li>
+<li><strong>alpha</strong> (<em>float</em>) &#8211; 0 = align img_2 to img_1, 1 = align img_1 to img_2, 0.5 align
+img_1 and img_2 to mean and points and lines acordingly.
+If alpha is None the smaller image is transformed to bigger one.
+(Default value = None)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>img_1</strong> (<em>ndarray</em>) &#8211; perspective transformed img_1</li>
+<li><strong>img_2</strong> (<em>ndarray</em>) &#8211; perspective transformed img_2</li>
+<li><strong>points_img_1</strong> (<em>list</em>) &#8211; perspective transformed points_img_1</li>
+<li><strong>points_img_2</strong> (<em>list</em>) &#8211; perspective transformed points_img_2</li>
+<li><strong>lines_img_1</strong> (<em>list</em>) &#8211; perspective transformed lines_img_1</li>
+<li><strong>lines_img_2</strong> (<em>list</em>) &#8211; perspective transformed lines_img_2</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_perspective_alignment.transform_lines">
+<code class="descclassname">image_perspective_alignment.</code><code class="descname">transform_lines</code><span class="sig-paren">(</span><em>lines</em>, <em>transform_matrix</em><span class="sig-paren">)</span><a class="headerlink" href="#image_perspective_alignment.transform_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transforms a list of lines given a transformation matrix.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>lines</strong> (<em>list</em>) &#8211; The list of lines given as lists.</li>
+<li><strong>transform_matrix</strong> (<em>ndarray</em>) &#8211; The transformation matrix.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>lines</strong> &#8211; Transformed lines in float32</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_perspective_alignment.transform_points">
+<code class="descclassname">image_perspective_alignment.</code><code class="descname">transform_points</code><span class="sig-paren">(</span><em>points</em>, <em>transform_matrix</em><span class="sig-paren">)</span><a class="headerlink" href="#image_perspective_alignment.transform_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transforms a list of points given a transformation matrix.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>points</strong> (<em>list</em>) &#8211; the list of points given as touples</li>
+<li><strong>transform_matrix</strong> (<em>ndarray</em>) &#8211; the transformation matrix</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>point_array</strong> &#8211; transformed points in int32</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/image_perspective_alignment.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Axel Schaffland.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/image_perspective_alignment.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

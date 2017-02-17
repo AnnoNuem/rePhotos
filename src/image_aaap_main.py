@@ -1,46 +1,67 @@
-import time
+#!/usr/bin/env python
+"""Wrapper for As-Affine-As-Possible Warping as described in 
+'Generalized As-Similar-As-Possible Warping with
+Applications in Digital Photography' by Chen and Gotsman.
+"""
 import cv2 
 import numpy as np
 import image_helpers as i_h
 import image_aaap as i_aaap 
-from scipy import sparse
 from image_morphing import morph
 from image_draw_grid import draw_grid
 
 def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15, 
         line_constraint_type=2, deform_energy_weights=np.array([1,0.0100, 0,0]),
         n_samples_per_grid=1, scale_factor=1, show_frame=False, draw_grid_f=False):
+    """Warp src image as affine as possible under given line constraints.
 
-    """
-    Wrapper for As-Affine-As-Possible Warping.
-    As described in 'Generalized As-Similar-As-Possible Warping with
-    Applications in Digital Photography' by Chen and Gotsman.
+    Parameters
+    ----------
+    src_img : ndarray
+        Source image which will be warped to match destination image.
+    dst_img : ndarray
+        Destination image which is only scaled.
+    src_lines : list
+        User drawn lines in the source image.
+    dst_lines : list
+        User drawn lines in the destination image.
+    grid_size :int
+        Distance between grid lines in pixels. (Default value = 15)
+    line_constraint_type : int
+        0: Fixed discretisation of lines.
+        1: Flexible discretisations, points can move on line but endpoints
+        are fixed.
+        2: Flexible discretisation, all points including endpoints can move
+        on line. (Default value = 2)
+    deform_energy_weights : ndarray
+        Weighting affinity of warping.
+        [alpha, beta, 0,0]. See paper for details.
+        (Default value = np.array([1,0.0100,0,0])
+    deform_energy_weights :
+        Weighting affinity of warping.
+        [alpha, beta, 0,0]. See paper for details.
+    n_samples_per_grid : int
+        Number of line discretization points per grid block. 
+        (Default value = 1)
+    scale_factor : int
+        Scaling factor for first image and both line lists.
+        Second image is not scaled since not used for computation.
+        (Default value = 1)
+    show_frame : bool
+        True: Draw frame arround cropped area but do not crop.
+        False: Crop images.
+    draw_grid_f : bool
+        True: Draw the aaap grid on the return images, False: Well...
+  
+    Returns
+    -------
+    src_img_morphed : ndarray
+        Warped and cropped source image.
+    dst_img_cropped : ndarray
+        Destination image cropped to same size as src_img.
+    src_img_cropped : ndarray
+        Source image cropped to evaluate warp.
 
-    Args:
-        src_img: Source image which will be warped to match destination image.
-        dst_img: Destination image which is only scaled.
-        src_lines: User drawn lines in the source image.
-        dst_lines: User drawn lines in the destination image.
-        grid_size: Distance between grid lines in pixels.
-        line_constraint_type: 
-            0: Fixed discretisation of lines.
-            1: Flexible discretisations, points can move on line but endpoints
-                are fixed.
-            2: Flexible discretisation, all points including endpoints can move
-                on line.
-        deform_energy_weights: Weighting affinity of warping. 
-            [alpha, beta, 0,0]. See paper for details.
-        n_samples_per_grid = Number of line discretisation points per grid block.
-        scale_factor: Scaling factor for first image and both line lists. 
-                      Second image is not scaled since not used for computation.
-        show_frame: True: Draw frame arround cropped area but do not crop.
-                    False: Crop images.
-        draw_grid_f: True: Draw the aaap grid on the return images, False: Well...
-
-    Returns:
-        src_img_morphed: Warped and cropped source image.
-        dst_img_cropped: Destination image cropped to same size as src_img.
-        src_img_cropped: Source image cropped to evaluate warp.
     """
 
     grid_size = grid_size * scale_factor
@@ -71,7 +92,6 @@ def aaap_morph(src_img, dst_img, src_lines, dst_lines, grid_size=15,
 
     # morph image
     i_h.vprint("Morphing...")
-    t = time.time()
     src_img_morphed = morph(src_img, grid_points, y_p, quads, grid_size, 
                             processes=4)
     

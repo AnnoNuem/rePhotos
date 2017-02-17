@@ -1,7 +1,10 @@
+#!/usr/bin/env python
+"""Collections of image processing function used throughout the project.
+"""
 from __future__ import print_function
+
 import numpy as np
 import cv2
-#from image_pst import pst
 from ler.image_ler import max_size
 
 
@@ -9,14 +12,32 @@ pint = lambda p: (int(p[0]), int(p[1]))
 
 vprint = lambda *a, **k: None
 def set_verbose(verbose):
-    """
-    Sets the global verbosity function.
+    """Sets the global verbosity function.
 
-    Args:
-        verbose: If true verbose output, false no verbose output.
+    Parameters
+    ----------
+    verbose : bool
+        If true verbose output, false no verbose output.
+
+    Returns
+    -------
+
     """
     if verbose:
         def _vprint(*args, **kwargs):
+            """ Print function which is used for verbose printing.
+
+            Parameters
+            ----------
+            *args : tuple
+                non-keyword arguments for print function.
+            **kwargs : dict
+                keyword arguments for print function
+
+            Returns
+            -------
+
+            """
             print(*args , **kwargs)
     else:   
         _vprint = lambda *a, **k: None     
@@ -25,16 +46,25 @@ def set_verbose(verbose):
 
 
 def draw_frame(img, x_min, x_max, y_min, y_max):
-    """
-    Draws a frame on a given image.
+    """Draws a frame on a given image.
     Used to display cropping lines
 
-    Args:
-        img: Image on which frame is drawn
-        x_min: X coordinate of smaller point of rectangle
-        y_min: Y coordinate of smaller point of rectangle
-        x_max: X coordinate of bigger point of rectangle
-        y_max: Y coordinate of bigger point of rectangle
+    Parameters
+    ----------
+    img : ndarray
+        Image on which frame is drawn
+    x_min : int
+        X coordinate of smaller point of rectangle
+    y_min : int
+        Y coordinate of smaller point of rectangle
+    x_max : int
+        X coordinate of bigger point of rectangle
+    y_max : int
+        Y coordinate of bigger point of rectangle
+
+    Returns
+    -------
+
     """
     thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
     lineType = 8
@@ -46,15 +76,26 @@ def draw_frame(img, x_min, x_max, y_min, y_max):
 
 
 def draw_line(img, start, end, color=(255,255,255), l_number=-1):
-    """
-    Draws line and line number on given image.
-    
-    Args:
-        img: Image to be drawn on.
-        start: Startpoint of line.
-        end: Endpoint of line.
-        color: Color of the line. If no color given line is white.
-        l_number: Linenumber. If no number given only line is drawn.
+    """Draws line and line number on given image.
+
+    Parameters
+    ----------
+    img : ndarray
+        Image to be drawn on.
+    start : tuple
+        Startpoint of line.
+    end : tuple
+        Endpoint of line.
+    color : tuple
+        Color of the line. If no color given line is white.
+        (Default value = (255,255,255))
+    l_number : int
+        Linenumber. If no number given only line is drawn.
+        (Default value = -1)
+        
+    Returns
+    -------
+
     """
     thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
     lineType = 8
@@ -65,14 +106,23 @@ def draw_line(img, start, end, color=(255,255,255), l_number=-1):
 
 
 def draw_rectangle(img, start, end, color=(255,255,255)):
-    """
-    Draws rectangle on given image.
-    
-    Args:
-        img: Image to be drawn on.
-        start: Startpoint of rectangle.
-        end: Endpoint of rectangle.
-        color: Color of the line. If no color given line is white.
+    """Draws rectangle on given image.
+
+    Parameters
+    ----------
+    img : ndarray
+        Image to be drawn on.
+    start : tuple
+        Startpoint of rectangle.
+    end : tuple
+        Endpoint of rectangle.
+    color : tuple
+        Color of the line. If no color given line is white. 
+        (Default value = (255,255,255)
+
+    Returns
+    -------
+
     """
     thickness = int((img.shape[0] + img.shape[1]) / 900  ) + 1
     lineType = 8
@@ -80,13 +130,21 @@ def draw_rectangle(img, start, end, color=(255,255,255)):
 
 
 def draw_circle(img, center, color=(255,255,255)):
-    """
-    Draws circle on given image.
-    
-    Args:
-        img: Image to be drawn on.
-        center: Center of circle
-        color: Color of the line. If no color given line is white.
+    """Draws circle on given image.
+
+    Parameters
+    ----------
+    img : ndarray
+        Image to be drawn on.
+    center : tuple
+        Center of circle
+    color : tuple
+        Color of the line. If no color given line is white. 
+        (Default value = (255,255,255))
+
+    Returns
+    -------
+
     """
     radius = int((img.shape[0] + img.shape[1]) / 400 ) + 1
     linetype = -1
@@ -94,15 +152,22 @@ def draw_circle(img, center, color=(255,255,255)):
 
 
 def weighted_average_point(point1, point2, alpha):
-    """
-    Return the average point between two points weighted by alpha.
-    
-    Args:
-        point1: First point multiplied by 1- alpha.
-        point2: Second point multiplied by alpha.
+    """Return the average point between two points weighted by alpha.
 
-    Returns:
-        point: Weighted point
+    Parameters
+    ----------
+    point1 : tuple
+        First point multiplied by 1 - alpha
+    point2 : tuple
+        Second point multiplied by alpha
+    alpha : float
+        The weight.
+
+    Returns
+    -------
+    tuple 
+         Weighted point
+
     """
     x = int((1 - alpha) * point1[0] + alpha * point2[0])
     y = int((1 - alpha) * point1[1] + alpha * point2[1])
@@ -110,18 +175,24 @@ def weighted_average_point(point1, point2, alpha):
 
 
 def lce(img, kernel = 11 , amount = 0.5):
-    """
-    Local Contrast Enhancement by unsharp mask.
+    """Local Contrast Enhancement by unsharp mask.
     From the value channel of the image in hsv color space a gaussian blured
     version is subtracted.
 
-    Args:
-        img: BGR-Image which is enhanced
-        kernel: Size of the gaussian kernel.
-        amount: Strength of the contrast enhancment.
+    Parameters
+    ----------
+    img : ndarray
+        BGR-Image which is enhanced
+    kernel : int
+        Size of the gaussian kernel. (Default value = 11)
+    amount : float
+        Strength of the contrast enhancment. (Default value = 0.5)
 
-    Returns:
-        img_bgr: Contrast enhanced np.float32 BGR-Image, values between 0, 255.
+    Returns
+    -------
+    img_bgr : ndarray
+        Contrast enhanced np.float32 BGR-Image, values between 0, 255.
+
     """
     
     assert kernel % 2 == 1, "kernel size has to be odd."
@@ -147,16 +218,22 @@ def lce(img, kernel = 11 , amount = 0.5):
 
 
 def unsharp_mask(img, sigma=1, amount=0.8):
-    """
-    Sharpends given image via unsharp mask.
+    """Sharpends given image via unsharp mask.
 
-    Args:
-        img: Image to be sharpened.
-        sigma: Sigma of Gaussian kernel for bluring.
-        amount: Amount of sharpening.
+    Parameters
+    ----------
+    img : ndarray
+        Image to be sharpened.
+    sigma : float
+        Sigma of Gaussian kernel for bluring. (Default value = 1)
+    amount : float
+        Amount of sharpening. (Default value = 0.8)
 
-    Returns:
-        img: Sharpened Image.
+    Returns
+    -------
+    img : ndarray
+        Sharpened Image.
+
     """
 
     img_blured = cv2.GaussianBlur(img, (0,0), sigma)
@@ -168,16 +245,21 @@ def unsharp_mask(img, sigma=1, amount=0.8):
 
 
 def get_crop_idx(crop_img, scale = 400):
-    """
-    Computes crop indices based on alpha channel.
+    """Computes crop indices based on alpha channel.
     Searches biggest white rectangle in alpha channel.
 
-    Args:
-        crop_img: to be cropped image with alpha channel
-        scale: Downsample image by img size / scale to speed up
+    Parameters
+    ----------
+    crop_img : ndarray
+        to be cropped image with alpha channel
+    scale : int
+        Downsample image by img size / scale to speed up (Default value = 400)
 
-    Returns:
-        idx: Cropindices [x_min, y_min, x_max, y_max]
+    Returns
+    -------
+    list 
+        Cropindices [x_min, y_min, x_max, y_max]
+
     """
 
     # Speed up by downsmpling the crop image costs accuracy of crop indices
@@ -186,19 +268,28 @@ def get_crop_idx(crop_img, scale = 400):
 
 
 def scale_image_lines_points(img, lines, points, scale_factor):
-    """
-    Scales an image, points and lines in this image by a given scale factor.
+    """Scales an image, points and lines in this image by a given scale factor.
 
-    Args:
-        img: To be scaled image.
-        lines: To be scaled lines.
-        points: To be scaled points.
-        scale_factor: Factor by which image, lines and points are scaled.
+    Parameters
+    ----------
+    img : ndarray
+        To be scaled image.
+    lines : list
+        To be scaled lines.
+    points : list
+        To be scaled points.
+    scale_factor : int
+        Factor by which image, lines and points are scaled.
 
-    Returns:
-        img: Scaled image.
-        lines: Scaled lines.
-        points: Scaled points.
+    Returns
+    -------
+    img : ndarray
+        Scaled image.
+    lines : list
+        Scaled lines.
+    points : list
+        Scaled points.
+
     """
     scale_lines = lambda ls, f: [[v * f for v in l] for l in ls]   
     scale_points = lambda ps, f: [tuple([pc * f for pc in p]) for p in ps]
@@ -221,30 +312,49 @@ def scale_image_lines_points(img, lines, points, scale_factor):
 
 def do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2,\
     scale_img1, scale_img2, scale_factor):
-    """
-    Scales an image, line and point pair.
+    """Scales an image, line and point pair.
     Uses a scale factor per image and one global factor.
 
-    Args:
-        img1: First image to be scaled.
-        img2: Second image to be scaled.
-        lines_img1: First list of lines to be scaled.
-        lines_img2: Second list of lines to be scaled.
-        points_img1: First list of points to be scaled.
-        points_img2: Second list of points to be scaled.
-        scale_img1: Scale factor for first image/lines/points.
-        scale_img2: Scale factor for second image/lines/points.
-        scale_factor: global scale factor.
+    Parameters
+    ----------
+    img1 : ndarray
+        First image to be scaled.
+    img2 : ndarray
+        Second image to be scaled.
+    lines_img1 : list
+        First list of lines to be scaled.
+    lines_img2 : list
+        Second list of lines to be scaled.
+    points_img1 : list
+        First list of points to be scaled.
+    points_img2 : list
+        Second list of points to be scaled.
+    scale_img1 : float
+        Scale factor for first image/lines/points.
+    scale_img2 : float
+        Scale factor for second image/lines/points.
+    scale_factor : float
+        global scale factor.
 
-    Returns:
-        img1: Scaled first image.
-        img2: Scaled second image.
-        lines_img1: Scaled first list of lines.
-        lines_img2: Scaled second list of lines.
-        points_img1: Scaled first list of points.
-        points_img2: Scaled second list of points.
-        scale_img1: Scale factor of first image times global scale factor.
-        scale_img2: Scale factor of second image times global scale factor.
+    Returns
+    -------
+    img1 : ndarray
+        Scaled first image.
+    img2 : ndarray
+        Scaled second image.
+    lines_img1 : list
+        Scaled first list of lines.
+    lines_img2 : list
+        Scaled second list of lines.
+    points_img1 : list
+        Scaled first list of points.
+    points_img2 : list
+        Scaled second list of points.
+    scale_img1 : float
+        Scale factor of first image times global scale factor.
+    scale_img2 : float
+        Scale factor of second image times global scale factor.
+
     """
     scale_img1 *= scale_factor
     scale_img2 *= scale_factor
@@ -261,36 +371,56 @@ def do_scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2,\
 
 def scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2,\
     scale_factor=1):
-    """
-    Upscales the smaller image and coresponding lines/points of two given images.
+    """Upscales the smaller image and coresponding lines/points of two given images.
     If scale factor is given all entities are scaled by this factor.
     Aspect ratio is preserved, blank space is filled with zeros.
-    Args:
-        img1: Image 1.
-        img2: Image 2.
-        lines_img_1: Lines in image 1.
-        lines_img_2: Lines in image 2.
-        points_img_1: Points in image 1.
-        points_img_2: Points in image 2.
-        scale_factor: Scaling factor for image/line/point pair. 
 
-    Returns:
-        img1: If img1 is bigger returns img1 else scaled img1.
-        img2: If img2 is bigger returns img2 else scaled img2.
-        lines_img_1: Lines in image 1, scaled if img1 is scaled.
-        lines_img_2: Lines in image 2, scaled if img2 is scaled.
-        points_img_1: Points in image 1, scaled if img1 is scaled.
-        points_img_2: Points in image 2, scaled if img2 is scaled.
-        scale_factor_img1: Scale factor by which first image/lines/points were
-            scaled.
-        scale_factor_img1: Scale factor by which second image/lines/points were
-            scaled.
-        x_max: After x_max one image is padded with zeros in x direction.
-        y_max: After y_max one image is padded with zeros in y direction.
+    Parameters
+    ----------
+    img1 : ndarray
+        Image 1.
+    img2 : ndarray
+        Image 2.
+    lines_img_1 : list
+        Lines in image 1.
+    lines_img_2 : list
+        Lines in image 2.
+    points_img_1 : list
+        Points in image 1.
+    points_img_2 :list
+        Points in image 2.
+    scale_factor : int
+        Scaling factor for image/line/point pair.
+        (Default value = 1)
+
+    Returns
+    -------
+    img1 : ndarray
+        If img1 is bigger returns img1 else scaled img1.
+    img2 : ndarray
+        If img2 is bigger returns img2 else scaled img2.
+    lines_img_1 : list
+        Lines in image 1, scaled if img1 is scaled.
+    lines_img_2 : list
+        Lines in image 2, scaled if img2 is scaled.
+    points_img_1 : list
+        Points in image 1, scaled if img1 is scaled.
+    points_img_2 : list
+        Points in image 2, scaled if img2 is scaled.
+    scale_factor_img1 : float
+        Scale factor by which first image/lines/points were
+        scaled.
+    scale_factor_img1 : float
+        Scale factor by which second image/lines/points were
+        scaled.
+    x_max : int
+        After x_max one image is padded with zeros in x direction.
+    y_max : int
+        After y_max one image is padded with zeros in y direction.
 
     """
-    y_size_img1, x_size_img1, z_size_img1 = img1.shape
-    y_size_img2, x_size_img2, z_size_img2 = img2.shape
+    y_size_img1, x_size_img1, _ = img1.shape
+    y_size_img2, x_size_img2, _ = img2.shape
     x_scale_factor = float(x_size_img1)/ float(x_size_img2)
     y_scale_factor = float(y_size_img1)/ float(y_size_img2)
 
@@ -350,14 +480,18 @@ def scale(img1, img2, lines_img1, lines_img2, points_img1, points_img2,\
 
 
 def adaptive_thresh(img):
-    """
-    Thresholds given image adaptive.
+    """Thresholds given image adaptive.
 
-    Args:
-        img: Image to be thresholded.
+    Parameters
+    ----------
+    img : ndarray
+        Image to be thresholded.
 
-    Returns:
-        img: Thresholded grey image.
+    Returns
+    -------
+    ndarray
+        Thresholded grey image.
+
     """
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     img = cv2.GaussianBlur(img, (3,3), 0)
@@ -389,15 +523,20 @@ def pst_wrapper(img):
 '''
 
 def statistic_canny(img, sigma=0.33):
-    """
-    Edge detection on color image depending on image properties.
-    
-    Args:
-        img: Image on which to detect edges.
-        sigma: Standard deviation.
+    """Edge detection on color image depending on image properties.
 
-    Returns:
-        img: Edge image.
+    Parameters
+    ----------
+    img : ndarray
+        Image on which to detect edges.
+    sigma : float
+        Standard deviation. (Default value = 0.33)
+
+    Returns
+    -------
+    ndarray
+        Edge image.
+
     """
 
     img = cv2.GaussianBlur(img, (5,5), 0)
@@ -417,18 +556,26 @@ def statistic_canny(img, sigma=0.33):
 
 
 def line_intersect(a1, a2, b1, b2) :
-    """
-    Compute intersection of two lines.
+    """Compute intersection of two lines.
     All input points have to be float.
     Returns startpoint of second line if lines are parallel.
-    Args:
-        a1: Startpoint first line.
-        a2: Endpoint first line.
-        b1: Startpoint second line.
-        b2: Endpoint second line.
 
-    Returns:
+    Parameters
+    ----------
+    a1 : ndarray
+        Startpoint first line.
+    a2 : ndarray
+        Endpoint first line.
+    b1 : ndarray
+        Startpoint second line.
+    b2 : ndarray
+        Endpoint second line.
+
+    Returns
+    -------
+    ndarray
         intersection point.
+
     """
     da = a2 - a1
     db = b2 - b1
@@ -444,15 +591,27 @@ def line_intersect(a1, a2, b1, b2) :
 
 
 def show_image(img, name='img', x=1000, y=1000):
-    """
-    Resizes image and displays it in window with given name.
+    """Resizes image and displays it in window with given name.
     Constraints both sides of image by given length constraints.
 
-    Args:
-        img: Image to be displayed.
-        name: Name of openCV window in which image is displayed.
-        x: Max size of image in x direction.
-        y: Max size of image in y direction.
+    Parameters
+    ----------
+    img : ndarray
+        Image to be displayed.
+    name : string
+        Name of openCV window in which image is displayed. (Default value = 'img')
+    x : int
+        Max size of image in x direction. (Default value = 1000)
+    y : int
+        Max size of image in y direction. (Default value = 1000)
+
+    Returns
+    -------
+    img_d : ndarray
+        Scaled image.
+    scale : float
+        Scale by which the image was scaled.
+
     """
     iy, ix, _ = img.shape
     

@@ -1,0 +1,376 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>image_lines module &#8212; rePhotosImageAlignment 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-image_lines">
+<span id="image-lines-module"></span><h1>image_lines module<a class="headerlink" href="#module-image_lines" title="Permalink to this headline">¶</a></h1>
+<p>Functions to find interesting lines near user drawn lines as well as
+corresponding lines.</p>
+<dl class="function">
+<dt id="image_lines.center_of_line">
+<code class="descclassname">image_lines.</code><code class="descname">center_of_line</code><span class="sig-paren">(</span><em>p1</em>, <em>p2</em><span class="sig-paren">)</span><a class="headerlink" href="#image_lines.center_of_line" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="image_lines.get_corresponding_line">
+<code class="descclassname">image_lines.</code><code class="descname">get_corresponding_line</code><span class="sig-paren">(</span><em>img1</em>, <em>img2</em>, <em>line1</em>, <em>psd=15</em>, <em>max_lines_to_check=60</em>, <em>template_size=200</em><span class="sig-paren">)</span><a class="headerlink" href="#image_lines.get_corresponding_line" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a corresponding line in a second image given a line in a first image.
+Find max_lines_to_check lines in patch arround line1 in img2. Compare
+correspondence of found lines by template matching. Transform template in
+img2 such that found line in img2 and given line in img1 allign. Compute
+sum of squared differences and weight templates/lines.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>img1</strong> (<em>ndarray</em>) &#8211; Destination image in which line is already found</li>
+<li><strong>img2</strong> (<em>ndarray</em>) &#8211; Source image in which the corresponding line is searched</li>
+<li><strong>line1</strong> (<em>list</em>) &#8211; Line in img1 for which a corresponding line needs to be found</li>
+<li><strong>psd</strong> (<em>int</em>) &#8211; Patchsizedivisor (Default value = 15)</li>
+<li><strong>max_lines_to_check</strong> (<em>int</em>) &#8211; Number of lines which correspondence to given line is evaluated.
+(Default value = 60)</li>
+<li><strong>template_size</strong> (<em>int</em>) &#8211; Size of template with which correspondence of line is determined.
+(Default value = 200)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The correspoding line.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_lines.get_line">
+<code class="descclassname">image_lines.</code><code class="descname">get_line</code><span class="sig-paren">(</span><em>p1</em>, <em>p2</em>, <em>img</em>, <em>psd=70</em><span class="sig-paren">)</span><a class="headerlink" href="#image_lines.get_line" title="Permalink to this definition">¶</a></dt>
+<dd><p>Search in image for nearest most similar line of a given line.
+Search in H, S, and V for line in area around given line. Select line
+with similar rotation and many supporting edge pixels.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>p1</strong> (<em>ndarray</em>) &#8211; Start point of user drawn line.</li>
+<li><strong>p2</strong> (<em>ndarray</em>) &#8211; End point of user drawn line.</li>
+<li><strong>img</strong> (<em>ndarray</em>) &#8211; Image in which nearest line in searched.</li>
+<li><strong>psd</strong> (<em>iny</em>) &#8211; Patch size divisor: Area around line in which similar line is
+searched. Higher value = Smaller area (Default value = 70)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>[p1,p2]</strong> &#8211; List of two points of computed most similar line</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_lines.get_patch">
+<code class="descclassname">image_lines.</code><code class="descname">get_patch</code><span class="sig-paren">(</span><em>img</em>, <em>p1</em>, <em>p2</em>, <em>psd=70</em><span class="sig-paren">)</span><a class="headerlink" href="#image_lines.get_patch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return image patch arround a given line.
+Return horizontal patch, a rectangular mask with same slope as the line and
+offset between min point of patch and image</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>img</strong> (<em>ndarray</em>) &#8211; Image from which the patch is generated</li>
+<li><strong>p1</strong> (<em>tuple</em>) &#8211; First point of the given line</li>
+<li><strong>p2</strong> (<em>tuple</em>) &#8211; Second point of the given line</li>
+<li><strong>psd</strong> (<em>int</em>) &#8211; Patchsizedivisor (Default value = 70) determining the patch size i.e.
+the size arround the given line.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>patch</strong> (<em>ndarray</em>) &#8211; Horizontal patch</li>
+<li><strong>mask</strong> (<em>ndarray</em>) &#8211; Zero matrix of size patch with one rectangle determining the
+actual patch arround the line.</li>
+<li><strong>offset</strong> (<em>ndarray</em>) &#8211; Offset between min point of patch and min point of image.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_lines.get_theta">
+<code class="descclassname">image_lines.</code><code class="descname">get_theta</code><span class="sig-paren">(</span><em>p1</em>, <em>p2</em><span class="sig-paren">)</span><a class="headerlink" href="#image_lines.get_theta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes gradient angle of line.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>p1</strong> (<em>ndarray</em>) &#8211; First point of line.</li>
+<li><strong>p2</strong> (<em>ndarray</em>) &#8211; Second point of line.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>theta</strong> &#8211; Gradient angle.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">float64</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_lines.get_transformed_patch">
+<code class="descclassname">image_lines.</code><code class="descname">get_transformed_patch</code><span class="sig-paren">(</span><em>patch</em>, <em>p11</em>, <em>p12</em>, <em>p21</em>, <em>p22</em><span class="sig-paren">)</span><a class="headerlink" href="#image_lines.get_transformed_patch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotates and translates given patch such that second line is mapped to a
+first horizontal line.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>patch</strong> (<em>ndarray</em>) &#8211; Patch to be translated and rotated.</li>
+<li><strong>p11</strong> (<em>tuple</em>) &#8211; First point of first line.</li>
+<li><strong>p12</strong> (<em>tuple</em>) &#8211; Second point of first line.</li>
+<li><strong>p21</strong> (<em>tuple</em>) &#8211; First point of second line.</li>
+<li><strong>p22</strong> (<em>tuple</em>) &#8211; Second point of second line.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>patch</strong> &#8211; Transformed patch.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_lines.get_weighted_lines">
+<code class="descclassname">image_lines.</code><code class="descname">get_weighted_lines</code><span class="sig-paren">(</span><em>img</em>, <em>mask</em>, <em>p1_o</em>, <em>p2_o</em>, <em>range_theta=0.2617993877991494</em><span class="sig-paren">)</span><a class="headerlink" href="#image_lines.get_weighted_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns sortet list of lines in proximity of a given line.
+Lines are sorted by line quality.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>img</strong> (<em>ndarray</em>) &#8211; Image in which lines are searched.</li>
+<li><strong>mask</strong> (<em>ndarray</em>) &#8211; Mask applied to image to limit search area.</li>
+<li><strong>p1_o</strong> (<em>ndarray</em>) &#8211; First point of original line.</li>
+<li><strong>p2_o</strong> (<em>ndarray</em>) &#8211; Second point of original line.</li>
+<li><strong>range_theta</strong> (<em>float</em>) &#8211; Limits how far new lines are rotated from original line.
+(Default value = 1/12.*np.pi)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>best_lines</strong> &#8211; Array of lines in descending order.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_lines.lim_line_length">
+<code class="descclassname">image_lines.</code><code class="descname">lim_line_length</code><span class="sig-paren">(</span><em>p1_h</em>, <em>p2_h</em>, <em>p1_o</em>, <em>p2_o</em><span class="sig-paren">)</span><a class="headerlink" href="#image_lines.lim_line_length" title="Permalink to this definition">¶</a></dt>
+<dd><p>Limits length of line h to linesegment o.
+Computes a line segment of line h found by hough transform to the
+length of user drawn line segment o by computing the normals at start
+and end point of user drawn line segment and their intersection with
+hough line.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>p1_h</strong> (<em>ndarray</em>) &#8211; First point on hough line.</li>
+<li><strong>p2_h</strong> (<em>ndarray</em>) &#8211; Second point on hough line.</li>
+<li><strong>p1_o</strong> (<em>ndarray</em>) &#8211; Startpoint of user drawn line segment.</li>
+<li><strong>p2_o</strong> (<em>ndarray</em>) &#8211; Endpoint of user drawn line segment.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>z1</strong> (<em>ndarray</em>) &#8211; Startpoint of line segment of hough line.</li>
+<li><strong>z2</strong> (<em>ndarray</em>) &#8211; Endpoint of line segment of hough line.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_lines.line_detect">
+<code class="descclassname">image_lines.</code><code class="descname">line_detect</code><span class="sig-paren">(</span><em>img</em>, <em>mask=None</em>, <em>sigma=0.33</em>, <em>magic_n=10</em>, <em>min_theta=0</em>, <em>max_theta=3.141592653589793</em><span class="sig-paren">)</span><a class="headerlink" href="#image_lines.line_detect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Line detection on given image via Canny and Hough.
+Lines are limited to have an angle between min_theta and max_theta.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>img</strong> (<em>ndarray</em>) &#8211; Image in which to detect lines.</li>
+<li><strong>mask</strong> (<em>ndarray</em>) &#8211; Matrix of image size. Detection of lines only where mask is
+nonzero. (Default value = None)</li>
+<li><strong>sigma</strong> (<em>float</em>) &#8211; Sigma for adpative Canny edge detection. (Default value = 0.33)</li>
+<li><strong>magic_n</strong> (<em>int</em>) &#8211; Offset for adaptive Canny edge detection. (Default value = 10)</li>
+<li><strong>min_theta</strong> (<em>float64</em>) &#8211; Minimum line angle for hough line detection.
+(Default value = 0)</li>
+<li><strong>max_theta</strong> (<em>float64</em>) &#8211; Maximum line angle for hough line detection.
+(Default value = np.pi)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>lines</strong> &#8211; Detected lines in Hesse normal form.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_lines.weight_lines">
+<code class="descclassname">image_lines.</code><code class="descname">weight_lines</code><span class="sig-paren">(</span><em>patch_p</em>, <em>lines</em>, <em>p1_o</em>, <em>p2_o</em>, <em>max_delta=0.05</em>, <em>number_of_lines=10</em><span class="sig-paren">)</span><a class="headerlink" href="#image_lines.weight_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>Weights hough lines by similarity to edges.
+Generates line segments with length according to user drawn lines and
+compares segments with edges in edge image. Select best matching line.
+Only lines with similar orientation to user drawn line are regarded.
+Only best ten lines fullfilling above criterium are considered.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>patch_p</strong> (<em>ndarray</em>) &#8211; Edgeimage.</li>
+<li><strong>lines</strong> (<em>ndarray</em>) &#8211; List of lines.</li>
+<li><strong>p1_o</strong> (<em>ndarray</em>) &#8211; Startpoint of user drawn line.</li>
+<li><strong>p2_o</strong> (<em>ndarray</em>) &#8211; Endpoint of user drawn line.</li>
+<li><strong>max_delta</strong> (<em>float</em>) &#8211; max angle between given line and lines to be weighted. (Default value = 0.05)</li>
+<li><strong>number_of_lines</strong> (<em>int</em>) &#8211; number of lines generated by first step (Default value = 10)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>line_segs</strong> (<em>ndarray</em>) &#8211; best lines.</li>
+<li><strong>weights</strong> (<em>ndarray</em>) &#8211; weights of the best line segments.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/image_lines.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Axel Schaffland.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/image_lines.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

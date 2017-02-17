@@ -1,21 +1,37 @@
+#!/usr/bin/env python
+"""Functions to moprh an image with src and dst quad mesh. Corners of the two
+quad meshes are mapped to each other, area inbetween is interpolated witch
+perspective transform.
+"""
 import numpy as np
 import cv2
 import multiprocessing as mp
 import ctypes
 
 def morph_process(src_img, s_x_min, shared_dst, dst_shape, points_new, points_old, quads):
-    """
-    Multiprocessing process to morph image stripes.
+    """Multiprocessing process to morph image stripes.
 
-    Args:
-        src_img: Stripe of the original image which is to be morphed.
-        s_x_min: Offset of image stripe. Used to determine where to add stripe
-            in shared_dst.
-        shared_dst: Shared destination image in which morphed image is saved.
-        dst_shape: Size of the destination image.
-        points_new: Corner locations of the quad grid in the destination image.
-        points_old: Corner locations of the quad grid in the source image.
-        quads: Indices of corners of the quads constituiting the mesh.
+    Parameters
+    ----------
+    src_img : ndarray
+        Stripe of the original image which is to be morphed.
+    s_x_min : int64
+        Offset of image stripe. Used to determine where to add stripe
+        in shared_dst.
+    shared_dst : SynchronizedArray
+        Shared destination image in which morphed image is saved.
+    dst_shape :tuple
+        Size of the destination image.
+    points_new : ndarray
+        Corner locations of the quad grid in the destination image.
+    points_old : ndarray
+        Corner locations of the quad grid in the source image.
+    quads : ndarray
+        Indices of corners of the quads constituiting the mesh.
+
+    Returns
+    -------
+
     """
     x_max = dst_shape[1] - 1 
     y_max = dst_shape[0] - 1
@@ -68,27 +84,45 @@ def morph_process(src_img, s_x_min, shared_dst, dst_shape, points_new, points_ol
 
 
 def to_numpy_array(mp_arr):
-    """
-    Create numpy array from multiprocessing array.
+    """Create numpy array from multiprocessing array.
+
+    Parameters
+    ----------
+    mp_arr : SynchronizedArray
+        Multiprocessing input array.
+        
+    Returns
+    -------
+    ndarray 
+        Numpy output array.
     """
     return np.frombuffer(mp_arr.get_obj())
 
 
 def morph(src_img, points_old, points_new, quads, grid_size, processes=1):
-    """
-    Returns morphed image given points of old and new grid and quadindices. 
+    """Returns morphed image given points of old and new grid and quadindices.
     Sourceimage is divided in stripes which are morphed parallel.
 
-    Args:
-        src_img: The image which will be morphed.
-        points_old: Positions of grid points in src_img.
-        points_new: Positions to where the old points are moved.
-        quads: List of quad indices.
-        grid_size: Distance between grid lines.
-        processes: Number of multiprocessing.Processes which are spawend.
+    Parameters
+    ----------
+    src_img : ndarray
+        The image which will be morphed.
+    points_old : ndarray
+        Positions of grid points in src_img.
+    points_new : ndarray
+        Positions to where the old points are moved.
+    quads : ndarray
+        List of quad indices.
+    grid_size : int
+        Distance between grid lines.
+    processes : int
+        Number of multiprocessing.Processes which are spawend. (Default value = 1)
 
-    Returns:
-        img_morh: The morphed src_img.    
+    Returns
+    -------
+    img_morh : ndarray
+        The morphed src_img.
+
     """
     assert len(points_old) == len(points_new), "Point lists of different size."
     assert len(points_old) > 0, "Point lists are empty."

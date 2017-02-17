@@ -1,0 +1,233 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>image_sac module &#8212; rePhotosImageAlignment 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-image_sac">
+<span id="image-sac-module"></span><h1>image_sac module<a class="headerlink" href="#module-image_sac" title="Permalink to this headline">¶</a></h1>
+<p>Functions to find interesting points near user drawn points as well as
+corresponding points.</p>
+<dl class="function">
+<dt id="image_sac.getCorespondingPoint">
+<code class="descclassname">image_sac.</code><code class="descname">getCorespondingPoint</code><span class="sig-paren">(</span><em>img1</em>, <em>img2</em>, <em>point</em>, <em>template_size_s=101</em><span class="sig-paren">)</span><a class="headerlink" href="#image_sac.getCorespondingPoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Search for coresponding point on second image given a point in first image.</p>
+<p>First possible matching corners are searched, then template matching at the
+possible corner locations is done.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>img1</strong> (<em>ndarray</em>) &#8211; Image in which point was found.</li>
+<li><strong>img2</strong> (<em>ndarray</em>) &#8211; Image in which corresponding point is searched.</li>
+<li><strong>point</strong> (<em>ndarray</em>) &#8211; Location of found point in img1.</li>
+<li><strong>template_size_1</strong> (<em>int</em>) &#8211; Size of scaled template for template matching.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>point</strong> &#8211; The corresponding point.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_sac.getPFromRectangleACorespondingP">
+<code class="descclassname">image_sac.</code><code class="descname">getPFromRectangleACorespondingP</code><span class="sig-paren">(</span><em>img1</em>, <em>img2</em>, <em>point1</em>, <em>point2</em><span class="sig-paren">)</span><a class="headerlink" href="#image_sac.getPFromRectangleACorespondingP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper for getPointFromRectangle and getCorespondingPoint.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>img1</strong> (<em>ndarray</em>) &#8211; Image in which point is searched.</li>
+<li><strong>img2</strong> (<em>ndarray</em>) &#8211; Image in which corresponding point is searched.</li>
+<li><strong>point1</strong> (<em>tuple</em>) &#8211; First corner of rectangle in which point is searched.</li>
+<li><strong>point2</strong> (<em>tuple</em>) &#8211; Second corner of rectangle in which point is searched.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>returnPoint1</strong> (<em>tuple</em>) &#8211; Found point.</li>
+<li><strong>returnPoint2</strong> (<em>tuple</em>) &#8211; Corresponding point.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_sac.getPointFromPoint">
+<code class="descclassname">image_sac.</code><code class="descname">getPointFromPoint</code><span class="sig-paren">(</span><em>img</em>, <em>point</em><span class="sig-paren">)</span><a class="headerlink" href="#image_sac.getPointFromPoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns most fitting point near a given point in an image.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>img</strong> (<em>ndarray</em>) &#8211; Image in which point is searched.</li>
+<li><strong>point</strong> (<em>tuple</em>) &#8211; Point near which the best point/corner is searched.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>point</strong> &#8211; Best point.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tuple</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_sac.getPointFromRectangle">
+<code class="descclassname">image_sac.</code><code class="descname">getPointFromRectangle</code><span class="sig-paren">(</span><em>img1</em>, <em>point1</em>, <em>point2</em><span class="sig-paren">)</span><a class="headerlink" href="#image_sac.getPointFromRectangle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes point of interest in a rectangle defined by two given points.</p>
+<p>The best corner is returned weighted by the distance to the center of the rectangle.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>img1</strong> (<em>ndarray</em>) &#8211; Image in which corner  point of interest is searched.</li>
+<li><strong>point1</strong> (<em>tuple</em>) &#8211; First corner of rectangle.</li>
+<li><strong>point2</strong> (<em>tuple</em>) &#8211; Opposite corner of first corner of rectangle.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>returnPoint</strong> &#8211; The best point of interest.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tuple</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_sac.get_and_pre_patch">
+<code class="descclassname">image_sac.</code><code class="descname">get_and_pre_patch</code><span class="sig-paren">(</span><em>img</em>, <em>point</em>, <em>size_half</em><span class="sig-paren">)</span><a class="headerlink" href="#image_sac.get_and_pre_patch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a patch from an image and preprocess it.</p>
+<p>Algorithm returns biggest possible template limited by the image size.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>img</strong> (<em>ndarray</em>) &#8211; Image from which to get the patch.</li>
+<li><strong>point</strong> (<em>ndarray</em>) &#8211; Centerpoint of the patch.</li>
+<li><strong>size_half</strong> (<em>int</em>) &#8211; Half of the patchsize.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>subimage</strong> (<em>ndarray</em>) &#8211; Template as copy.</li>
+<li><em>ndarray</em> &#8211; Offset of lowest corner of patch with respect to image origin.</li>
+<li><em>ndarray</em> &#8211; Differences between theorethical template size and practical
+template size limited by size of the image.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/image_sac.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Axel Schaffland.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/image_sac.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

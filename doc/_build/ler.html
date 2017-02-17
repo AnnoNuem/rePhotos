@@ -1,0 +1,203 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>ler package &#8212; rePhotosImageAlignment 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ler-package">
+<h1>ler package<a class="headerlink" href="#ler-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-ler.image_ler">
+<span id="ler-image-ler-module"></span><h2>ler.image_ler module<a class="headerlink" href="#module-ler.image_ler" title="Permalink to this headline">¶</a></h2>
+<p>Find height, width of the largest rectangle containing all 0&#8217;s in the matrix.</p>
+<p>The algorithm for <cite>max_size()</cite> is suggested by &#64;j_random_hacker [1].
+The algorithm for <cite>max_rectangle_size()</cite> is from [2].
+The Python implementation [3] is dual licensed under CC BY-SA 3.0
+and ISC license.</p>
+<p>[1]: <a class="reference external" href="http://stackoverflow.com/questions/2478447/find-largest-rectangle-containing-only-zeros-in-an-nn-binary-matrix#comment5169734_4671342">http://stackoverflow.com/questions/2478447/find-largest-rectangle-containing-only-zeros-in-an-nn-binary-matrix#comment5169734_4671342</a></p>
+<p>[2]: <a class="reference external" href="http://blog.csdn.net/arbuckle/archive/2006/05/06/710988.aspx">http://blog.csdn.net/arbuckle/archive/2006/05/06/710988.aspx</a></p>
+<p>[3]: <a class="reference external" href="http://stackoverflow.com/a/4671342">http://stackoverflow.com/a/4671342</a></p>
+<p>Copyright (c) 2014, zed &lt;<a class="reference external" href="mailto:isidore&#46;john&#46;r&#37;&#52;&#48;gmail&#46;com">isidore<span>&#46;</span>john<span>&#46;</span>r<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</p>
+<p>Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.</p>
+<p>THE SOFTWARE IS PROVIDED &#8220;AS IS&#8221; AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.</p>
+<p>Changed by <a class="reference external" href="mailto:axschaffland&#37;&#52;&#48;uos&#46;de">axschaffland<span>&#64;</span>uos<span>&#46;</span>de</a> to return not max_size but position of
+largest empty rectangle.</p>
+<dl class="class">
+<dt id="ler.image_ler.Info">
+<em class="property">class </em><code class="descclassname">ler.image_ler.</code><code class="descname">Info</code><span class="sig-paren">(</span><em>start</em>, <em>height</em><span class="sig-paren">)</span><a class="headerlink" href="#ler.image_ler.Info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">tuple</span></code></p>
+<dl class="attribute">
+<dt id="ler.image_ler.Info.height">
+<code class="descname">height</code><a class="headerlink" href="#ler.image_ler.Info.height" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ler.image_ler.Info.start">
+<code class="descname">start</code><a class="headerlink" href="#ler.image_ler.Info.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ler.image_ler.TestCase">
+<em class="property">class </em><code class="descclassname">ler.image_ler.</code><code class="descname">TestCase</code><span class="sig-paren">(</span><em>methodName='runTest'</em><span class="sig-paren">)</span><a class="headerlink" href="#ler.image_ler.TestCase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></code></p>
+<dl class="method">
+<dt id="ler.image_ler.TestCase.test">
+<code class="descname">test</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ler.image_ler.TestCase.test" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="ler.image_ler.area">
+<code class="descclassname">ler.image_ler.</code><code class="descname">area</code><span class="sig-paren">(</span><em>size</em><span class="sig-paren">)</span><a class="headerlink" href="#ler.image_ler.area" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="ler.image_ler.max_rectangle_size">
+<code class="descclassname">ler.image_ler.</code><code class="descname">max_rectangle_size</code><span class="sig-paren">(</span><em>histogram</em><span class="sig-paren">)</span><a class="headerlink" href="#ler.image_ler.max_rectangle_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find height, width of the largest rectangle that fits entirely under
+the histogram.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">max_rectangle_size</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">([</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+<span class="go">(3, 2)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">])</span>
+<span class="go">(3, 2)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">5</span><span class="p">])</span>
+<span class="go">(5, 1)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+<span class="go">(3, 3)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+<span class="go">(3, 3)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+<span class="go">(1, 3)</span>
+</pre></div>
+</div>
+<p>Algorithm is &#8220;Linear search using a stack of incomplete subproblems&#8221; [1].</p>
+<p>[1]: <a class="reference external" href="http://blog.csdn.net/arbuckle/archive/2006/05/06/710988.aspx">http://blog.csdn.net/arbuckle/archive/2006/05/06/710988.aspx</a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="ler.image_ler.max_size">
+<code class="descclassname">ler.image_ler.</code><code class="descname">max_size</code><span class="sig-paren">(</span><em>mat</em>, <em>value=0</em><span class="sig-paren">)</span><a class="headerlink" href="#ler.image_ler.max_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find height, width of the largest rectangle containing all <cite>value</cite>&#8216;s.</p>
+<p>For each row solve &#8220;Largest Rectangle in a Histrogram&#8221; problem [1]:</p>
+<p>[1]: <a class="reference external" href="http://blog.csdn.net/arbuckle/archive/2006/05/06/710988.aspx">http://blog.csdn.net/arbuckle/archive/2006/05/06/710988.aspx</a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-ler">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-ler" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">ler package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-ler.image_ler">ler.image_ler module</a></li>
+<li><a class="reference internal" href="#module-ler">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/ler.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Axel Schaffland.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/ler.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

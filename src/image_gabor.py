@@ -1,20 +1,7 @@
 #!/usr/bin/env python
-
-'''
-Adapation of:
-gabor_threads.py
-=========
-
-Sample demonstrates:
-- use of multiple Gabor filter convolutions to get Fractalius-like image effect (http://www.redfieldplugins.com/filterFractalius.htm)
-- use of python threading to accelerate the computation
-
-Usage
------
-gabor_threads.py [image filename]
-
-'''
-
+"""Adapation of gabor_threads.py from openCV/samples/python/
+Filters an image with a set of gabor filters. 
+"""
 # Python 2/3 compatibility
 from __future__ import print_function
 
@@ -24,6 +11,17 @@ from multiprocessing.pool import ThreadPool
 
 
 def build_filters():
+    """Builds collection of gabor filters.
+    
+    Parameters
+    ----------
+    
+    Returns
+    -------
+    filters : list
+        List of gabor filters.
+        
+    """
     filters = []
     ksize = 31
     for theta in np.arange(0, np.pi, np.pi / 16):
@@ -34,6 +32,21 @@ def build_filters():
 
 
 def process(img, filters):
+    """Filters image by several gabor filters from a list.
+
+    Parameters
+    ----------
+    img : ndarray
+        To be filtered image.     
+    filters : list
+        Gabor filters.
+
+    Returns
+    -------
+    accum : ndarray
+        Gaborfiltered image.
+
+    """
     accum = np.zeros_like(img)
     for kern in filters:
         fimg = cv2.filter2D(img, cv2.CV_32F, kern)
@@ -41,7 +54,24 @@ def process(img, filters):
     return accum
 
 
-def process_threaded(img, filters, threadn = 8):
+def process_threaded(img, filters, threadn = 4):
+    """Starts threated gabor filtering of image.
+
+    Parameters
+    ----------
+    img : ndarray
+        To be filtered image.     
+    filters : list
+        Gabor filters.
+    threadn : int
+        Number of threads for multiprocessing. (Default value = 4)
+
+    Returns
+    -------
+    accum : ndarray
+        Gaborfiltered image.
+
+    """
     accum = np.zeros_like(img)
     def f(kern):
         return cv2.filter2D(img, cv2.CV_32F, kern)
@@ -52,14 +82,18 @@ def process_threaded(img, filters, threadn = 8):
 
 
 def get_gabor(img):
-    """
-    Returns gabor filtered image of a given image.
+    """Returns gabor filtered image of a given image.
 
-    Args: 
-        img: Image to be filtered.
+    Parameters
+    ----------
+    img : ndarray
+        Image to be filtered.
 
-    Returns:
-        img: The filtered image.
+    Returns
+    -------
+    img : ndarray
+        The filtered image.
+
     """
     filters = build_filters()
     return process_threaded(img, filters)
@@ -67,7 +101,7 @@ def get_gabor(img):
 
 if __name__ == '__main__':
     import sys
-    from common import Timer
+#    from common import Timer
 
     print(__doc__)
     try:
@@ -82,10 +116,12 @@ if __name__ == '__main__':
 
     filters = build_filters()
 
-    with Timer('running single-threaded'):
-        res1 = process(img, filters)
-    with Timer('running multi-threaded'):
-        res2 = process_threaded(img, filters)
+#    with Timer('running single-threaded'):
+#        res1 = process(img, filters)
+#    with Timer('running multi-threaded'):
+#        res2 = process_threaded(img, filters)
+    res1 = process(img, filters)
+    res2 = process_threaded(img, filters)
 
     print('res1 == res2: ', (res1 == res2).all())
     cv2.imshow('img', img)

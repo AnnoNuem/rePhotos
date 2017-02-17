@@ -1,7 +1,9 @@
+#!/usr/bin/env python
+"""Functions to find interesting points near user drawn points as well as
+corresponding points.
+"""
 import cv2
 import numpy as np
-from image_helpers import lce
-from image_helpers import draw_circle
 from image_gabor import get_gabor
 
 # scale factor for subimage size on which template matching is done
@@ -14,18 +16,24 @@ MIN_RECT_SIZE = 5
 
 
 def getPointFromRectangle(img1, point1, point2):
-    """
-    Computes point of interest in a rectangle defined by two given points.
-    The best corner is returned weighted by the distance to the center of 
-    the rectangle.
+    """ Computes point of interest in a rectangle defined by two given points.
+    
+    The best corner is returned weighted by the distance to the center of the rectangle.
+    
+    Parameters
+    ----------
+    img1 : ndarray
+        Image in which corner  point of interest is searched.
+    point1 : tuple
+        First corner of rectangle.
+    point2 : tuple
+        Opposite corner of first corner of rectangle.
+    
+    Returns
+    -------
+    returnPoint : tuple
+        The best point of interest.
 
-    Args:
-        img1: Image in which corner / point of interest is searched.
-        point1: First corner of rectangle.
-        point2: Opposite corner of first corner of rectangle.
-   
-    Returns:
-        returnPoint: The best point of interest.
     """
 
     assert 0 <= point1[1] < img1.shape[0], "Point1 outside image"
@@ -80,21 +88,31 @@ def getPointFromRectangle(img1, point1, point2):
 
 
 def get_and_pre_patch(img, point, size_half):
-    """
-    Get a patch from an image and preprocess it.
+    """Get a patch from an image and preprocess it.
+    
     Algorithm returns biggest possible template limited by the image size. 
 
-    Args:
-        img: Image from which to get the patch.
-        point: Centerpoint of the patch.
-        size_half: Half of the patchsize.
+    Parameters
+    ----------
+    img : ndarray
+        Image from which to get the patch.
+    point: ndarray
+        Centerpoint of the patch.
+    size_half : int
+        Half of the patchsize.
 
-    Returns:
-        patch: Patch as copy.
-        offset: Offset of lowest corner of patch with respect to image origin.
-        deltas: Differences between theorethical template size and practical
-            template size limited by size of the image.
+    Returns
+    -------
+    subimage : ndarray
+        Template as copy.
+    ndarray
+        Offset of lowest corner of patch with respect to image origin.
+    ndarray
+        Differences between theorethical template size and practical
+        template size limited by size of the image.
+
     """
+    
     x1 = max(point[0] - size_half, 0)
     x2 = min(point[0] + size_half, img.shape[1])
     y1 = max(point[1] - size_half, 0)
@@ -109,26 +127,34 @@ def get_and_pre_patch(img, point, size_half):
 
 
 def getCorespondingPoint(img1, img2, point, template_size_s=101):
-    """
-    Search for coresponding point on second image given a point in first image.
+    """Search for coresponding point on second image given a point in first image.
+
     First possible matching corners are searched, then template matching at the
     possible corner locations is done.
 
-    Args:
-        img1: Image in which point was found.
-        img2: Image in which corresponding point is searched.
-        point: Location of found point in img1.
-        template_size_1: Size of scaled template for template matching.
+    Parameters
+    ----------
+    img1 : ndarray
+        Image in which point was found.
+    img2 : ndarray
+        Image in which corresponding point is searched.
+    point : ndarray
+        Location of found point in img1.
+    template_size_1 : int 
+        Size of scaled template for template matching.
 
-    Returns:
-        point: The corresponding point.
+    Returns
+    -------
+    point: ndarray
+        The corresponding point.
+
     """
 
     if not (0 <= point[1] < img1.shape[0]) or\
        not (0 <= point[0] < img1.shape[1]) or\
        not (0 <= point[1] < img2.shape[0]) or\
        not (0 <= point[0] < img2.shape[1]):
-       return None
+        return None
 
     point = np.array(point, dtype=np.int_)
     
@@ -156,20 +182,15 @@ def getCorespondingPoint(img1, img2, point, template_size_s=101):
     subimageF1 = cv2.resize(subimageF1, (0,0), fx=sf, fy=sf)
     corners_s = [corner[0] * sf for corner in corners]
     deltas = np.int_(deltas * sf)
-
-    templateSizeHalf_s = int(templateSizeHalf * sf)  
     weights = np.zeros((corners.shape[0]), dtype=np.float32)
-    patch = np.empty(subimageF1.shape)
     i = 0
-    min_w = np.inf
-    max_w = 0
 
     subimageF2 = cv2.normalize(get_gabor(subimageF2)[...,2], subimageF2, 0, 1,\
         cv2.NORM_MINMAX)
     subimageF1 = cv2.normalize(get_gabor(subimageF1)[...,2], subimageF1, 0, 1,\
         cv2.NORM_MINMAX)
 
-    dif_img = np.ones_like(subimageF1)
+    #dif_img = np.ones_like(subimageF1)
 
     for corner in corners_s:
         xmin = int(corner[0]) - deltas[0]
@@ -190,34 +211,48 @@ def getCorespondingPoint(img1, img2, point, template_size_s=101):
 
 
 def getPFromRectangleACorespondingP(img1, img2, point1, point2):
-    """
-    Wrapper for getPointFromRectangle and getCorespondingPoint.
+    """Wrapper for getPointFromRectangle and getCorespondingPoint.
 
-    Args:
-        img1: Image in which point is searched.
-        img2: Image in which corresponding point is searched.
-        point1: First corner of rectangle in which point is searched.
-        point2: Second corner of rectangle in which point is searched.
+    Arguments
+    ---------
+    img1 : ndarray
+        Image in which point is searched.
+    img2 : ndarray
+        Image in which corresponding point is searched.
+    point1 : tuple
+        First corner of rectangle in which point is searched.
+    point2 : tuple
+        Second corner of rectangle in which point is searched.
     
-    Returns:
-        returnPoint1: Found point.
-        returnPoint2: Corresponding point.
+    Returns
+    -------
+    returnPoint1 : tuple
+        Found point.
+    returnPoint2 :  tuple
+        Corresponding point.
+
     """
     returnPoint1 = getPointFromRectangle(img1, point1, point2)
     returnPoint2 = getCorespondingPoint(img1, img2, returnPoint1)
+    returnPoint2 = (returnPoint2[0], returnPoint2[1])
     return returnPoint1, returnPoint2
 
 
 def getPointFromPoint(img, point):
-    """
-    Returns most fitting point near a given point in an image.
+    """Returns most fitting point near a given point in an image.
 
-    Args:
-        img: Image in which point is searched.
-        point: Point near which the best point/corner is searched.
+    Parameters
+    ----------
+    img : ndarray
+        Image in which point is searched.
+    point : tuple
+        Point near which the best point/corner is searched.
     
-    Returns:
-        point: Best point.
+    Returns
+    -------
+    point : tuple
+        Best point.
+
     """
     rect_size_half = int(((img.shape[0] + img.shape[1]) / 2 ) * 0.01)
     

@@ -4,7 +4,7 @@ __author__ = 'Adapted from Rich Li by Axel Schaffland'
 
 import os.path
 import ctypes
-from ctypes import c_double, c_size_t, byref, pointer, POINTER
+from ctypes import c_size_t
 import numpy as np
 from numpy.ctypeslib import ndpointer
 
@@ -31,7 +31,7 @@ spqrlib.qr_solve.argtypes = [
 spqrlib.qr_solve.restype = int # R_nnz 
 
 def qr_solve(A_data, A_row, A_col, A_nnz, A_m, A_n, b_data):
-    """ Python wrapper to qr_solve """
+    """Python wrapper to qr_solve.<"""
     if len(A_data) != len(A_row) != len(A_col) != A_nnz:
         raise TypeError("A_data, A_row, A_col, A_nnz must agree")
     if len(b_data) != A_m:
@@ -60,6 +60,7 @@ def qr_solve(A_data, A_row, A_col, A_nnz, A_m, A_n, b_data):
     return C_data, C_i, C_j, r_data[0:R_nnz], r_i[0:R_nnz], r_j[0:R_nnz]
 
 def main():
+    """ """
     print("Testing qr_solve")
     A_data = np.array([2, 9, 25], dtype=np.float64)
     A_row = np.array([0, 1, 2])

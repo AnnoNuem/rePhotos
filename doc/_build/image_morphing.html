@@ -1,0 +1,171 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>image_morphing module &#8212; rePhotosImageAlignment 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-image_morphing">
+<span id="image-morphing-module"></span><h1>image_morphing module<a class="headerlink" href="#module-image_morphing" title="Permalink to this headline">¶</a></h1>
+<p>Functions to moprh an image with src and dst quad mesh. Corners of the two
+quad meshes are mapped to each other, area inbetween is interpolated witch
+perspective transform.</p>
+<dl class="function">
+<dt id="image_morphing.morph">
+<code class="descclassname">image_morphing.</code><code class="descname">morph</code><span class="sig-paren">(</span><em>src_img</em>, <em>points_old</em>, <em>points_new</em>, <em>quads</em>, <em>grid_size</em>, <em>processes=1</em><span class="sig-paren">)</span><a class="headerlink" href="#image_morphing.morph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns morphed image given points of old and new grid and quadindices.
+Sourceimage is divided in stripes which are morphed parallel.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>src_img</strong> (<em>ndarray</em>) &#8211; The image which will be morphed.</li>
+<li><strong>points_old</strong> (<em>ndarray</em>) &#8211; Positions of grid points in src_img.</li>
+<li><strong>points_new</strong> (<em>ndarray</em>) &#8211; Positions to where the old points are moved.</li>
+<li><strong>quads</strong> (<em>ndarray</em>) &#8211; List of quad indices.</li>
+<li><strong>grid_size</strong> (<em>int</em>) &#8211; Distance between grid lines.</li>
+<li><strong>processes</strong> (<em>int</em>) &#8211; Number of multiprocessing.Processes which are spawend. (Default value = 1)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>img_morh</strong> &#8211; The morphed src_img.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_morphing.morph_process">
+<code class="descclassname">image_morphing.</code><code class="descname">morph_process</code><span class="sig-paren">(</span><em>src_img</em>, <em>s_x_min</em>, <em>shared_dst</em>, <em>dst_shape</em>, <em>points_new</em>, <em>points_old</em>, <em>quads</em><span class="sig-paren">)</span><a class="headerlink" href="#image_morphing.morph_process" title="Permalink to this definition">¶</a></dt>
+<dd><p>Multiprocessing process to morph image stripes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>src_img</strong> (<em>ndarray</em>) &#8211; Stripe of the original image which is to be morphed.</li>
+<li><strong>s_x_min</strong> (<em>int64</em>) &#8211; Offset of image stripe. Used to determine where to add stripe
+in shared_dst.</li>
+<li><strong>shared_dst</strong> (<em>SynchronizedArray</em>) &#8211; Shared destination image in which morphed image is saved.</li>
+<li><strong>dst_shape</strong> (<em>tuple</em>) &#8211; Size of the destination image.</li>
+<li><strong>points_new</strong> (<em>ndarray</em>) &#8211; Corner locations of the quad grid in the destination image.</li>
+<li><strong>points_old</strong> (<em>ndarray</em>) &#8211; Corner locations of the quad grid in the source image.</li>
+<li><strong>quads</strong> (<em>ndarray</em>) &#8211; Indices of corners of the quads constituiting the mesh.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_morphing.to_numpy_array">
+<code class="descclassname">image_morphing.</code><code class="descname">to_numpy_array</code><span class="sig-paren">(</span><em>mp_arr</em><span class="sig-paren">)</span><a class="headerlink" href="#image_morphing.to_numpy_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create numpy array from multiprocessing array.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>mp_arr</strong> (<em>SynchronizedArray</em>) &#8211; Multiprocessing input array.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Numpy output array.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/image_morphing.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Axel Schaffland.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/image_morphing.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

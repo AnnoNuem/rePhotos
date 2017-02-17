@@ -1,0 +1,518 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>image_helpers module &#8212; rePhotosImageAlignment 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-image_helpers">
+<span id="image-helpers-module"></span><h1>image_helpers module<a class="headerlink" href="#module-image_helpers" title="Permalink to this headline">¶</a></h1>
+<p>Collections of image processing function used throughout the project.</p>
+<dl class="function">
+<dt id="image_helpers.adaptive_thresh">
+<code class="descclassname">image_helpers.</code><code class="descname">adaptive_thresh</code><span class="sig-paren">(</span><em>img</em><span class="sig-paren">)</span><a class="headerlink" href="#image_helpers.adaptive_thresh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thresholds given image adaptive.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>img</strong> (<em>ndarray</em>) &#8211; Image to be thresholded.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Thresholded grey image.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_helpers.do_scale">
+<code class="descclassname">image_helpers.</code><code class="descname">do_scale</code><span class="sig-paren">(</span><em>img1</em>, <em>img2</em>, <em>lines_img1</em>, <em>lines_img2</em>, <em>points_img1</em>, <em>points_img2</em>, <em>scale_img1</em>, <em>scale_img2</em>, <em>scale_factor</em><span class="sig-paren">)</span><a class="headerlink" href="#image_helpers.do_scale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scales an image, line and point pair.
+Uses a scale factor per image and one global factor.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>img1</strong> (<em>ndarray</em>) &#8211; First image to be scaled.</li>
+<li><strong>img2</strong> (<em>ndarray</em>) &#8211; Second image to be scaled.</li>
+<li><strong>lines_img1</strong> (<em>list</em>) &#8211; First list of lines to be scaled.</li>
+<li><strong>lines_img2</strong> (<em>list</em>) &#8211; Second list of lines to be scaled.</li>
+<li><strong>points_img1</strong> (<em>list</em>) &#8211; First list of points to be scaled.</li>
+<li><strong>points_img2</strong> (<em>list</em>) &#8211; Second list of points to be scaled.</li>
+<li><strong>scale_img1</strong> (<em>float</em>) &#8211; Scale factor for first image/lines/points.</li>
+<li><strong>scale_img2</strong> (<em>float</em>) &#8211; Scale factor for second image/lines/points.</li>
+<li><strong>scale_factor</strong> (<em>float</em>) &#8211; global scale factor.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>img1</strong> (<em>ndarray</em>) &#8211; Scaled first image.</li>
+<li><strong>img2</strong> (<em>ndarray</em>) &#8211; Scaled second image.</li>
+<li><strong>lines_img1</strong> (<em>list</em>) &#8211; Scaled first list of lines.</li>
+<li><strong>lines_img2</strong> (<em>list</em>) &#8211; Scaled second list of lines.</li>
+<li><strong>points_img1</strong> (<em>list</em>) &#8211; Scaled first list of points.</li>
+<li><strong>points_img2</strong> (<em>list</em>) &#8211; Scaled second list of points.</li>
+<li><strong>scale_img1</strong> (<em>float</em>) &#8211; Scale factor of first image times global scale factor.</li>
+<li><strong>scale_img2</strong> (<em>float</em>) &#8211; Scale factor of second image times global scale factor.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_helpers.draw_circle">
+<code class="descclassname">image_helpers.</code><code class="descname">draw_circle</code><span class="sig-paren">(</span><em>img</em>, <em>center</em>, <em>color=(255</em>, <em>255</em>, <em>255)</em><span class="sig-paren">)</span><a class="headerlink" href="#image_helpers.draw_circle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws circle on given image.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>img</strong> (<em>ndarray</em>) &#8211; Image to be drawn on.</li>
+<li><strong>center</strong> (<em>tuple</em>) &#8211; Center of circle</li>
+<li><strong>color</strong> (<em>tuple</em>) &#8211; Color of the line. If no color given line is white.
+(Default value = (255,255,255))</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_helpers.draw_frame">
+<code class="descclassname">image_helpers.</code><code class="descname">draw_frame</code><span class="sig-paren">(</span><em>img</em>, <em>x_min</em>, <em>x_max</em>, <em>y_min</em>, <em>y_max</em><span class="sig-paren">)</span><a class="headerlink" href="#image_helpers.draw_frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws a frame on a given image.
+Used to display cropping lines</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>img</strong> (<em>ndarray</em>) &#8211; Image on which frame is drawn</li>
+<li><strong>x_min</strong> (<em>int</em>) &#8211; X coordinate of smaller point of rectangle</li>
+<li><strong>y_min</strong> (<em>int</em>) &#8211; Y coordinate of smaller point of rectangle</li>
+<li><strong>x_max</strong> (<em>int</em>) &#8211; X coordinate of bigger point of rectangle</li>
+<li><strong>y_max</strong> (<em>int</em>) &#8211; Y coordinate of bigger point of rectangle</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_helpers.draw_line">
+<code class="descclassname">image_helpers.</code><code class="descname">draw_line</code><span class="sig-paren">(</span><em>img</em>, <em>start</em>, <em>end</em>, <em>color=(255</em>, <em>255</em>, <em>255)</em>, <em>l_number=-1</em><span class="sig-paren">)</span><a class="headerlink" href="#image_helpers.draw_line" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws line and line number on given image.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>img</strong> (<em>ndarray</em>) &#8211; Image to be drawn on.</li>
+<li><strong>start</strong> (<em>tuple</em>) &#8211; Startpoint of line.</li>
+<li><strong>end</strong> (<em>tuple</em>) &#8211; Endpoint of line.</li>
+<li><strong>color</strong> (<em>tuple</em>) &#8211; Color of the line. If no color given line is white.
+(Default value = (255,255,255))</li>
+<li><strong>l_number</strong> (<em>int</em>) &#8211; Linenumber. If no number given only line is drawn.
+(Default value = -1)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_helpers.draw_rectangle">
+<code class="descclassname">image_helpers.</code><code class="descname">draw_rectangle</code><span class="sig-paren">(</span><em>img</em>, <em>start</em>, <em>end</em>, <em>color=(255</em>, <em>255</em>, <em>255)</em><span class="sig-paren">)</span><a class="headerlink" href="#image_helpers.draw_rectangle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws rectangle on given image.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>img</strong> (<em>ndarray</em>) &#8211; Image to be drawn on.</li>
+<li><strong>start</strong> (<em>tuple</em>) &#8211; Startpoint of rectangle.</li>
+<li><strong>end</strong> (<em>tuple</em>) &#8211; Endpoint of rectangle.</li>
+<li><strong>color</strong> (<em>tuple</em>) &#8211; Color of the line. If no color given line is white.
+(Default value = (255,255,255)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_helpers.get_crop_idx">
+<code class="descclassname">image_helpers.</code><code class="descname">get_crop_idx</code><span class="sig-paren">(</span><em>crop_img</em>, <em>scale=400</em><span class="sig-paren">)</span><a class="headerlink" href="#image_helpers.get_crop_idx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes crop indices based on alpha channel.
+Searches biggest white rectangle in alpha channel.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>crop_img</strong> (<em>ndarray</em>) &#8211; to be cropped image with alpha channel</li>
+<li><strong>scale</strong> (<em>int</em>) &#8211; Downsample image by img size / scale to speed up (Default value = 400)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Cropindices [x_min, y_min, x_max, y_max]</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_helpers.lce">
+<code class="descclassname">image_helpers.</code><code class="descname">lce</code><span class="sig-paren">(</span><em>img</em>, <em>kernel=11</em>, <em>amount=0.5</em><span class="sig-paren">)</span><a class="headerlink" href="#image_helpers.lce" title="Permalink to this definition">¶</a></dt>
+<dd><p>Local Contrast Enhancement by unsharp mask.
+From the value channel of the image in hsv color space a gaussian blured
+version is subtracted.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>img</strong> (<em>ndarray</em>) &#8211; BGR-Image which is enhanced</li>
+<li><strong>kernel</strong> (<em>int</em>) &#8211; Size of the gaussian kernel. (Default value = 11)</li>
+<li><strong>amount</strong> (<em>float</em>) &#8211; Strength of the contrast enhancment. (Default value = 0.5)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>img_bgr</strong> &#8211; Contrast enhanced np.float32 BGR-Image, values between 0, 255.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_helpers.line_intersect">
+<code class="descclassname">image_helpers.</code><code class="descname">line_intersect</code><span class="sig-paren">(</span><em>a1</em>, <em>a2</em>, <em>b1</em>, <em>b2</em><span class="sig-paren">)</span><a class="headerlink" href="#image_helpers.line_intersect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute intersection of two lines.
+All input points have to be float.
+Returns startpoint of second line if lines are parallel.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>a1</strong> (<em>ndarray</em>) &#8211; Startpoint first line.</li>
+<li><strong>a2</strong> (<em>ndarray</em>) &#8211; Endpoint first line.</li>
+<li><strong>b1</strong> (<em>ndarray</em>) &#8211; Startpoint second line.</li>
+<li><strong>b2</strong> (<em>ndarray</em>) &#8211; Endpoint second line.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">intersection point.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_helpers.pint">
+<code class="descclassname">image_helpers.</code><code class="descname">pint</code><span class="sig-paren">(</span><em>p</em><span class="sig-paren">)</span><a class="headerlink" href="#image_helpers.pint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="image_helpers.scale">
+<code class="descclassname">image_helpers.</code><code class="descname">scale</code><span class="sig-paren">(</span><em>img1</em>, <em>img2</em>, <em>lines_img1</em>, <em>lines_img2</em>, <em>points_img1</em>, <em>points_img2</em>, <em>scale_factor=1</em><span class="sig-paren">)</span><a class="headerlink" href="#image_helpers.scale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upscales the smaller image and coresponding lines/points of two given images.
+If scale factor is given all entities are scaled by this factor.
+Aspect ratio is preserved, blank space is filled with zeros.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>img1</strong> (<em>ndarray</em>) &#8211; Image 1.</li>
+<li><strong>img2</strong> (<em>ndarray</em>) &#8211; Image 2.</li>
+<li><strong>lines_img_1</strong> (<em>list</em>) &#8211; Lines in image 1.</li>
+<li><strong>lines_img_2</strong> (<em>list</em>) &#8211; Lines in image 2.</li>
+<li><strong>points_img_1</strong> (<em>list</em>) &#8211; Points in image 1.</li>
+<li><strong>points_img_2</strong> (<em>list</em>) &#8211; Points in image 2.</li>
+<li><strong>scale_factor</strong> (<em>int</em>) &#8211; Scaling factor for image/line/point pair.
+(Default value = 1)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>img1</strong> (<em>ndarray</em>) &#8211; If img1 is bigger returns img1 else scaled img1.</li>
+<li><strong>img2</strong> (<em>ndarray</em>) &#8211; If img2 is bigger returns img2 else scaled img2.</li>
+<li><strong>lines_img_1</strong> (<em>list</em>) &#8211; Lines in image 1, scaled if img1 is scaled.</li>
+<li><strong>lines_img_2</strong> (<em>list</em>) &#8211; Lines in image 2, scaled if img2 is scaled.</li>
+<li><strong>points_img_1</strong> (<em>list</em>) &#8211; Points in image 1, scaled if img1 is scaled.</li>
+<li><strong>points_img_2</strong> (<em>list</em>) &#8211; Points in image 2, scaled if img2 is scaled.</li>
+<li><strong>scale_factor_img1</strong> (<em>float</em>) &#8211; Scale factor by which first image/lines/points were
+scaled.</li>
+<li><strong>scale_factor_img1</strong> (<em>float</em>) &#8211; Scale factor by which second image/lines/points were
+scaled.</li>
+<li><strong>x_max</strong> (<em>int</em>) &#8211; After x_max one image is padded with zeros in x direction.</li>
+<li><strong>y_max</strong> (<em>int</em>) &#8211; After y_max one image is padded with zeros in y direction.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_helpers.scale_image_lines_points">
+<code class="descclassname">image_helpers.</code><code class="descname">scale_image_lines_points</code><span class="sig-paren">(</span><em>img</em>, <em>lines</em>, <em>points</em>, <em>scale_factor</em><span class="sig-paren">)</span><a class="headerlink" href="#image_helpers.scale_image_lines_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scales an image, points and lines in this image by a given scale factor.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>img</strong> (<em>ndarray</em>) &#8211; To be scaled image.</li>
+<li><strong>lines</strong> (<em>list</em>) &#8211; To be scaled lines.</li>
+<li><strong>points</strong> (<em>list</em>) &#8211; To be scaled points.</li>
+<li><strong>scale_factor</strong> (<em>int</em>) &#8211; Factor by which image, lines and points are scaled.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>img</strong> (<em>ndarray</em>) &#8211; Scaled image.</li>
+<li><strong>lines</strong> (<em>list</em>) &#8211; Scaled lines.</li>
+<li><strong>points</strong> (<em>list</em>) &#8211; Scaled points.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_helpers.set_verbose">
+<code class="descclassname">image_helpers.</code><code class="descname">set_verbose</code><span class="sig-paren">(</span><em>verbose</em><span class="sig-paren">)</span><a class="headerlink" href="#image_helpers.set_verbose" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the global verbosity function.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>verbose</strong> (<em>bool</em>) &#8211; If true verbose output, false no verbose output.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_helpers.show_image">
+<code class="descclassname">image_helpers.</code><code class="descname">show_image</code><span class="sig-paren">(</span><em>img</em>, <em>name='img'</em>, <em>x=1000</em>, <em>y=1000</em><span class="sig-paren">)</span><a class="headerlink" href="#image_helpers.show_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resizes image and displays it in window with given name.
+Constraints both sides of image by given length constraints.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>img</strong> (<em>ndarray</em>) &#8211; Image to be displayed.</li>
+<li><strong>name</strong> (<em>string</em>) &#8211; Name of openCV window in which image is displayed. (Default value = &#8216;img&#8217;)</li>
+<li><strong>x</strong> (<em>int</em>) &#8211; Max size of image in x direction. (Default value = 1000)</li>
+<li><strong>y</strong> (<em>int</em>) &#8211; Max size of image in y direction. (Default value = 1000)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>img_d</strong> (<em>ndarray</em>) &#8211; Scaled image.</li>
+<li><strong>scale</strong> (<em>float</em>) &#8211; Scale by which the image was scaled.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_helpers.statistic_canny">
+<code class="descclassname">image_helpers.</code><code class="descname">statistic_canny</code><span class="sig-paren">(</span><em>img</em>, <em>sigma=0.33</em><span class="sig-paren">)</span><a class="headerlink" href="#image_helpers.statistic_canny" title="Permalink to this definition">¶</a></dt>
+<dd><p>Edge detection on color image depending on image properties.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>img</strong> (<em>ndarray</em>) &#8211; Image on which to detect edges.</li>
+<li><strong>sigma</strong> (<em>float</em>) &#8211; Standard deviation. (Default value = 0.33)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Edge image.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_helpers.unsharp_mask">
+<code class="descclassname">image_helpers.</code><code class="descname">unsharp_mask</code><span class="sig-paren">(</span><em>img</em>, <em>sigma=1</em>, <em>amount=0.8</em><span class="sig-paren">)</span><a class="headerlink" href="#image_helpers.unsharp_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sharpends given image via unsharp mask.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>img</strong> (<em>ndarray</em>) &#8211; Image to be sharpened.</li>
+<li><strong>sigma</strong> (<em>float</em>) &#8211; Sigma of Gaussian kernel for bluring. (Default value = 1)</li>
+<li><strong>amount</strong> (<em>float</em>) &#8211; Amount of sharpening. (Default value = 0.8)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>img</strong> &#8211; Sharpened Image.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_helpers.vprint">
+<code class="descclassname">image_helpers.</code><code class="descname">vprint</code><span class="sig-paren">(</span><em>*a</em>, <em>**k</em><span class="sig-paren">)</span><a class="headerlink" href="#image_helpers.vprint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="image_helpers.weighted_average_point">
+<code class="descclassname">image_helpers.</code><code class="descname">weighted_average_point</code><span class="sig-paren">(</span><em>point1</em>, <em>point2</em>, <em>alpha</em><span class="sig-paren">)</span><a class="headerlink" href="#image_helpers.weighted_average_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the average point between two points weighted by alpha.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>point1</strong> (<em>tuple</em>) &#8211; First point multiplied by 1 - alpha</li>
+<li><strong>point2</strong> (<em>tuple</em>) &#8211; Second point multiplied by alpha</li>
+<li><strong>alpha</strong> (<em>float</em>) &#8211; The weight.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Weighted point</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tuple</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/image_helpers.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Axel Schaffland.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/image_helpers.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

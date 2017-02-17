@@ -1,0 +1,240 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>image_aaap module &#8212; rePhotosImageAlignment 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-image_aaap">
+<span id="image-aaap-module"></span><h1>image_aaap module<a class="headerlink" href="#module-image_aaap" title="Permalink to this headline">¶</a></h1>
+<p>Functions for As-Affine-As-Possible Warping as described in
+&#8216;Generalized As-Similar-As-Possible Warping with
+Applications in Digital Photography&#8217; by Chen and Gotsman.</p>
+<dl class="function">
+<dt id="image_aaap.bilinear_point_in_quad_mesh">
+<code class="descclassname">image_aaap.</code><code class="descname">bilinear_point_in_quad_mesh</code><span class="sig-paren">(</span><em>pts</em>, <em>X</em>, <em>P</em>, <em>qmSize</em><span class="sig-paren">)</span><a class="headerlink" href="#image_aaap.bilinear_point_in_quad_mesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Express points in a quad mesh as the convex combination of there
+containing quads, using bilinear weights
+A = bilinearPointInQuadMesh(pts, X, P, qmSize)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>pts</strong> (<em>ndarray</em>) &#8211; Points that are to be expressed as bilinear combinations of
+the quadmesh vertices</li>
+<li><strong>X</strong> (<em>ndarray</em>) &#8211; The vertices of the quadmesh</li>
+<li><strong>P</strong> (<em>ndarray</em>) &#8211; The connectivy of the quadmesh</li>
+<li><strong>qmSize</strong> (<em>tuple</em>) &#8211; Size (rows/columns of quads) of the quadmesh, that is
+consctructed to cover some image plane.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>Ascr</strong> &#8211; A matrix that gives the weights for the points as combinations
+of the quadmesh vertices, i.e. A*X = pts.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">csc_matrix</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_aaap.build_regular_mesh">
+<code class="descclassname">image_aaap.</code><code class="descname">build_regular_mesh</code><span class="sig-paren">(</span><em>width</em>, <em>height</em>, <em>grid_size</em><span class="sig-paren">)</span><a class="headerlink" href="#image_aaap.build_regular_mesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates quadratic meshgrid of given width, height and distance between
+grid points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>width</strong> (<em>int</em>) &#8211; Width of meshgrid.</li>
+<li><strong>height</strong> (<em>int</em>) &#8211; Height of meshgrid.</li>
+<li><strong>grid_size</strong> (<em>int</em>) &#8211; Distance between grid lines.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>grid_points</strong> (<em>ndarray</em>) &#8211; Array of points of the grid</li>
+<li><strong>quads</strong> (<em>ndarray</em>) &#8211; quads spanning the grid</li>
+<li><strong>m</strong> (<em>int</em>) &#8211; dimension of the grid</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_aaap.construct_mesh_energy">
+<code class="descclassname">image_aaap.</code><code class="descname">construct_mesh_energy</code><span class="sig-paren">(</span><em>grid_points</em>, <em>quads</em>, <em>deform_energy_weights</em><span class="sig-paren">)</span><a class="headerlink" href="#image_aaap.construct_mesh_energy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create quadratic energy matrix for aaap deformation of quad mesh.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>grid_points</strong> (<em>ndarray</em>) &#8211; Array of points spanning the mesh.</li>
+<li><strong>quads</strong> (<em>ndarray</em>) &#8211; Index of grid points yielding quadrangulation of mesh.</li>
+<li><strong>deform_energy_weights</strong> (<em>ndarray</em>) &#8211; Weighting affinity of warping.
+[alpha, beta, 0,0]. See paper for details.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>L</strong> &#8211; Sparse matrixs coresponding to aaap quadratic energy.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">csc_matrix</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_aaap.deform_aaap">
+<code class="descclassname">image_aaap.</code><code class="descname">deform_aaap</code><span class="sig-paren">(</span><em>x</em>, <em>Asrc</em>, <em>pdst</em>, <em>L</em>, <em>line_constraint_type</em><span class="sig-paren">)</span><a class="headerlink" href="#image_aaap.deform_aaap" title="Permalink to this definition">¶</a></dt>
+<dd><p>AAAP/ASAP deform a quadmesh with line constraints</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<em>ndarray</em>) &#8211; Geometry of the original quadmesh.</li>
+<li><strong>Asrc</strong> (<em>csc_matrix</em>) &#8211; Matrix that express lines (sampled points on lines) as linear
+combinations of x.</li>
+<li><strong>pdst</strong> (<em>list</em>) &#8211; Target positions of the lines (sampled points on them), each
+cell element corresponds to one line.</li>
+<li><strong>L</strong> (<em>csc_matrix</em>) &#8211; AAAP/ASAP energy of the quadmesh.</li>
+<li><strong>line_constraint_type</strong> (<em>int</em>) &#8211; Constraint type of each line.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>y</strong> &#8211; Geometry of the deformed quadmesh.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="image_aaap.sample_lines">
+<code class="descclassname">image_aaap.</code><code class="descname">sample_lines</code><span class="sig-paren">(</span><em>src_lines</em>, <em>dst_lines</em>, <em>sample_rate</em><span class="sig-paren">)</span><a class="headerlink" href="#image_aaap.sample_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>Samples points from line pairs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>src_lines</strong> (<em>list</em>) &#8211; List of lines in source image.</li>
+<li><strong>dst_lines</strong> (<em>list</em>) &#8211; List of lines in destination image.</li>
+<li><strong>sample_rate</strong> (<em>float</em>) &#8211; Distance between sampled line points.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>p1</strong> (<em>ndarray</em>) &#8211; List of points in src_img.</li>
+<li><strong>p2</strong> (<em>list</em>) &#8211; List of points in src_img.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/image_aaap.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Axel Schaffland.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/image_aaap.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

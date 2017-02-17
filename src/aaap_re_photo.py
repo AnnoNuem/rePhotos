@@ -1,3 +1,15 @@
+#!/usr/bin/env python
+"""Mainscript for image alignment in the re.photos project.
+Two images which names are given as parameters at program start are loaded and
+scaled to the same size. In a two stage approach the user aligns the images. In
+the first stage the user draws rectangles on either of the two images. A 
+probable corner point inside the rectangle meant by the user is automatically 
+selected as well as a corresponding point in the second image. Alternatively the
+user can draw points directly. With four pointpairs a perspective transform is 
+performed aligning the images roughly. In the second stage the user draws lines 
+instead of point and as-affine-as-possible warping is used to tune the image 
+alignment. After that the images are cropped to the maximal possible size.
+"""
 from __future__ import print_function
 import argparse
 import os
@@ -8,7 +20,6 @@ import sys
 import image_lines as i_l
 import image_io as i_io
 import image_helpers as i_h
-from time import sleep
 from numpy.linalg import inv
 from image_aaap_main import aaap_morph
 from image_sac import getPointFromPoint
@@ -28,6 +39,56 @@ number_of_points = 0
 def onMouse_stage_one(event, x, y, flags,
     (img_d, img_d_clean, img_orig, scale, points, win_name, color,
      img2_d, img2_d_clean, img2_orig, scale2, points2, win_name2, color2)):
+    """Mousecallback function for first stage user input.
+    User input is drawn on resized images. Search for point and corresponding
+    point is done on original sized images. 
+    Custom parameters are given as one tuple.
+
+    Parameters
+    ----------
+    event : int
+        Mouse event. 
+    x : int
+        X-coordinate of mouse pointer.
+    y : int
+        Y-coordinate of mouse pointer.
+    flags : int
+        Type of mouse event.
+    img_d : ndarray
+        Resized image on which points are drawn.
+    img_d_clean : ndarray
+        Resized image to reset img_d if points are removed.
+    img_orig : ndarray
+        Unscaled image in which point is searched.
+    scale : float
+        Scale of img_d with respect to imig_orig.
+    points : list
+        List of points.
+    win_name : string
+        Name of window in which image is shown.
+    color : tuple
+        Color of drawn points.
+    img2_d : ndarray
+        Resized image for corresponding point on which points are drawn.
+    img2_d_clean : ndarray
+        Resized image for corresponding point to reset img_d if points 
+        are removed.
+    img2_orig : ndarray
+        Unscaled image for corresponding point in which corresponding
+        point is searched.
+    scale2 : float
+        Scale of img2_d with respect to imig2_orig.
+    points2 : list
+        List of corresponding points.
+    win_name2 : string
+        Name of window in which image2 is shown.
+    color2 : tuple
+        Color of corresponding points.
+
+    Returns
+    -------
+
+    """
     global drag_start, number_of_points
 
     img_tmp = np.copy(img_d)
@@ -68,6 +129,56 @@ def onMouse_stage_one(event, x, y, flags,
 def onMouse_stage_two(event, x, y, flags, 
         (img_d, img_d_clean, img_orig, scale, lines, win_name, color,
          img2_d, img2_d_clean, img2_orig, scale2, lines2, win_name2, color2)):
+    """Mousecallback function for second stage user input.
+    User input is drawn on resized images. Search for line and corresponding
+    line is done on original sized images. 
+    Custom parameters are given as one tuple.
+    
+    Parameters
+    ----------
+    event : int
+        Mouse event. 
+    x : int
+        X-coordinate of mouse pointer.
+    y : int
+        Y-coordinate of mouse pointer.
+    flags : int
+        Type of mouse event.
+    img_d : ndarray
+        Resized image on which lines are drawn.
+    img_d_clean : ndarray
+        Resized image to reset img_d if lines are removed.
+    img_orig : ndarray
+        Unscaled image in which lines is searched.
+    scale : float
+        Scale of img_d with respect to imig_orig.
+    lines : list
+        List of lines.
+    win_name : string
+        Name of window in which image is shown.
+    color : tuple
+        Color of drawn lines.
+    img2_d : ndarray
+        Resized image for corresponding lines on which lines are drawn.
+    img2_d_clean : ndarray
+        Resized image for corresponding lines to reset img_d if lines 
+        are removed.
+    img2_orig : ndarray
+        Unscaled image for corresponding line in which corresponding
+        line is searched.
+    scale2 : float
+        Scale of img2_d with respect to imig2_orig.
+    points2 : list
+        List of corresponding lines.
+    win_name2 : string
+        Name of window in which image2 is shown.
+    color2 : tuple
+        Color of corresponding lines.
+
+    Returns
+    -------
+
+    """
     global drag_start, point_stage, number_of_points
 
     img_d_tmp = np.copy(img_d)
@@ -135,6 +246,33 @@ def onMouse_stage_two(event, x, y, flags,
 
 
 def init():
+    """ Processes command line parameters, reads images, lines and points.
+    
+    Parameters
+    ----------
+    
+    Returns
+    -------
+    src_img : ndarray
+        Image which is warped.
+    dst_img : ndarray
+        Image to which the src_img is warped.
+    src_lines : list
+        List of lines in src_img read from line file. If line file not found or
+        command line parameter *--line_file* not given an empty list is returned.
+    dst_lines : list
+        List of lines in dst_img read from line file. If line file not found or
+        command line parameter *--line_file* not given an empty list is returned.
+    src_points : list
+        List of points in src_img read from point file. If point file not found or
+        command line parameter *--point_file* not given an empty list is returned.
+    dst_points : list
+        List of points in dst_img read from point file. If point file not found or
+        command line parameter *-point_file* not given an empty list is returned.
+    args : Namespace
+        Command line arguments.
+
+    """
     # Parse Arguments
     parser = argparse.ArgumentParser()
 
@@ -152,7 +290,7 @@ def init():
                          default=1, type=int)
     parser.add_argument("-sg", "--show_grid", help="draw aaap warp grid on\
                         result images", action="store_true")
-                         #TODO make float scale avaiable 
+    #TODO make float scale avaiable 
     parser.add_argument("-sui", "--show_user_input", help="Show user drawn points\
                         and lines in result images", action="store_true")
     parser.add_argument("-v", "--verbose", help="increase output verbosity",
@@ -202,6 +340,48 @@ def init():
 
 
 def stage_one(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, args):
+    """First stage. User drawn points are used for perspective alignment.
+
+    Parameters
+    ----------
+    src_img : ndarray
+        Image on which aaap-warping will be later performed.
+    dst_img : ndarray
+        Image which is only perspective transformed.
+    src_points : list
+        Points in src_img.
+    dst_points : list
+        Points in dst_img. 
+    src_lines : list
+        Lines in src_img.
+    dst_lines : list
+        Lines in dst_img
+    args : Namespace
+        Parameters.
+
+    Returns
+    -------
+    src_img : ndarray
+        Perspective transformed src_img.
+    dst_img : ndarray
+        Perspective transformed dst_img.
+    src_points : list
+        Perspective transformed points in src_img.
+    dst_points : list
+        Perspective transformed points in dst_img.
+    src_lines : list
+        Perspective transformed lines in src_img.
+    dst_lines : list
+        Perspective transformed lines in dst_img.
+    src_transform_matrix : ndarray
+        Perspective transform matrix of src image, lines and points.
+    dst_transform_matrix : ndarray
+        Perspective transform matrix of dst image, lines and points.
+    stage_one_success : bool
+        True if four point pairs where avaiable to perform perspective
+        transform of src and dst images, lines and points, else False.
+
+    """
     print("First Stage: Draw four points for initial perspective transform.\
            \nDrawing less than four points omits the first stage.\
            \nLMB: Draw point.\
@@ -323,6 +503,37 @@ def stage_one(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, ar
 
 def stage_two(src_img, dst_img, src_points, dst_points, src_lines, dst_lines, 
               src_transform_matrix, dst_transform_matrix, stage_one_success, args):
+    """Second stage. User drawn lines are used for aaap-warping.
+
+    Parameters
+    ----------
+    src_img : ndarray
+        Image on which aaap-warping will be later performed.
+    dst_img : ndarray
+        Image to which src_img shall be warped.
+    src_points : list
+        Points in src_img.
+    dst_points : list
+        Points in dst_img. 
+    src_lines : list
+        Lines in src_img.
+    dst_lines : list
+        Lines in dst_img
+    src_transform_matrix : ndarray
+        Perspective transform matrix of src image, lines and points
+        from first stage.
+    dst_transform_matrix : ndarray
+        Perspective transform matrix of dst image, lines and points
+        from first stage.
+    stage_one_success : bool
+        True if first stage was successful, else False.
+    args : Namespace
+        Parameters.
+
+    Returns
+    -------
+    
+    """
     print("Second Stage: Draw lines for fine grain aaap warping.\
           \nDrawing no line omits the second stage.\
           \nLMB: Draw Line\
@@ -439,6 +650,7 @@ def stage_two(src_img, dst_img, src_points, dst_points, src_lines, dst_lines,
 
     
 def main():
+    """First function to be called. Initializes programm and switches stages."""
     global point_stage, number_of_points
 
     # Initialize
@@ -456,11 +668,8 @@ def main():
                               dst_img.shape[1],1), dtype=np.float32)], axis=2)
 
     src_img, dst_img, src_lines, dst_lines, src_points, dst_points,\
-        args.src_scale, args.dst_scale, x_max, y_max = i_h.scale(src_img, dst_img, 
+        args.src_scale, args.dst_scale, _, _ = i_h.scale(src_img, dst_img, 
             src_lines, dst_lines, src_points, dst_points, args.scale_factor)
-
-    src_img_orig = np.copy(src_img)
-    dst_img_orig = np.copy(dst_img)
 
     # Stage one: Drawing points and perspective transform
     src_img, dst_img, src_points, dst_points, src_lines, dst_lines,\

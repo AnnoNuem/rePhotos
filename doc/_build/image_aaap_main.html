@@ -1,0 +1,147 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>image_aaap_main module &#8212; rePhotosImageAlignment 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-image_aaap_main">
+<span id="image-aaap-main-module"></span><h1>image_aaap_main module<a class="headerlink" href="#module-image_aaap_main" title="Permalink to this headline">¶</a></h1>
+<p>Wrapper for As-Affine-As-Possible Warping as described in
+&#8216;Generalized As-Similar-As-Possible Warping with
+Applications in Digital Photography&#8217; by Chen and Gotsman.</p>
+<dl class="function">
+<dt id="image_aaap_main.aaap_morph">
+<code class="descclassname">image_aaap_main.</code><code class="descname">aaap_morph</code><span class="sig-paren">(</span><em>src_img</em>, <em>dst_img</em>, <em>src_lines</em>, <em>dst_lines</em>, <em>grid_size=15</em>, <em>line_constraint_type=2</em>, <em>deform_energy_weights=array([ 1.</em>, <em>0.01</em>, <em>0.</em>, <em>0.  ])</em>, <em>n_samples_per_grid=1</em>, <em>scale_factor=1</em>, <em>show_frame=False</em>, <em>draw_grid_f=False</em><span class="sig-paren">)</span><a class="headerlink" href="#image_aaap_main.aaap_morph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Warp src image as affine as possible under given line constraints.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>src_img</strong> (<em>ndarray</em>) &#8211; Source image which will be warped to match destination image.</li>
+<li><strong>dst_img</strong> (<em>ndarray</em>) &#8211; Destination image which is only scaled.</li>
+<li><strong>src_lines</strong> (<em>list</em>) &#8211; User drawn lines in the source image.</li>
+<li><strong>dst_lines</strong> (<em>list</em>) &#8211; User drawn lines in the destination image.</li>
+<li><strong>grid_size</strong> (<em>int</em>) &#8211; Distance between grid lines in pixels. (Default value = 15)</li>
+<li><strong>line_constraint_type</strong> (<em>int</em>) &#8211; 0: Fixed discretisation of lines.
+1: Flexible discretisations, points can move on line but endpoints
+are fixed.
+2: Flexible discretisation, all points including endpoints can move
+on line. (Default value = 2)</li>
+<li><strong>deform_energy_weights</strong> (<em>ndarray</em>) &#8211; Weighting affinity of warping.
+[alpha, beta, 0,0]. See paper for details.
+(Default value = np.array([1,0.0100,0,0])</li>
+<li><strong>deform_energy_weights</strong> &#8211; Weighting affinity of warping.
+[alpha, beta, 0,0]. See paper for details.</li>
+<li><strong>n_samples_per_grid</strong> (<em>int</em>) &#8211; Number of line discretization points per grid block.
+(Default value = 1)</li>
+<li><strong>scale_factor</strong> (<em>int</em>) &#8211; Scaling factor for first image and both line lists.
+Second image is not scaled since not used for computation.
+(Default value = 1)</li>
+<li><strong>show_frame</strong> (<em>bool</em>) &#8211; True: Draw frame arround cropped area but do not crop.
+False: Crop images.</li>
+<li><strong>draw_grid_f</strong> (<em>bool</em>) &#8211; True: Draw the aaap grid on the return images, False: Well...</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>src_img_morphed</strong> (<em>ndarray</em>) &#8211; Warped and cropped source image.</li>
+<li><strong>dst_img_cropped</strong> (<em>ndarray</em>) &#8211; Destination image cropped to same size as src_img.</li>
+<li><strong>src_img_cropped</strong> (<em>ndarray</em>) &#8211; Source image cropped to evaluate warp.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/image_aaap_main.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Axel Schaffland.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/image_aaap_main.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

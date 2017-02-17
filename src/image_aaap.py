@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+"""Functions for As-Affine-As-Possible Warping as described in 
+'Generalized As-Similar-As-Possible Warping with
+Applications in Digital Photography' by Chen and Gotsman.
+"""
 import numpy as np
 from scipy.sparse import csc_matrix
 from scipy.sparse import coo_matrix
@@ -5,26 +10,30 @@ from scipy.sparse import hstack
 from scipy.sparse import vstack
 from scipy.sparse import bmat
 from scipy.sparse.linalg import spsolve
-from scipy.linalg import qr
-from scipy.linalg import qr_multiply
-import json
-import spqr.image_spqr
 
 
 def build_regular_mesh(width, height, grid_size):
-    """
-    Creates quadratic meshgrid of given width, height and distance between grid 
-    points.
+    """Creates quadratic meshgrid of given width, height and distance between 
+    grid points.
 
-    Args:
-        width: Width of meshgrid.
-        height: Height of meshgrid.
-        grid_size: Distance between grid lines.
+    Parameters
+    ----------
+    width : int
+        Width of meshgrid.
+    height : int
+        Height of meshgrid.
+    grid_size : int
+        Distance between grid lines.
 
-    Returns:
-        grid_points: Array of points of the grid
-        quads: quads spanning the grid
-        (m,n): dimension of the grid
+    Returns
+    -------
+    grid_points : ndarray
+        Array of points of the grid
+    quads : ndarray
+        quads spanning the grid
+    m : int
+        dimension of the grid
+
     """
 
     x = np.int64(np.arange(0, height + grid_size, grid_size))
@@ -54,15 +63,23 @@ def build_regular_mesh(width, height, grid_size):
 
 
 def construct_mesh_energy(grid_points, quads, deform_energy_weights):
-    """
-    Create quadratic enery matrix for aaap deformation of quad mesh.
+    """Create quadratic energy matrix for aaap deformation of quad mesh.
 
-    Args:
-        grid_points: Array of points spanning the mesh.
-        quads: Index of grid points yielding quadrangulation of mesh.
+    Parameters
+    ----------
+    grid_points : ndarray
+        Array of points spanning the mesh.
+    quads : ndarray
+        Index of grid points yielding quadrangulation of mesh.
+    deform_energy_weights : ndarray
+        Weighting affinity of warping.
+        [alpha, beta, 0,0]. See paper for details.
 
-    Returns:
-        L: Sparse matrixs coresponding to aaap quadratic energy.
+    Returns
+    -------
+    L : csc_matrix
+        Sparse matrixs coresponding to aaap quadratic energy.
+
     """
 
     nv = grid_points.shape[0]
@@ -98,17 +115,24 @@ def construct_mesh_energy(grid_points, quads, deform_energy_weights):
 
 
 def sample_lines(src_lines, dst_lines, sample_rate):
-    """
-    Samples points from line pairs.
+    """Samples points from line pairs.
 
-    Args:
-        src_lines: List of lines in source image.
-        dst_lines: List of lines in destination image.
-        sample_rate: Distance between sampled line points.
+    Parameters
+    ----------
+    src_lines : list
+        List of lines in source image.
+    dst_lines : list
+        List of lines in destination image.
+    sample_rate : float
+        Distance between sampled line points.
 
-    Returns:
-        p1: List of points in src_img.
-        p2: List of points in src_img.
+    Returns
+    -------
+    p1 : ndarray
+        List of points in src_img.
+    p2 : list
+        List of points in src_img.
+
     """
 
     assert len(src_lines) == len(dst_lines), \
@@ -140,22 +164,30 @@ def sample_lines(src_lines, dst_lines, sample_rate):
 
 
 def bilinear_point_in_quad_mesh(pts, X, P, qmSize):
-    """
-    Express points in a quad mesh as the convex combination of there 
+    """Express points in a quad mesh as the convex combination of there
     containing quads, using bilinear weights
     A = bilinearPointInQuadMesh(pts, X, P, qmSize)
 
-    Args: 
-        pts: points that are to be expressed as bilinear combinations of 
+    Parameters
+    ----------
+    pts : ndarray
+        Points that are to be expressed as bilinear combinations of
         the quadmesh vertices
-        X, P: the vertices/connectivy of the quadmesh
-        qmSize: size (rows/columns of quads) of the quadmesh, that is 
-        consctructed to cover some image plane
+    X : ndarray
+        The vertices of the quadmesh
+    P : ndarray
+        The connectivy of the quadmesh
+    qmSize : tuple
+        Size (rows/columns of quads) of the quadmesh, that is
+        consctructed to cover some image plane.
 
-    Returns:
-        A: a matrix that gives the weights for the points as combinations 
-        of the quadmesh vertices, i.e. A*X = pts
-    """ 
+    Returns
+    -------
+    Ascr : csc_matrix
+        A matrix that gives the weights for the points as combinations
+        of the quadmesh vertices, i.e. A*X = pts.
+
+    """
     
     if pts.dtype == 'complex128':
         pts = np.array([pts.real, pts.imag])
@@ -200,20 +232,28 @@ def write_points(C, d, filename):
 
 
 def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
-    """
-    AAAP/ASAP deform a quadmesh with line constraints
+    """AAAP/ASAP deform a quadmesh with line constraints
 
-    Args: 
-        x: Geometry of the original quadmesh.
-        Asrc: Matrix that express lines (sampled points on lines) as linear 
-              combinations of x.
-        pdst: Target positions of the lines (sampled points on them), each 
-              cell element corresponds to one line.
-        L: AAAP/ASAP energy of the quadmesh.
-        flexLineConstraints: Constraint type of each line.
+    Parameters
+    ----------
+    x : ndarray
+        Geometry of the original quadmesh.
+    Asrc : csc_matrix
+        Matrix that express lines (sampled points on lines) as linear
+        combinations of x.
+    pdst : list
+        Target positions of the lines (sampled points on them), each
+        cell element corresponds to one line.
+    L : csc_matrix
+        AAAP/ASAP energy of the quadmesh.
+    line_constraint_type : int
+        Constraint type of each line.
 
-    Returns:
-        y: Geometry of the deformed quadmesh.
+    Returns
+    -------
+    y : ndarray
+        Geometry of the deformed quadmesh.
+
     """
 
     xreal = False
@@ -223,8 +263,8 @@ def deform_aaap(x, Asrc, pdst, L, line_constraint_type):
 
     nv =  x.shape[0]
 
-    B1 = []
-    nb = 0
+    #B1 = []
+    #nb = 0
     
     if line_constraint_type > 0:
         n_samples_in_line = np.zeros((len(pdst) + 1))

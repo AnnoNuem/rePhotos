@@ -1,14 +1,24 @@
+#!/usr/bin/env python
+"""Function to draw a grid on an image. Used to show the grid deformation of 
+aaap-morphing.
+"""
 import cv2
-import numpy as np
 
 def draw_grid(img, grid_points, quad_indices):
-    """
-    Draws line grid on given image.
+    """Draws line grid on given image.
 
-    Args:
-        img: Image on which to draw.
-        grid_points: List of cornerpoints of the grid.
-        quad_indices: List of indices of quads.
+    Parameters
+    ----------
+    img : ndarray
+        Image on which to draw.
+    grid_points : ndarray
+        List of cornerpoints of the grid.
+    quad_indices : ndarray
+        List of indices of quads.
+
+    Returns
+    -------
+
     """
     
     thickness = int((img.shape[0] + img.shape[1]) / 2500  ) + 1

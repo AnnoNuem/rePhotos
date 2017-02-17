@@ -1,0 +1,294 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>aaap_re_photo module &#8212; rePhotosImageAlignment 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="aaap-re-photo-module">
+<h1>aaap_re_photo module<a class="headerlink" href="#aaap-re-photo-module" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-aaap_re_photo"></span><p>Mainscript for image alignment in the re.photos project.
+Two images which names are given as parameters at program start are loaded and
+scaled to the same size. In a two stage approach the user aligns the images. In
+the first stage the user draws rectangles on either of the two images. A
+probable corner point inside the rectangle meant by the user is automatically
+selected as well as a corresponding point in the second image. Alternatively the
+user can draw points directly. With four pointpairs a perspective transform is
+performed aligning the images roughly. In the second stage the user draws lines
+instead of point and as-affine-as-possible warping is used to tune the image
+alignment. After that the images are cropped to the maximal possible size.</p>
+<dl class="function">
+<dt id="aaap_re_photo.init">
+<code class="descclassname">aaap_re_photo.</code><code class="descname">init</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#aaap_re_photo.init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Processes command line parameters, reads images, lines and points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
+<li><strong>src_img</strong> (<em>ndarray</em>) &#8211; Image which is warped.</li>
+<li><strong>dst_img</strong> (<em>ndarray</em>) &#8211; Image to which the src_img is warped.</li>
+<li><strong>src_lines</strong> (<em>list</em>) &#8211; List of lines in src_img read from line file. If line file not found or
+command line parameter <em>&#8211;line_file</em> not given an empty list is returned.</li>
+<li><strong>dst_lines</strong> (<em>list</em>) &#8211; List of lines in dst_img read from line file. If line file not found or
+command line parameter <em>&#8211;line_file</em> not given an empty list is returned.</li>
+<li><strong>src_points</strong> (<em>list</em>) &#8211; List of points in src_img read from point file. If point file not found or
+command line parameter <em>&#8211;point_file</em> not given an empty list is returned.</li>
+<li><strong>dst_points</strong> (<em>list</em>) &#8211; List of points in dst_img read from point file. If point file not found or
+command line parameter <em>-point_file</em> not given an empty list is returned.</li>
+<li><strong>args</strong> (<em>Namespace</em>) &#8211; Command line arguments.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="aaap_re_photo.ls">
+<code class="descclassname">aaap_re_photo.</code><code class="descname">ls</code><span class="sig-paren">(</span><em>l</em>, <em>sf</em><span class="sig-paren">)</span><a class="headerlink" href="#aaap_re_photo.ls" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="aaap_re_photo.main">
+<code class="descclassname">aaap_re_photo.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#aaap_re_photo.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>First function to be called. Initializes programm and switches stages.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="aaap_re_photo.onMouse_stage_one">
+<code class="descclassname">aaap_re_photo.</code><code class="descname">onMouse_stage_one</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#aaap_re_photo.onMouse_stage_one" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mousecallback function for first stage user input.
+User input is drawn on resized images. Search for point and corresponding
+point is done on original sized images.
+Custom parameters are given as one tuple.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>event</strong> (<em>int</em>) &#8211; Mouse event.</li>
+<li><strong>x</strong> (<em>int</em>) &#8211; X-coordinate of mouse pointer.</li>
+<li><strong>y</strong> (<em>int</em>) &#8211; Y-coordinate of mouse pointer.</li>
+<li><strong>flags</strong> (<em>int</em>) &#8211; Type of mouse event.</li>
+<li><strong>img_d</strong> (<em>ndarray</em>) &#8211; Resized image on which points are drawn.</li>
+<li><strong>img_d_clean</strong> (<em>ndarray</em>) &#8211; Resized image to reset img_d if points are removed.</li>
+<li><strong>img_orig</strong> (<em>ndarray</em>) &#8211; Unscaled image in which point is searched.</li>
+<li><strong>scale</strong> (<em>float</em>) &#8211; Scale of img_d with respect to imig_orig.</li>
+<li><strong>points</strong> (<em>list</em>) &#8211; List of points.</li>
+<li><strong>win_name</strong> (<em>string</em>) &#8211; Name of window in which image is shown.</li>
+<li><strong>color</strong> (<em>tuple</em>) &#8211; Color of drawn points.</li>
+<li><strong>img2_d</strong> (<em>ndarray</em>) &#8211; Resized image for corresponding point on which points are drawn.</li>
+<li><strong>img2_d_clean</strong> (<em>ndarray</em>) &#8211; Resized image for corresponding point to reset img_d if points
+are removed.</li>
+<li><strong>img2_orig</strong> (<em>ndarray</em>) &#8211; Unscaled image for corresponding point in which corresponding
+point is searched.</li>
+<li><strong>scale2</strong> (<em>float</em>) &#8211; Scale of img2_d with respect to imig2_orig.</li>
+<li><strong>points2</strong> (<em>list</em>) &#8211; List of corresponding points.</li>
+<li><strong>win_name2</strong> (<em>string</em>) &#8211; Name of window in which image2 is shown.</li>
+<li><strong>color2</strong> (<em>tuple</em>) &#8211; Color of corresponding points.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="aaap_re_photo.onMouse_stage_two">
+<code class="descclassname">aaap_re_photo.</code><code class="descname">onMouse_stage_two</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#aaap_re_photo.onMouse_stage_two" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mousecallback function for second stage user input.
+User input is drawn on resized images. Search for line and corresponding
+line is done on original sized images.
+Custom parameters are given as one tuple.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>event</strong> (<em>int</em>) &#8211; Mouse event.</li>
+<li><strong>x</strong> (<em>int</em>) &#8211; X-coordinate of mouse pointer.</li>
+<li><strong>y</strong> (<em>int</em>) &#8211; Y-coordinate of mouse pointer.</li>
+<li><strong>flags</strong> (<em>int</em>) &#8211; Type of mouse event.</li>
+<li><strong>img_d</strong> (<em>ndarray</em>) &#8211; Resized image on which lines are drawn.</li>
+<li><strong>img_d_clean</strong> (<em>ndarray</em>) &#8211; Resized image to reset img_d if lines are removed.</li>
+<li><strong>img_orig</strong> (<em>ndarray</em>) &#8211; Unscaled image in which lines is searched.</li>
+<li><strong>scale</strong> (<em>float</em>) &#8211; Scale of img_d with respect to imig_orig.</li>
+<li><strong>lines</strong> (<em>list</em>) &#8211; List of lines.</li>
+<li><strong>win_name</strong> (<em>string</em>) &#8211; Name of window in which image is shown.</li>
+<li><strong>color</strong> (<em>tuple</em>) &#8211; Color of drawn lines.</li>
+<li><strong>img2_d</strong> (<em>ndarray</em>) &#8211; Resized image for corresponding lines on which lines are drawn.</li>
+<li><strong>img2_d_clean</strong> (<em>ndarray</em>) &#8211; Resized image for corresponding lines to reset img_d if lines
+are removed.</li>
+<li><strong>img2_orig</strong> (<em>ndarray</em>) &#8211; Unscaled image for corresponding line in which corresponding
+line is searched.</li>
+<li><strong>scale2</strong> (<em>float</em>) &#8211; Scale of img2_d with respect to imig2_orig.</li>
+<li><strong>points2</strong> (<em>list</em>) &#8211; List of corresponding lines.</li>
+<li><strong>win_name2</strong> (<em>string</em>) &#8211; Name of window in which image2 is shown.</li>
+<li><strong>color2</strong> (<em>tuple</em>) &#8211; Color of corresponding lines.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="aaap_re_photo.ps">
+<code class="descclassname">aaap_re_photo.</code><code class="descname">ps</code><span class="sig-paren">(</span><em>p</em>, <em>sf</em><span class="sig-paren">)</span><a class="headerlink" href="#aaap_re_photo.ps" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="aaap_re_photo.stage_one">
+<code class="descclassname">aaap_re_photo.</code><code class="descname">stage_one</code><span class="sig-paren">(</span><em>src_img</em>, <em>dst_img</em>, <em>src_points</em>, <em>dst_points</em>, <em>src_lines</em>, <em>dst_lines</em>, <em>args</em><span class="sig-paren">)</span><a class="headerlink" href="#aaap_re_photo.stage_one" title="Permalink to this definition">¶</a></dt>
+<dd><p>First stage. User drawn points are used for perspective alignment.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>src_img</strong> (<em>ndarray</em>) &#8211; Image on which aaap-warping will be later performed.</li>
+<li><strong>dst_img</strong> (<em>ndarray</em>) &#8211; Image which is only perspective transformed.</li>
+<li><strong>src_points</strong> (<em>list</em>) &#8211; Points in src_img.</li>
+<li><strong>dst_points</strong> (<em>list</em>) &#8211; Points in dst_img.</li>
+<li><strong>src_lines</strong> (<em>list</em>) &#8211; Lines in src_img.</li>
+<li><strong>dst_lines</strong> (<em>list</em>) &#8211; Lines in dst_img</li>
+<li><strong>args</strong> (<em>Namespace</em>) &#8211; Parameters.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>src_img</strong> (<em>ndarray</em>) &#8211; Perspective transformed src_img.</li>
+<li><strong>dst_img</strong> (<em>ndarray</em>) &#8211; Perspective transformed dst_img.</li>
+<li><strong>src_points</strong> (<em>list</em>) &#8211; Perspective transformed points in src_img.</li>
+<li><strong>dst_points</strong> (<em>list</em>) &#8211; Perspective transformed points in dst_img.</li>
+<li><strong>src_lines</strong> (<em>list</em>) &#8211; Perspective transformed lines in src_img.</li>
+<li><strong>dst_lines</strong> (<em>list</em>) &#8211; Perspective transformed lines in dst_img.</li>
+<li><strong>src_transform_matrix</strong> (<em>ndarray</em>) &#8211; Perspective transform matrix of src image, lines and points.</li>
+<li><strong>dst_transform_matrix</strong> (<em>ndarray</em>) &#8211; Perspective transform matrix of dst image, lines and points.</li>
+<li><strong>stage_one_success</strong> (<em>bool</em>) &#8211; True if four point pairs where avaiable to perform perspective
+transform of src and dst images, lines and points, else False.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="aaap_re_photo.stage_two">
+<code class="descclassname">aaap_re_photo.</code><code class="descname">stage_two</code><span class="sig-paren">(</span><em>src_img</em>, <em>dst_img</em>, <em>src_points</em>, <em>dst_points</em>, <em>src_lines</em>, <em>dst_lines</em>, <em>src_transform_matrix</em>, <em>dst_transform_matrix</em>, <em>stage_one_success</em>, <em>args</em><span class="sig-paren">)</span><a class="headerlink" href="#aaap_re_photo.stage_two" title="Permalink to this definition">¶</a></dt>
+<dd><p>Second stage. User drawn lines are used for aaap-warping.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>src_img</strong> (<em>ndarray</em>) &#8211; Image on which aaap-warping will be later performed.</li>
+<li><strong>dst_img</strong> (<em>ndarray</em>) &#8211; Image to which src_img shall be warped.</li>
+<li><strong>src_points</strong> (<em>list</em>) &#8211; Points in src_img.</li>
+<li><strong>dst_points</strong> (<em>list</em>) &#8211; Points in dst_img.</li>
+<li><strong>src_lines</strong> (<em>list</em>) &#8211; Lines in src_img.</li>
+<li><strong>dst_lines</strong> (<em>list</em>) &#8211; Lines in dst_img</li>
+<li><strong>src_transform_matrix</strong> (<em>ndarray</em>) &#8211; Perspective transform matrix of src image, lines and points
+from first stage.</li>
+<li><strong>dst_transform_matrix</strong> (<em>ndarray</em>) &#8211; Perspective transform matrix of dst image, lines and points
+from first stage.</li>
+<li><strong>stage_one_success</strong> (<em>bool</em>) &#8211; True if first stage was successful, else False.</li>
+<li><strong>args</strong> (<em>Namespace</em>) &#8211; Parameters.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/aaap_re_photo.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Axel Schaffland.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/aaap_re_photo.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
