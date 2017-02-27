@@ -28,8 +28,8 @@ from image_sac import getCorespondingPoint
 from image_perspective_alignment import perspective_align
 from image_perspective_alignment import transform_lines
 
-line_file_name_end = "line_file.txt"
-point_file_name_end = "point_file.txt"
+line_file_name_end = "line_file.json"
+point_file_name_end = "point_file.json"
     
 ps = lambda p, sf: (p[0]*sf, p[1]*sf)
 ls = lambda l, sf: [v * sf for v in l]
@@ -111,7 +111,7 @@ def onMouse_stage_one(event, x, y, flags,
         points.append(point)
         number_of_points = number_of_points + 1
 
-        point2 = getCorespondingPoint(img_orig[:,:,0:3], img2_orig[:,:,0:3], point)
+        point2 = getCorespondingPoint(img_orig[:,:,:], img2_orig[:,:,:], point)
         if point2 is not None:
             i_h.draw_circle(img2_d, (point2[0]*scale2, point2[1]*scale2), color2)
             cv2.imshow(win_name2, img2_d)

@@ -121,8 +121,9 @@ def get_and_pre_patch(img, point, size_half):
     delta_x_max = x2 - point[0]
     delta_y_min = point[1] - y1
     delta_y_max = y2 - point[1]
-    subimage = cv2.cvtColor(np.float32(img[y1:y2, x1:x2]), cv2.COLOR_BGR2HSV).copy()
-    subimage = cv2.normalize(subimage, subimage, 0.0, 1.0 , cv2.NORM_MINMAX)
+    subimage = None
+    subimage = cv2.normalize(np.float32(img[y1:y2, x1:x2]), subimage, 0.0, 1.0 , cv2.NORM_MINMAX)
+    subimage = cv2.cvtColor(subimage, cv2.COLOR_BGR2HSV)
     return subimage, np.array((x1, y1)), np.array([delta_x_min, delta_x_max, delta_y_min, delta_y_max], dtype=np.float32)   
 
 
@@ -185,9 +186,9 @@ def getCorespondingPoint(img1, img2, point, template_size_s=101):
     weights = np.zeros((corners.shape[0]), dtype=np.float32)
     i = 0
 
-    subimageF2 = cv2.normalize(get_gabor(subimageF2)[...,2], subimageF2, 0, 1,\
+    subimageF2 = cv2.normalize(get_gabor(subimageF2[...,2]), subimageF2, 0, 1,\
         cv2.NORM_MINMAX)
-    subimageF1 = cv2.normalize(get_gabor(subimageF1)[...,2], subimageF1, 0, 1,\
+    subimageF1 = cv2.normalize(get_gabor(subimageF1[...,2]), subimageF1, 0, 1,\
         cv2.NORM_MINMAX)
 
     #dif_img = np.ones_like(subimageF1)

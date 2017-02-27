@@ -5,6 +5,7 @@ corresponding lines.
 import numpy as np
 import cv2
 from image_helpers import line_intersect 
+from image_gabor import get_gabor
 
 
 
@@ -422,15 +423,15 @@ def get_corresponding_line(img1, img2, line1, psd=15, max_lines_to_check=60,
 
     # Compare lines in src image witch line in dst image  
     if len(best_lines) > 0:
-        patch = cv2.cvtColor(np.uint8(patch[:,:,0:3]), cv2.COLOR_BGR2HSV)
-        patch2 = cv2.cvtColor(np.uint8(patch2[:,:,0:3]), cv2.COLOR_BGR2HSV)
+        patch = cv2.cvtColor(np.float32(patch[:,:,0:3]), cv2.COLOR_BGR2HSV)
+        patch2 = cv2.cvtColor(np.float32(patch2[:,:,0:3]), cv2.COLOR_BGR2HSV)
 
         weights_t = np.zeros((max_lines_to_check, 3), dtype=np.float32)
 
         # Scale patches, lines and points
         sf = template_size/np.float32((patch.shape[0] + patch.shape[1])/2)
-        patch2 = np.uint8(cv2.resize(patch2, (0,0), fx=sf, fy=sf))
-        patch = np.uint8(cv2.resize(patch, (0,0), fx=sf, fy=sf))
+        patch2 = np.float32(cv2.resize(patch2, (0,0), fx=sf, fy=sf))
+        patch = np.float32(cv2.resize(patch, (0,0), fx=sf, fy=sf))
         p11_s = (p11[0]*sf, p11[1]*sf)
         p12_s = (p12[0]*sf, p12[1]*sf)
         best_lines_s = [tuple(point * sf for point in line) for line in\
@@ -446,6 +447,12 @@ def get_corresponding_line(img1, img2, line1, psd=15, max_lines_to_check=60,
         rm = cv2.getRotationMatrix2D((size/2, size/2), t, 1)
         patch = cv2.warpAffine(patch_, rm, (size, size))
 
+        # Gabor Filter
+        patch = cv2.normalize(get_gabor(patch),\
+            patch, 0, 1, cv2.NORM_MINMAX)
+        patch2 = cv2.normalize(get_gabor(patch2),\
+            patch2, 0, 1, cv2.NORM_MINMAX)
+
         for i in range(0, min(max_lines_to_check, len(best_lines))):
             patch2_t = get_transformed_patch(np.copy(patch2), p11_s, p12_s,\
                        tuple(best_lines_s[i][0]), tuple(best_lines_s[i][1]))
@@ -453,12 +460,12 @@ def get_corresponding_line(img1, img2, line1, psd=15, max_lines_to_check=60,
             # Take only pixels which are non zero in both patches into account
             index = (patch2_t[:,:,2]!=0) * (patch[:,:,2]!=0)
             
+            # Better results if only value channel is used compared to all three
+            # channels.
             for j in range(2,3):
-                weights_t[i][j] = np.sum((patch2_t[:,:,j][index] -\
-                                  patch[:,:,j][index])**2, dtype=np.float64)/\
-                                  np.count_nonzero(index)
-        min_i = np.argmin(weights_t[0:i+1,2]) % (i+1)
-        return np.array(best_lines[min_i]).flatten() + np.tile(offset2, 2)
+                weights_t[i][j] = np.sum((patch2_t[:,:,j][index] * patch[:,:,j][index]), dtype=np.float32) / np.sqrt(np.sum(patch2_t[:,:,j][index]**2, dtype=np.float32) * np.sum(patch[:,:,j][index]**2, dtype=np.float32))
+        max_i = np.argmax(weights_t[0:i+1,2]) % (i+1)
+        return np.array(best_lines[max_i]).flatten() + np.tile(offset2, 2)
     else:
         return None
 
