@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """Functions to find interesting points near user drawn points as well as
-corresponding points.
+corresponding points. sac = semi automatic correspondence.
 """
 import cv2
 import numpy as np
@@ -175,7 +175,7 @@ def getCorespondingPoint(img1, img2, point, template_size_s=101):
 
     # get possible corners
     corners = cv2.goodFeaturesToTrack(np.uint8(subimageF2[...,2]*255), 2000,\
-        qualityLevel=0.01, minDistance=10)
+        qualityLevel=0.01, minDistance=10, useHarrisDetector=True)
 
     # Scale patches, lines and points
     sf = template_size_s/np.float32(np.max(subimageF1.shape[0:2]))
@@ -186,6 +186,7 @@ def getCorespondingPoint(img1, img2, point, template_size_s=101):
     weights = np.zeros((corners.shape[0]), dtype=np.float32)
     i = 0
 
+    # Gabor Filter
     subimageF2 = cv2.normalize(get_gabor(subimageF2[...,2]), subimageF2, 0, 1,\
         cv2.NORM_MINMAX)
     subimageF1 = cv2.normalize(get_gabor(subimageF1[...,2]), subimageF1, 0, 1,\
