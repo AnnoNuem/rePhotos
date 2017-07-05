@@ -1,0 +1,2 @@
+Funktioniert nicht. Es Werden nicht die selben Punkte gefunden und viele falsche gefunden.
+Gausfiltern hilft auch nicht. Punkte werden mit findHomography angepasst

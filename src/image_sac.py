@@ -5,11 +5,12 @@ corresponding points. sac = semi automatic correspondence.
 import cv2
 import numpy as np
 from image_gabor import get_gabor
+from image_helpers import draw_circle
 
 # scale factor for subimage size on which template matching is done
-SUBIMAGE_SIZE_SCALE = 0.3 #0.159  
+SUBIMAGE_SIZE_SCALE = 0.15 #0.159  
 # scale factor for template size
-TEMPLATE_SIZE_SCALE = 0.07
+TEMPLATE_SIZE_SCALE = 0.15
 # minimum size of user drawn rectangle to start point search else return middle
 # point
 MIN_RECT_SIZE = 5
@@ -168,7 +169,7 @@ def getCorespondingPoint(img1, img2, point, template_size_s=101):
                              SUBIMAGE_SIZE_SCALE)/2)
 
     # get template from img1 in which user draw
-    subimageF1, _, deltas = get_and_pre_patch(img1, point, templateSizeHalf)
+    subimageF1, offset1, deltas = get_and_pre_patch(img1, point, templateSizeHalf)
 
     # create subimage from img2 in which template is searched
     subimageF2, offset, _ = get_and_pre_patch(img2, point, subimageSizeHalf)
@@ -177,39 +178,101 @@ def getCorespondingPoint(img1, img2, point, template_size_s=101):
     corners = cv2.goodFeaturesToTrack(np.uint8(subimageF2[...,2]*255), 2000,\
         qualityLevel=0.01, minDistance=10, useHarrisDetector=True)
 
+    #TODO 
+    #i1 = cv2.zeros_like(subimageF1)
+    #i2 = cv2.zeros_like(subimageF2)
+
+
+    subimageF1 = cv2.GaussianBlur(subimageF1, (25,25), 0)
+    subimageF2 = cv2.GaussianBlur(subimageF2, (25,25), 0)
+    kernel = np.array([ [0  ,  0.5,  0  ],
+                        [0.5,  0  , -0.5], 
+                        [0  , -0.5, 0  ]], np.float32)
+
+
+    i1 = cv2.filter2D(subimageF1[:,:,2], -1, kernel)
+    i2 = cv2.filter2D(subimageF2[:,:,2], -1, kernel)
+
+    #cv2.imshow("F1", subimageF1)
+    #cv2.imshow("F2", subimageF2)
+    #cv2.imshow("i1", i1)
+    #cv2.imshow("i2", i2)
+
+    i1 = np.sqrt(i1*i1)
+    i2 = np.sqrt(i2*i2)
+
+
+    number_edge_pixels1 = int(0.025 * i1.size)
+    number_edge_pixels2 = number_edge_pixels1
+    #number_edge_pixels2 = int(0.1 * i2.size)
+
+    pixels1 = np.unravel_index(np.argsort(i1.ravel())[-number_edge_pixels1:], i1.shape)
+    pixels1 = np.vstack((pixels1[0], pixels1[1])).T
+
+    pixels2 = np.unravel_index(np.argsort(i2.ravel())[-number_edge_pixels2:], i2.shape)
+    pixels2 = np.vstack((pixels2[0], pixels2[1])).T
+        
+    for i in range(0,pixels1.shape[0]):
+       draw_circle(subimageF1, (pixels1[i,1], pixels1[i,0])) 
+
+    for i in range(0,pixels2.shape[0]):
+       draw_circle(subimageF2, (pixels2[i,1], pixels2[i,0])) 
+    
+    cv2.imshow("res", subimageF1[:,:,2])
+    cv2.imshow("res2", subimageF2[:,:,2])
+    
+    pixels1 = np.float32(pixels1)
+    pixels2 = np.float32(pixels2)
+
+
+    #transform = cv2.findHomography(pixels1, pixels2, cv2.RANSAC, number_edge_pixels1/number_edge_pixels2)[0]
+    transform = cv2.findHomography(pixels1, pixels2, cv2.RANSAC, 10.0)[0]
+    print(transform)
+    print point 
+    print offset1
+    point = point - offset1
+    #point = np.array([[point[0]],[point[1]]])
+    point = np.float32(point.reshape(1,-1,2))
+    print(point)
+    point  = cv2.perspectiveTransform(point, transform) 
+
+    point = point.flatten() 
+    print(point)
+    return point + offset
+
     # Scale patches, lines and points
-    sf = template_size_s/np.float32(np.max(subimageF1.shape[0:2]))
-    subimageF2 = cv2.resize(subimageF2, (0,0), fx=sf, fy=sf)
-    subimageF1 = cv2.resize(subimageF1, (0,0), fx=sf, fy=sf)
-    corners_s = [corner[0] * sf for corner in corners]
-    deltas = np.int_(deltas * sf)
-    weights = np.zeros((corners.shape[0]), dtype=np.float32)
-    i = 0
-
-    # Gabor Filter
-    subimageF2 = cv2.normalize(get_gabor(subimageF2[...,2]), subimageF2, 0, 1,\
-        cv2.NORM_MINMAX)
-    subimageF1 = cv2.normalize(get_gabor(subimageF1[...,2]), subimageF1, 0, 1,\
-        cv2.NORM_MINMAX)
-
-    #dif_img = np.ones_like(subimageF1)
-
-    for corner in corners_s:
-        xmin = int(corner[0]) - deltas[0]
-        xmax = int(corner[0]) + deltas[1] + 1
-        ymin = int(corner[1]) - deltas[2]
-        ymax = int(corner[1]) + deltas[3] + 1
-
-        if xmin >= 0 and ymin >= 0 and xmax <= subimageF2.shape[1] and\
-                                       ymax <= subimageF2.shape[0]:
-            weights[i] = np.sum((subimageF2[ymin:ymax, xmin:xmax] * subimageF1),\
-                dtype=np.float32) / np.sqrt(\
-                np.sum(subimageF2[ymin:ymax,xmin:xmax]**2, dtype=np.float32)*\
-                    np.sum(subimageF1**2, dtype=np.float32))
-        i+=1
-
-    corner = corners[np.argmax(weights),0]
-    return corner + offset
+#    sf = template_size_s/np.float32(np.max(subimageF1.shape[0:2]))
+#    subimageF2 = cv2.resize(subimageF2, (0,0), fx=sf, fy=sf)
+#    subimageF1 = cv2.resize(subimageF1, (0,0), fx=sf, fy=sf)
+#    corners_s = [corner[0] * sf for corner in corners]
+#    deltas = np.int_(deltas * sf)
+#    weights = np.zeros((corners.shape[0]), dtype=np.float32)
+#    i = 0
+#
+#    # Gabor Filter
+#    subimageF2 = cv2.normalize(get_gabor(subimageF2[...,2]), subimageF2, 0, 1,\
+#        cv2.NORM_MINMAX)
+#    subimageF1 = cv2.normalize(get_gabor(subimageF1[...,2]), subimageF1, 0, 1,\
+#        cv2.NORM_MINMAX)
+#
+#    #dif_img = np.ones_like(subimageF1)
+#
+#    for corner in corners_s:
+#        xmin = int(corner[0]) - deltas[0]
+#        xmax = int(corner[0]) + deltas[1] + 1
+#        ymin = int(corner[1]) - deltas[2]
+#        ymax = int(corner[1]) + deltas[3] + 1
+#
+#        if xmin >= 0 and ymin >= 0 and xmax <= subimageF2.shape[1] and\
+#                                       ymax <= subimageF2.shape[0]:
+#            weights[i] = np.sum((subimageF2[ymin:ymax, xmin:xmax] * subimageF1),\
+#                dtype=np.float32) / np.sqrt(\
+#                np.sum(subimageF2[ymin:ymax,xmin:xmax]**2, dtype=np.float32)*\
+#                    np.sum(subimageF1**2, dtype=np.float32))
+#        i+=1
+#
+#    corner = corners[np.argmax(weights),0]
+#    return corner + offset
 
 
 def getPFromRectangleACorespondingP(img1, img2, point1, point2):
